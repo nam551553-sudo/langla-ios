@@ -1,0 +1,16 @@
+.gradle/
+**/build/
+local.properties
+.tools/
+*.jks
+*.keystore
+.local/
+release/
+*.pk8
+*.pem
+update-ssh.json
+web-dist/
+*.p12
+*.pfx
+*.mobileprovision
+.DS_Store

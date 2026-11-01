@@ -1,0 +1,18 @@
+def releaseInfo = new Properties()
+file('version.properties').withInputStream { releaseInfo.load(it) }
+ext.releaseBuild = providers.gradleProperty('releaseBuild').getOrElse(releaseInfo.getProperty('build')).toInteger()
+ext.releaseName = "1.1.${releaseBuild}"
+allprojects {
+    version = rootProject.releaseName
+    repositories { google(); mavenCentral() }
+}
+ext.gdxVersion = '1.12.1'
+ext.roboVMVersion = '2.3.23'
+subprojects {
+    tasks.withType(Jar).configureEach { preserveFileTimestamps = false; reproducibleFileOrder = true }
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        sourceCompatibility = '1.8'
+        targetCompatibility = '1.8'
+    }
+}

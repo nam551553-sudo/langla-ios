@@ -1,0 +1,5 @@
+pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+rootProject.name = 'LangLaLau'
+include 'core', 'desktop', 'launcher'
+if (providers.gradleProperty('android').isPresent()) include 'android'
+if (providers.gradleProperty('ios').isPresent()) include 'ios'

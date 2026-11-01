@@ -1,0 +1,68 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+    inputs:
+      signing:
+        description: Signing mode (signed requires Apple certificate and profile secrets)
+        type: choice
+        options: [unsigned, signed]
+        default: unsigned
+      build_number:
+        description: Numeric build number
+        default: '124'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  ipa:
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+      BUILD_NUMBER: ${{ inputs.build_number }}
+      SIGNING_MODE: ${{ inputs.signing }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Prepare build
+        run: |
+          test -d "$DEVELOPER_DIR"
+          xcodebuild -version
+          chmod +x gradlew
+          python3 tools/ci/prepare-ios.py
+      - name: Import Apple signing files
+        if: inputs.signing == 'signed'
+        env:
+          IOS_CERTIFICATE_P12_BASE64: ${{ secrets.IOS_CERTIFICATE_P12_BASE64 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          IOS_PROVISION_PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
+        run: python3 tools/ci/import-signing.py
+      - name: Build IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(-Pios "-PreleaseBuild=$BUILD_NUMBER")
+          if [[ "$SIGNING_MODE" == signed ]]; then
+            args+=(-Probovm.iosSkipSigning=false "-Probovm.iosSignIdentity=$IOS_SIGN_IDENTITY" "-Probovm.iosProvisioningProfile=$IOS_PROFILE_UUID")
+          else
+            args+=(-Probovm.iosSkipSigning=true)
+          fi
+          ./gradlew "${args[@]}" :ios:createIPA --no-daemon --stacktrace
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: LangLa-iOS-${{ inputs.build_number }}-${{ inputs.signing }}
+          path: ios/build/robovm/**/*.ipa
+          if-no-files-found: error
+          retention-days: 7
+      - name: Remove temporary signing files
+        if: always() && inputs.signing == 'signed'
+        run: python3 tools/ci/import-signing.py --cleanup

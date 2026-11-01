@@ -1,0 +1,43 @@
+plugins { id 'application' }
+application { mainClass = 'com.beatdz.langlalau.DesktopLauncher' }
+sourceSets.main {
+    java { srcDirs = ['../src']; include 'com/beatdz/langlalau/**' }
+    resources {
+        srcDirs = ['..']
+        include 'resource/**', 'music/**', 'sound/**', 'support/**', 'DanhHieu/**', 'src/path.txt'
+    }
+}
+tasks.named('processResources') {
+    eachFile { if (it.path == 'src/path.txt') it.path = 'path.txt' }
+    includeEmptyDirs = false
+}
+dependencies {
+    implementation project(':core')
+    implementation "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
+    runtimeOnly "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+    runtimeOnly "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
+}
+tasks.register('fatJar', Jar) {
+    dependsOn configurations.runtimeClasspath
+    archiveFileName = 'LangLaLau.jar'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest { attributes 'Main-Class': application.mainClass.get() }
+    from sourceSets.main.output
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA'
+}
+tasks.register('packagePc', Exec) {
+    dependsOn 'installDist'
+    def output = providers.gradleProperty('pcOutput').isPresent()
+        ? rootProject.file(providers.gradleProperty('pcOutput').get())
+        : layout.buildDirectory.dir('pc').get().asFile
+    doFirst {
+        if (output.exists()) throw new GradleException("Output already exists: $output. Remove it before packaging again.")
+    }
+    commandLine new File(System.getProperty('java.home'), 'bin/jpackage').absolutePath,
+        '--type', 'app-image', '--name', 'LangLaTest', '--input', tasks.installDist.destinationDir.toString() + '/lib',
+        '--main-jar', "desktop-${project.version}.jar", '--main-class', application.mainClass.get(),
+        '--description', 'Làng Lá Test', '--icon', rootProject.file('resource/icons/lang-la-test.ico').absolutePath,
+        '--add-launcher', 'LangLaTest-Software=' + project.file('software-launcher.properties').absolutePath,
+        '--dest', output.absolutePath
+}
