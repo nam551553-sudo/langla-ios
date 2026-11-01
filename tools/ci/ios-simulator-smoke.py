@@ -22,10 +22,10 @@ properties.write_text(properties.read_text().replace('app.mainclass=com.beatdz.l
                       'app.mainclass=com.beatdz.langlalau.IOSStartupSmoke'))
 try:
     run('./gradlew', '-Pios', '-PiosSmoke', '-PreleaseBuild=' + os.environ['BUILD_NUMBER'],
-        '-Probovm.arch=arm64', '-Probovm.iosSkipSigning=true', '-Probovm.skipLaunch=true',
-        '-Probovm.device.name=iPhone 16 Pro Max', '-Probovm.sdk.version=' + runtime['version'],
+        '-Probovm.archs=arm64-simulator', '-Probovm.iosSkipSigning=true',
+        '-Probovm.sdk.version=' + runtime['version'],
         '-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8',
-        ':ios:launchIPhoneSimulator', '--max-workers=2', '--no-daemon', '--stacktrace')
+        ':ios:robovmInstall', '--max-workers=2', '--no-daemon', '--stacktrace')
     apps = list(Path('ios/build').rglob('LangLaLau.app'))
     if not apps:
         raise SystemExit('Simulator app was not produced')
