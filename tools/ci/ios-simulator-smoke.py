@@ -5,6 +5,7 @@ from pathlib import Path
 import plistlib
 import shutil
 import subprocess
+import time
 import zipfile
 
 def run(*args, **kwargs):
@@ -35,11 +36,16 @@ try:
             candidate = plistlib.loads(info_path.read_bytes())
         except Exception:
             continue
-        if candidate.get('CFBundleIdentifier') == 'com.beatdz.langlalau' and 'iPhoneSimulator' in candidate.get('CFBundleSupportedPlatforms', []):
+        if (candidate.get('CFBundleIdentifier') == 'com.beatdz.langlalau'
+                and 'iPhoneSimulator' in candidate.get('CFBundleSupportedPlatforms', [])
+                and (info_path.parent / 'resource/background.jpg').is_file()
+                and (info_path.parent / 'lib').is_dir()):
             app = info_path.parent
             break
     if app is None:
-        raise SystemExit('Simulator Info.plist was not produced')
+        print('Produced plist files:', [str(p) for p in Path('.').rglob('Info.plist')], flush=True)
+        raise SystemExit('Complete simulator bundle (plist, resources, lib) was not produced')
+    print('Installed bundle source:', app, flush=True)
     if app.suffix != '.app':
         packaged = Path(os.environ['RUNNER_TEMP']) / 'LangLaLau-smoke.app'
         shutil.copytree(app, packaged)
@@ -72,11 +78,29 @@ try:
     run('xcrun', 'simctl', 'bootstatus', udid, '-b')
     run('xcrun', 'simctl', 'install', udid, str(app))
     with open('ios-native-smoke.log', 'w') as log:
-        result = subprocess.run(['xcrun', 'simctl', 'launch', '--console', udid, bundle],
-                                stdout=log, stderr=subprocess.STDOUT, timeout=360)
+        process = subprocess.Popen(['xcrun', 'simctl', 'launch', '--console', udid, bundle],
+                                   stdout=log, stderr=subprocess.STDOUT)
+        deadline = time.monotonic() + 360
+        printed = 0
+        try:
+            while process.poll() is None and time.monotonic() < deadline:
+                time.sleep(1)
+                text = Path('ios-native-smoke.log').read_text(errors='replace')
+                if len(text) > printed:
+                    print(text[printed:], end='', flush=True)
+                    printed = len(text)
+                if 'PASS IOS_NATIVE_STARTUP' in text or 'FAIL IOS_NATIVE_STARTUP' in text:
+                    break
+        finally:
+            if process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    process.kill()
     text = Path('ios-native-smoke.log').read_text(errors='replace')
     print(text[-20000:])
-    if result.returncode or 'PASS IOS_NATIVE_STARTUP' not in text:
+    if 'PASS IOS_NATIVE_STARTUP' not in text:
         raise SystemExit('Native iOS startup did not reach login; inspect ios-native-smoke.log')
 finally:
     subprocess.run(['xcrun', 'simctl', 'shutdown', udid], check=False)
