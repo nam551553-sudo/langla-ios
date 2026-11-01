@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import plistlib
+import shutil
 import subprocess
 
 def run(*args, **kwargs):
@@ -26,10 +27,23 @@ try:
         '-Probovm.sdk.version=' + runtime['version'],
         '-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8',
         ':ios:robovmInstall', '--max-workers=2', '--no-daemon', '--stacktrace')
-    apps = list(Path('ios/build').rglob('LangLaLau.app'))
-    if not apps:
-        raise SystemExit('Simulator app was not produced')
-    app = apps[0]
+    # robovmInstall installs directly into installDir, without an .app suffix.
+    app = None
+    for info_path in Path('.').rglob('Info.plist'):
+        try:
+            candidate = plistlib.loads(info_path.read_bytes())
+        except Exception:
+            continue
+        if candidate.get('CFBundleIdentifier') == 'com.beatdz.langlalau' and 'iPhoneSimulator' in candidate.get('CFBundleSupportedPlatforms', []):
+            app = info_path.parent
+            break
+    if app is None:
+        raise SystemExit('Simulator Info.plist was not produced')
+    if app.suffix != '.app':
+        packaged = Path(os.environ['RUNNER_TEMP']) / 'LangLaLau-smoke.app'
+        shutil.copytree(app, packaged)
+        app = packaged
+    print('Simulator app:', app, flush=True)
     info = plistlib.loads((app / 'Info.plist').read_bytes())
     bundle = info['CFBundleIdentifier']
     run('xcrun', 'simctl', 'boot', udid)

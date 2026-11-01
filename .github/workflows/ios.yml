@@ -12,6 +12,10 @@ on:
         description: Numeric build number
         default: '125'
         required: true
+      native_test_only:
+        description: Only run the native startup test (no new IPA)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -45,6 +49,7 @@ jobs:
           path: ios-native-smoke.log
           if-no-files-found: warn
   ipa:
+    if: ${{ !inputs.native_test_only }}
     runs-on: macos-15
     timeout-minutes: 90
     env:
