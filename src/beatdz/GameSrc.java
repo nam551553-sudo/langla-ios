@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public class GameSrc extends MainScreen {
 
@@ -299,7 +298,12 @@ public class GameSrc extends MainScreen {
             }
         }
         if (listMob.size() > 0) {
-            List<Mob> list = listMob.stream().filter(mob -> mob.levelBoss == lv).collect(Collectors.toList());
+            List<Mob> list = new ArrayList<Mob>();
+            for (Mob mob : listMob) {
+                if (mob.levelBoss == lv) {
+                    list.add(mob);
+                }
+            }
             if (list.size() > 0) {
                 Collections.sort(list, new Comparator() {
                     @Override

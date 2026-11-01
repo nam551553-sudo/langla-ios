@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Vector;
-import java.util.stream.Collectors;
 
 public class LangLa_ar extends LangLa_kj {
 
@@ -111,7 +110,12 @@ public class LangLa_ar extends LangLa_kj {
                     return;
                 }
 
-                List<Item> list = Arrays.asList(Char.gI().arrItemBag).stream().filter(i -> i != null && i.q()).collect(Collectors.toList());
+                List<Item> list = new ArrayList<Item>();
+                for (Item bagItem : Char.gI().arrItemBag) {
+                    if (bagItem != null && bagItem.q()) {
+                        list.add(bagItem);
+                    }
+                }
                 if (list.size() == 0) {
                     Item i = Char.gI().d(277);
                     if (i == null) {
@@ -140,7 +144,11 @@ public class LangLa_ar extends LangLa_kj {
                         if (numP >= 6.5 && numP <= 100 || numP > 100 && i <= 5) {
                             listId.add(i);
                             int i2z = i;
-                            listItem.addAll(Arrays.asList(Char.gI().arrItemBag).stream().filter(i2 -> i2 != null && i2.id == i2z).collect(Collectors.toList()));
+                            for (Item bagItem : Char.gI().arrItemBag) {
+                                if (bagItem != null && bagItem.id == i2z) {
+                                    listItem.add(bagItem);
+                                }
+                            }
                             System.out.println(i);
                             if (Min == -1) {
                                 Min = i;
@@ -160,7 +168,12 @@ public class LangLa_ar extends LangLa_kj {
                     for (int i = Min; i <= 11; i++) {
                         if (arrayNum[i] >= 6.5 && arrayNum[i] <= 100 || arrayNum[i] > 100 && i <= 5) {
                             int id_da = i;
-                            List<Item> listda = Arrays.asList(Char.gI().arrItemBag).stream().filter(i2 -> i2 != null && i2.id == id_da).collect(Collectors.toList());// listItem.addAll();
+                            List<Item> listda = new ArrayList<Item>();
+                            for (Item bagItem : Char.gI().arrItemBag) {
+                                if (bagItem != null && bagItem.id == id_da) {
+                                    listda.add(bagItem);
+                                }
+                            }
                             while (listda.size() > 0) {
                                 Item da = listda.remove(0);
                                 if (da != null) {
