@@ -75,7 +75,6 @@ public final class MultiSession {
     }
     public static Runnable bind(Runnable action) { Context owner = current(); return () -> run(owner, action); }
     public static int barHeight() {
-        if (Gdx.app.getType() == com.badlogic.gdx.Application.ApplicationType.iOS) return 0;
         return Math.round(28 * Math.max(1f, Math.min(2f, Gdx.graphics.getDensity())));
     }
 
@@ -147,7 +146,6 @@ public final class MultiSession {
     }
 
     public static void attach(InputMultiplexer input) {
-        if (Gdx.app.getType() == com.badlogic.gdx.Application.ApplicationType.iOS) return;
         if (bar == null) { bar = new Stage(new ScreenViewport()); font = new BitmapFont(); }
         bar.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
         input.addProcessor(0, bar);
@@ -155,7 +153,6 @@ public final class MultiSession {
     }
 
     public static void drawBar() {
-        if (Gdx.app.getType() == com.badlogic.gdx.Application.ApplicationType.iOS) return;
         if (bar == null) return;
         float scale = Math.max(1f, Math.min(2f, Gdx.graphics.getDensity()));
         float width = Gdx.graphics.getWidth();

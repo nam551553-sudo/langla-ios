@@ -55,6 +55,31 @@ public class IOSStartupSmoke extends IOSLauncher {
                         }
                         System.out.println("PASS IOS_NATIVE_SERVER_PICKER visible selected server=" + data.aP.getName()
                                 + "; picker opened with newer-client flag enabled");
+                        if (MultiSession.barHeight() <= 0) {
+                            System.err.println("FAIL IOS_NATIVE_STARTUP x6 tab bar disabled"); System.exit(7);
+                        }
+                        java.util.Set<Session> sessions = new java.util.HashSet<>();
+                        java.util.Set<DataCenter> centers = new java.util.HashSet<>();
+                        java.util.Set<String> profiles = new java.util.HashSet<>();
+                        for (int slot = 0; slot < MultiSession.LIMIT; slot++) {
+                            if (slot > 0 && !MultiSession.add()) {
+                                System.err.println("FAIL IOS_NATIVE_STARTUP cannot add x6 tab " + slot); System.exit(8);
+                            }
+                            sessions.add(Session.gI()); centers.add(DataCenter.gI());
+                            profiles.add(MultiSession.storageName("arr_acc"));
+                            beatdz.Char.gI().hp = 100 + slot;
+                        }
+                        if (MultiSession.add() || sessions.size() != 6 || centers.size() != 6 || profiles.size() != 6) {
+                            System.err.println("FAIL IOS_NATIVE_STARTUP x6 account isolation or limit"); System.exit(9);
+                        }
+                        for (int slot = 0; slot < MultiSession.LIMIT; slot++) {
+                            MultiSession.select(slot);
+                            if (beatdz.Char.gI().hp != 100 + slot) {
+                                System.err.println("FAIL IOS_NATIVE_STARTUP x6 switch lost account state"); System.exit(10);
+                            }
+                        }
+                        MultiSession.select(0);
+                        System.out.println("PASS IOS_NATIVE_X6 six independent tabs, profile paths and account switching");
                         System.out.println("PASS IOS_NATIVE_STARTUP downloaded data via NSURLSession and reached login");
                         System.out.flush(); System.exit(0);
                     }
