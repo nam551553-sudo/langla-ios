@@ -55,7 +55,7 @@ jobs:
           else
             args+=(-Probovm.iosSkipSigning=true)
           fi
-          ./gradlew "${args[@]}" :ios:createIPA --no-daemon --stacktrace
+          ./gradlew "${args[@]}" '-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8' :ios:createIPA --max-workers=2 --no-daemon --stacktrace
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
