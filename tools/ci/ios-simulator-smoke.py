@@ -28,8 +28,8 @@ try:
         '-Probovm.archs=arm64-simulator', '-Probovm.iosSkipSigning=true',
         '-Probovm.sdk.version=' + runtime['version'],
         '-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8',
-        ':ios:robovmInstall', '--max-workers=2', '--no-daemon', '--stacktrace')
-    # robovmInstall installs directly into installDir, without an .app suffix.
+        ':ios:createIPA', '--max-workers=2', '--no-daemon', '--stacktrace')
+    # Archive packaging leaves a complete .app next to its simulator-only IPA.
     app = None
     for info_path in Path('.').rglob('Info.plist'):
         try:
