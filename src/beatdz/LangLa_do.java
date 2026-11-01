@@ -20,7 +20,10 @@ package beatdz;
             try { downloaded = AssetArchives.download(url, false); break; }
             catch (java.io.IOException error) { if (attempt == 2) throw error; Utlis.sleep(1000L); }
          }
-         if (this.a.d.contains("Client")) {
+         // iOS creates/disposes interface images on the render thread at finalization.
+         if (com.badlogic.gdx.Gdx.app.getType() == com.badlogic.gdx.Application.ApplicationType.iOS) {
+            if (this.a.d.contains("Client")) DataCenter.gI().bb = false;
+         } else if (this.a.d.contains("Client")) {
             LangLa_fq.b();
          } else if (this.a.d.contains("Char")) {
             LangLa_fq.a();
@@ -31,8 +34,8 @@ package beatdz;
          Binary.writeInt("arr_check_" + this.a.a, downloaded);
          this.a.f = true;
          CheckVersionScreen.b(this.b);
-      } catch (Exception var2) {
-         CheckVersionScreen.a(this.b);
+      } catch (Throwable var2) {
+         CheckVersionScreen.failed(this.b, var2);
          CheckVersionScreen.c(this.b).clear();
          beatdz.CheckVersionScreen.$state_CheckVersionScreen().d = true;
       }

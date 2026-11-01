@@ -21,6 +21,10 @@ public class CheckVersionScreen extends ScreenLogin {
     private boolean i = true;
     private boolean j = false;
     private volatile boolean k;
+    private volatile boolean manifestBusy;
+    private volatile int manifestGeneration;
+    private long manifestStarted;
+    private boolean retryShown;
 
     public CheckVersionScreen() {
         DataCenter.gI().a(Binary.readBoolan("arr_savemap"));
@@ -33,6 +37,8 @@ public class CheckVersionScreen extends ScreenLogin {
     }
 
     private void showRetry() {
+        if (retryShown) return;
+        retryShown = true;
         if (beatdz.Utlis.$state_Utlis().timeOut < 120000) {
             beatdz.Utlis.$state_Utlis().timeOut += 20000;
         }
@@ -80,7 +86,7 @@ public class CheckVersionScreen extends ScreenLogin {
         DataCenter data = DataCenter.gI();
         try {
             data.startupPhase = "Hoàn tất dữ liệu đăng nhập";
-            if (data.MapTemplate == null) data.readCachedGameData(false);
+            if (!data.ba || data.MapTemplate == null) data.readCachedGameData(false);
             if (!data.bb) { LangLa_fq.c(); LangLa_fq.a(false); }
             if (!data.ba || !data.bb || data.MapTemplate == null)
                 throw new IllegalStateException("Game data or interface assets are not ready");
@@ -103,6 +109,14 @@ public class CheckVersionScreen extends ScreenLogin {
 
     public void b() {
         super.b();
+        if (Gdx.app.getType() == ApplicationType.iOS && manifestBusy
+                && System.nanoTime() - manifestStarted > 45000000000L) {
+            manifestBusy = false;
+            manifestGeneration++;
+            DataCenter.gI().startupFailure = "Kết nối quá 45 giây. Kiểm tra mạng rồi thử lại.";
+            DataCenter.gI().startupPhase = "Không tải được danh sách dữ liệu";
+            showRetry();
+        }
         if (this.a != null && !beatdz.CheckVersionScreen.$state_CheckVersionScreen().d) {
             if (!this.k) {
                 LangLa_r var10000 = this.a.a;
@@ -127,6 +141,11 @@ public class CheckVersionScreen extends ScreenLogin {
             boolean ready = Gdx.app.getType() == ApplicationType.iOS ? data.startupWarmupDone : DataCenter.a();
             if (ready) {
                 this.i = false;
+                retryShown = false;
+                manifestGeneration++;
+                manifestStarted = System.nanoTime();
+                manifestBusy = true;
+                data.startupFailure = null;
                 data.startupPhase = "Kết nối máy chủ dữ liệu";
                 new Thread(MultiSession.bind(new LangLa_mj(this)), "startup-manifest").start();
             }
@@ -147,12 +166,13 @@ public class CheckVersionScreen extends ScreenLogin {
         }
 
         mFont.a(var1, Caption.eP + Session.gI().d(), 8 + AppListener.gI().o, 8, 0, -1);
-        String buildLabel = Gdx.app.getType() == ApplicationType.iOS ? " [iOS " + System.getProperty("langla.ios.build", "124") + "]" : "";
+        String buildLabel = Gdx.app.getType() == ApplicationType.iOS ? " [iOS " + System.getProperty("langla.ios.build", "125") + "]" : "";
         mFont.a(var1, Caption.eQ + Utlis.e(DataCenter.gI().VER2) + buildLabel, this.width - 8 - AppListener.gI().o, 8, 1, -1);
         if (AppListener.d != null && AppListener.e != null && this.a != null) {
             this.a.a(var1);
         } else if (Gdx.app.getType() == ApplicationType.iOS) {
-            mFont.a(var1, DataCenter.gI().startupPhase + "...", this.width / 2, this.height - 24, 2, -1);
+            String elapsed = manifestBusy ? " (" + ((System.nanoTime() - manifestStarted) / 1000000000L) + "s)" : "";
+            mFont.a(var1, DataCenter.gI().startupPhase + elapsed + "...", this.width / 2, this.height - 24, 2, -1);
             if (DataCenter.gI().startupFailure != null)
                 mFont.a(var1, DataCenter.gI().startupFailure, this.width / 2, this.height - 42, 2, -1);
         }
@@ -161,6 +181,13 @@ public class CheckVersionScreen extends ScreenLogin {
 
     public static void a(CheckVersionScreen var0) {
         var0.a();
+    }
+
+    public static void failed(CheckVersionScreen screen, Throwable error) {
+        DataCenter.gI().startupPhase = "Không tải được dữ liệu";
+        DataCenter.gI().startupFailure = error.getClass().getSimpleName() + ": " + String.valueOf(error.getMessage());
+        Gdx.app.error("Startup", "Asset download failed", error);
+        screen.a();
     }
 
     public static void b(CheckVersionScreen var0) {
@@ -188,6 +215,7 @@ public class CheckVersionScreen extends ScreenLogin {
 
     public static void d(CheckVersionScreen var0) {
         var0 = var0;
+        int generation = var0.manifestGeneration;
 
         try {
             // Test the actual asset endpoint on iOS; unrelated social sites may be blocked.
@@ -211,8 +239,10 @@ public class CheckVersionScreen extends ScreenLogin {
             }
 
             var1 = Binary.a(var1, 2);
+            if (generation != var0.manifestGeneration) return;
+            var0.manifestBusy = false;
             if (Gdx.app.getType() == ApplicationType.iOS && (var1 == null || var1.trim().isEmpty()))
-                throw new java.io.IOException("Cannot fetch the iOS asset manifest");
+                throw new java.io.IOException("Không tải được manifest: " + HttpDownloads.lastError());
 
             String[] var10000 = new String[2];
             String[] var17;
@@ -375,7 +405,11 @@ public class CheckVersionScreen extends ScreenLogin {
             LangLa_ci var24;
             (var24 = new LangLa_ci(var23, var0, 0, 2111)).a = var0;
             var0.a((LangLa_cx) var24);
-        } catch (Exception var15) {
+        } catch (Throwable var15) {
+            if (generation != var0.manifestGeneration) return;
+            var0.manifestBusy = false;
+            DataCenter.gI().startupPhase = "Không tải được dữ liệu";
+            DataCenter.gI().startupFailure = var15.getClass().getSimpleName() + ": " + String.valueOf(var15.getMessage());
             Gdx.app.error("Startup", "Cannot prepare asset download", var15);
             var0.a();
         }

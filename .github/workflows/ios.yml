@@ -10,13 +10,40 @@ on:
         default: unsigned
       build_number:
         description: Numeric build number
-        default: '124'
+        default: '125'
         required: true
 
 permissions:
   contents: read
 
 jobs:
+  native-smoke:
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+      BUILD_NUMBER: ${{ inputs.build_number }}
+      SIGNING_MODE: unsigned
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Prepare simulator build
+        run: |
+          chmod +x gradlew
+          python3 tools/ci/prepare-ios.py
+      - name: Native iOS cold-start to login
+        run: python3 tools/ci/ios-simulator-smoke.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iOS-native-startup-log-${{ inputs.build_number }}
+          path: ios-native-smoke.log
+          if-no-files-found: warn
   ipa:
     runs-on: macos-15
     timeout-minutes: 90

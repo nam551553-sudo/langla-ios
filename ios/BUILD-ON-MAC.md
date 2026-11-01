@@ -1,4 +1,4 @@
-# iOS startup/fullscreen fix, build 124
+# iOS startup/fullscreen fix, build 125
 
 Extract the complete source ZIP into a new folder on the Mac. Keep the Apple signing
 identity and provisioning profile used for your previous successful IPA build.
@@ -8,11 +8,11 @@ Use Xcode and JDK 21. In Terminal, from the folder containing `gradlew`:
 ```bash
 export JAVA_HOME=$(/usr/libexec/java_home -v 21)
 chmod +x gradlew
-./gradlew -Pios -PreleaseBuild=124 :ios:clean :ios:createIPA
+./gradlew -Pios -PreleaseBuild=125 '-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g' :ios:clean :ios:createIPA
 ```
 
 Install the newly built IPA with your existing signing/install method. The bundle ID
-is still `com.beatdz.langlalau`. Check CFBundleVersion is 124 to distinguish this fix.
+is still `com.beatdz.langlalau`. Check CFBundleVersion is 125 to distinguish this fix.
 The launch screen must be compiled by Xcode/ibtool; RoboVM processes the storyboard
 from `ios/launch/Base.lproj/LaunchScreen.storyboard` via `ios/robovm.xml`.
 
@@ -39,9 +39,11 @@ References: [Apple launch-screen key](https://developer.apple.com/documentation/
 [libGDX iOS configuration](https://github.com/libgdx/libgdx/blob/1.12.1/backends/gdx-backend-robovm/src/com/badlogic/gdx/backends/iosrobovm/IOSApplicationConfiguration.java).
 
 
-Build 124 additionally rejects truncated compressed input without looping, invalidates
+Build 125 additionally rejects truncated compressed input without looping, invalidates
 only the broken core-data cache and its correctly classified revision marker, and
 continues to the manifest even when local warmup failed. iOS cached preparation runs
 on the render thread without HTTP recovery. Core data is bundled under ios/bootstrap
 as a first-launch fallback; the manifest still checks for current server data.
 The screen shows the current initialization stage and any recovery warning.
+
+Build 125: iOS uses NSURLSession for HTTP text, core tables and disk-backed image archives. Manifest requests have a 45-second UI watchdog. Native simulator CI requires the app to download data and reach a ready login screen. Real iPhone validation is still required.

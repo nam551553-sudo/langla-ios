@@ -13,13 +13,9 @@ final class AssetArchives {
     private AssetArchives() { }
 
     static int download(String url, boolean refreshImages) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection)new URL(Utlis.i(url)).openConnection();
-        connection.setConnectTimeout(beatdz.Utlis.$state_Utlis().timeOut);
-        connection.setReadTimeout(beatdz.Utlis.$state_Utlis().timeOut * 2);
-        try {
-            if (connection.getResponseCode() != 200) throw new IOException("Image archive HTTP " + connection.getResponseCode());
-            int expected = connection.getContentLength();
-            CountingInputStream counter = new CountingInputStream(connection.getInputStream());
+        try (HttpDownloads.Response response = HttpDownloads.open(Utlis.i(url), 300000, 192L * 1024 * 1024)) {
+            long expected = response.length;
+            CountingInputStream counter = new CountingInputStream(response.input, !response.progressCounted);
             try (BufferedInputStream input = new BufferedInputStream(counter, 32768)) {
                 unpack(input, (name, bytes) -> cache(name, bytes, refreshImages));
                 // ZipInputStream stops at the central directory. Count the rest for the archive revision marker.
@@ -29,7 +25,7 @@ final class AssetArchives {
                 if (counter.count > Integer.MAX_VALUE) throw new IOException("Image archive is too large");
                 return (int)counter.count;
             }
-        } finally { connection.disconnect(); }
+        }
     }
 
     static void unpack(InputStream input, EntrySink sink) throws IOException {
@@ -79,11 +75,12 @@ final class AssetArchives {
 
     private static final class CountingInputStream extends FilterInputStream {
         long count;
-        CountingInputStream(InputStream input) { super(input); }
+        final boolean countNetwork;
+        CountingInputStream(InputStream input, boolean countNetwork) { super(input); this.countNetwork = countNetwork; }
         private void received(int bytes) {
             if (bytes <= 0) return;
             count += bytes;
-            Session session = Session.gI(); session.countRecv += bytes; session.k += bytes;
+            if (countNetwork) HttpDownloads.received(bytes);
         }
         @Override public int read() throws IOException { int value = in.read(); if (value != -1) received(1); return value; }
         @Override public int read(byte[] bytes, int offset, int length) throws IOException {

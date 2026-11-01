@@ -13,3 +13,6 @@ dependencies {
     implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-ios"
 }
 robovm { archs = 'arm64' }
+if (providers.gradleProperty('iosSmoke').isPresent()) {
+    sourceSets.main.java.srcDir('src/smoke/java')
+}

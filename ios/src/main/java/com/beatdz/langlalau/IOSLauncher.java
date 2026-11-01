@@ -10,6 +10,7 @@ public class IOSLauncher extends IOSApplication.Delegate {
         Object bundleVersion = org.robovm.apple.foundation.NSBundle.getMainBundle().getInfoDictionaryObject("CFBundleVersion");
         if (bundleVersion != null) System.setProperty("langla.ios.build", bundleVersion.toString());
         MobilePlatform.install();
+        beatdz.HttpDownloads.install(new IOSHttpTransport());
         IOSApplicationConfiguration config = new IOSApplicationConfiguration();
         config.preferredFramesPerSecond = 60;
         config.hdpiMode = com.badlogic.gdx.graphics.glutils.HdpiMode.Pixels;
@@ -23,16 +24,10 @@ public class IOSLauncher extends IOSApplication.Delegate {
     }
     private void checkForUpdate(IOSApplication application) {
         Thread worker = new Thread(() -> {
-            java.net.HttpURLConnection connection = null;
             try (NSAutoreleasePool pool = new NSAutoreleasePool()) {
                 String base = "http://103.77.172.222/langlaapp/langla-test/";
-                connection = (java.net.HttpURLConnection) new java.net.URL(base + "version.json?t=" + System.currentTimeMillis()).openConnection();
-                connection.setConnectTimeout(5000); connection.setReadTimeout(5000); connection.setUseCaches(false);
-                if (connection.getResponseCode() != 200) return;
-                com.badlogic.gdx.utils.JsonValue manifest;
-                try (java.io.InputStream stream = connection.getInputStream()) {
-                    manifest = new com.badlogic.gdx.utils.JsonReader().parse(stream);
-                }
+                byte[] json = beatdz.HttpDownloads.bytes(base + "version.json?t=" + System.currentTimeMillis(), 5000, 1024 * 1024);
+                com.badlogic.gdx.utils.JsonValue manifest = new com.badlogic.gdx.utils.JsonReader().parse(new String(json, "UTF-8"));
                 com.badlogic.gdx.utils.JsonValue ios = manifest.get("ios");
                 if (ios == null) return;
                 int current = Integer.parseInt(org.robovm.apple.foundation.NSBundle.getMainBundle().getInfoDictionaryObject("CFBundleVersion").toString());
@@ -47,7 +42,6 @@ public class IOSLauncher extends IOSApplication.Delegate {
                     controller.presentViewController(dialog, true, null);
                 });
             } catch (Exception error) { System.err.println("iOS update check: " + error.getMessage()); }
-            finally { if (connection != null) connection.disconnect(); }
         }, "ios-update-check");
         worker.setDaemon(true); worker.start();
     }

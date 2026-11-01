@@ -1,7 +1,7 @@
-# LangLa iOS 124 - GitHub Actions
+# LangLa iOS 125 - GitHub Actions
 
 Source client libGDX/RoboVM, bundle ID `com.beatdz.langlalau`.
-Goi nay giu cac sua loi khoi dong va man hinh iOS cua build 124.
+Goi nay giu cac sua loi khoi dong va man hinh iOS cua build 125.
 Chua kiem chung tren iPhone bang IPA build tu GitHub Actions.
 
 ## Dua source len GitHub
@@ -16,8 +16,8 @@ ZIP source da chon rieng file client can de build.
 ## Build khi chua co chung chi Apple
 
 1. Mo repository > Actions > Build iOS IPA > Run workflow.
-2. Chon `signing: unsigned`, giu build number `124`, bam Run workflow.
-3. Sau khi job thanh cong, tai artifact `LangLa-iOS-124-unsigned` va giai nen.
+2. Chon `signing: unsigned`, giu build number `125`, bam Run workflow.
+3. Sau khi job thanh cong, tai artifact `LangLa-iOS-125-unsigned` va giai nen.
 4. IPA nay chua ky: can ky bang AltStore/Sideloadly truoc khi cai len iPhone.
 
 Workflow chay macOS 15, Xcode 16.4, Java 21, Gradle Wrapper va RoboVM 2.3.23.
@@ -56,4 +56,4 @@ file ky sau build. Apple quyet dinh kha nang cai/chay theo chung chi va profile.
 - [macOS 15 runner image](https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md)
 - [Apple code signing](https://developer.apple.com/support/code-signing/)
 
-Windows OpenGL DLLs are omitted from this iOS repository.
+Build 125: iOS uses NSURLSession for HTTP text, core tables and disk-backed image archives. Manifest requests have a 45-second UI watchdog. Native simulator CI requires the app to download data and reach a ready login screen. Real iPhone validation is still required.

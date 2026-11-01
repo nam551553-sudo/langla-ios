@@ -69,10 +69,12 @@ public class Binary {
     }
 
     public static byte[] b(String var0) {
+        if (HttpDownloads.isNative()) return nativeBytes(var0);
         return a(var0, (ByteArrayOutputStream) null, (byte[]) null, new int[1], new int[1], 2);
     }
 
     public static byte[] c(String var0) {
+        if (HttpDownloads.isNative()) return nativeBytes(var0);
         return a(var0, (ByteArrayOutputStream) null, (byte[]) null, new int[1], new int[1], 4);
     }
 
@@ -322,29 +324,24 @@ public class Binary {
         return var3;
     }
 
-    /** Bounded text fetch: the old counter incremented toward integer overflow and retried forever. */
+    private static byte[] nativeBytes(String url) {
+        try { return HttpDownloads.bytes(Utlis.i(url), 60000, 64 * 1024 * 1024); }
+        catch (Exception failure) {
+            if (com.badlogic.gdx.Gdx.app != null) com.badlogic.gdx.Gdx.app.error("HTTP", "Cannot download " + url, failure);
+            return null;
+        }
+    }
+
+    /** Bounded text fetch using the installed platform transport. */
     public static String a(String url, int attempts) {
         int limit = Math.max(1, attempts);
         for (int attempt = 0; attempt < limit; attempt++) {
-            HttpURLConnection connection = null;
             try {
-                connection = (HttpURLConnection)new URL(url).openConnection();
-                connection.setConnectTimeout(Math.min(10000, beatdz.Utlis.$state_Utlis().timeOut));
-                connection.setReadTimeout(Math.min(15000, beatdz.Utlis.$state_Utlis().timeOut * 2));
-                connection.setRequestProperty("User-Agent", "LangLaTest");
-                if (connection.getResponseCode() != 200) throw new java.io.IOException("Text HTTP " + connection.getResponseCode());
-                StringBuilder text = new StringBuilder();
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        if (text.length() + line.length() > 1024 * 1024) throw new java.io.IOException("Text response too large");
-                        text.append(line).append("\r\n");
-                    }
-                }
-                if (text.length() > 0) return text.toString();
+                String text = new String(HttpDownloads.bytes(url, 15000, 1024 * 1024), "UTF-8");
+                if (text.length() > 0) return text;
             } catch (Exception error) {
                 if (attempt + 1 == limit && com.badlogic.gdx.Gdx.app != null) com.badlogic.gdx.Gdx.app.error("Startup", "Text download failed after " + limit + " attempts", error);
-            } finally { if (connection != null) connection.disconnect(); }
+            }
             if (attempt + 1 < limit) Utlis.sleep(250L);
         }
         return null;

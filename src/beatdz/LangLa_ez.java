@@ -23,7 +23,7 @@ package beatdz;
             if ((var1 = Binary.c(DataCenter.gI().aU + this.a.d)) == null) {
                Utlis.sleep(1000L);
                if ((var1 = Binary.c(DataCenter.gI().aU + this.a.d)) == null) {
-                  CheckVersionScreen.a(this.b);
+                  CheckVersionScreen.failed(this.b, new java.io.IOException("Không tải được bảng dữ liệu: " + HttpDownloads.lastError()));
                   return;
                }
             }
@@ -34,11 +34,13 @@ package beatdz;
          }
 
          Binary.writeInt("arr_check_" + this.a.a, var1.length);
-         DataCenter.gI().readArrDataGame(true);
+         if (com.badlogic.gdx.Gdx.app.getType() == com.badlogic.gdx.Application.ApplicationType.iOS)
+            DataCenter.gI().ba = false; // Parse on the render thread before opening login.
+         else DataCenter.gI().readArrDataGame(true);
          this.a.f = true;
          CheckVersionScreen.b(this.b);
-      } catch (Exception var2) {
-         CheckVersionScreen.a(this.b);
+      } catch (Throwable var2) {
+         CheckVersionScreen.failed(this.b, var2);
          CheckVersionScreen.c(this.b).clear();
          beatdz.CheckVersionScreen.$state_CheckVersionScreen().d = true;
       }

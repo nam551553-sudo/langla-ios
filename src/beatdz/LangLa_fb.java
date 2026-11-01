@@ -7,7 +7,7 @@ public class LangLa_fb {
    public int c;
    public String d;
    public String e;
-   public boolean f;
+   public volatile boolean f;
    public Hashtable g;
 
    public boolean a() {
