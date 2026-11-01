@@ -224,12 +224,10 @@ public class LoginPCScreen extends ScreenLogin {
 
         super.a(var1);
         drawLoginLogo(var1);
-        if (beatdz.DataCenter.$state_DataCenter().ar && !AppListener.isDesktop()) {
-            this.e.b(true);
-            this.f.b(true);
-        } else {
-            mFont.b(mFont.d, var1, Caption.qS[2], this.a.cx - 10, this.k + mFont.a(mFont.e) / 2, 1, -6488, -16742145);
-        }
+        // A newer client version must not hide the server selection on phones.
+        this.e.b(false);
+        this.f.b(false);
+        mFont.b(mFont.d, var1, Caption.qS[2], this.a.cx - 10, this.k + mFont.a(mFont.e) / 2, 1, -6488, -16742145);
 
 //        if (DataCenter.gI().aP != null) {
 //            //     mFont.b(mFont.d, var1, "Bạn đang chọn Server Lậu", this.width / 2, this.h - 45, 2, -2560, -16742145);

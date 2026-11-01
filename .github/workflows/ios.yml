@@ -10,7 +10,7 @@ on:
         default: unsigned
       build_number:
         description: Numeric build number
-        default: '125'
+        default: '126'
         required: true
       native_test_only:
         description: Only run the native startup test (no new IPA)

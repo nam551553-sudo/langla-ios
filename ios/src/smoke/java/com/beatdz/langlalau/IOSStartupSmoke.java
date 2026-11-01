@@ -8,6 +8,7 @@ import org.robovm.apple.uikit.UIApplication;
 
 /** CI-only entry point; excluded from the shipping app's source set. */
 public class IOSStartupSmoke extends IOSLauncher {
+    private long loginObserved;
     @Override protected IOSApplication createApplication() {
         IOSApplication application = super.createApplication();
         final long started = System.nanoTime();
@@ -20,10 +21,40 @@ public class IOSStartupSmoke extends IOSLauncher {
                     System.out.println("IOS_SMOKE phase=" + data.startupPhase + " bytes=" + Session.gI().countRecv
                             + " screen=" + (data.currentScreen == null ? "null" : data.currentScreen.getClass().getSimpleName()));
                     if (data.currentScreen instanceof LoginPCScreen) {
+                        if (loginObserved == 0) {
+                            // Reproduce the mobile-only hiding condition from the reported bug.
+                            DataCenter.$state_DataCenter().ar = true;
+                            loginObserved = System.nanoTime();
+                            return;
+                        }
+                        if (System.nanoTime() - loginObserved < 2000000000L) return;
                         if (!HttpDownloads.isNative() || !data.ba || !data.bb || data.MapTemplate == null
                                 || data.aP == null || data.arrayServers == null || data.arrayServers.length == 0) {
                             System.err.println("FAIL IOS_NATIVE_STARTUP incomplete login data"); System.exit(3);
                         }
+                        LoginPCScreen login = (LoginPCScreen) data.currentScreen;
+                        int selectors = 0;
+                        boolean selectedNameVisible = false;
+                        for (Object value : login.cG) {
+                            if (value instanceof LangLa_dz) {
+                                LangLa_dz button = (LangLa_dz) value;
+                                if (button.b == 1004 && !button.v) {
+                                    selectors++;
+                                    selectedNameVisible |= data.aP.getName().equals(button.a);
+                                }
+                            }
+                        }
+                        if (selectors != 2 || !selectedNameVisible) {
+                            System.err.println("FAIL IOS_NATIVE_STARTUP server selector hidden or unnamed"); System.exit(5);
+                        }
+                        login.a(1004, null, null);
+                        boolean opened = false;
+                        for (Object dialog : login.cD) opened |= dialog instanceof LangLa_bp;
+                        if (!opened) {
+                            System.err.println("FAIL IOS_NATIVE_STARTUP server picker did not open"); System.exit(6);
+                        }
+                        System.out.println("PASS IOS_NATIVE_SERVER_PICKER visible selected server=" + data.aP.getName()
+                                + "; picker opened with newer-client flag enabled");
                         System.out.println("PASS IOS_NATIVE_STARTUP downloaded data via NSURLSession and reached login");
                         System.out.flush(); System.exit(0);
                     }
