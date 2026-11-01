@@ -5,6 +5,7 @@ from pathlib import Path
 import plistlib
 import shutil
 import subprocess
+import zipfile
 
 def run(*args, **kwargs):
     return subprocess.run(args, check=True, **kwargs)
@@ -46,6 +47,27 @@ try:
     print('Simulator app:', app, flush=True)
     info = plistlib.loads((app / 'Info.plist').read_bytes())
     bundle = info['CFBundleIdentifier']
+    # RoboVM's own simulator launcher supplies external framework search paths.
+    # simctl needs the matching simulator slices embedded in the app instead.
+    frameworks = app / 'Frameworks'
+    for jar in (Path.home() / '.gradle/caches/modules-2/files-2.1/com.badlogicgames.gdx').rglob('*natives-ios.jar'):
+        with zipfile.ZipFile(jar) as native:
+            for name in native.namelist():
+                if '-simulator/' not in name or '.framework/' not in name or name.endswith('/'):
+                    continue
+                relative = Path(name.split('-simulator/', 1)[1])
+                if relative.is_absolute() or '..' in relative.parts:
+                    raise SystemExit('Invalid native framework member')
+                destination = frameworks / relative
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(native.read(name))
+    for framework in frameworks.glob('*.framework'):
+        binary = framework / framework.stem
+        binary.chmod(0o755)
+        run('codesign', '--force', '--sign', '-', str(framework))
+    if not (frameworks / 'gdx.framework/gdx').exists():
+        raise SystemExit('GDX simulator framework was not found')
+    run('codesign', '--force', '--sign', '-', str(app))
     run('xcrun', 'simctl', 'boot', udid)
     run('xcrun', 'simctl', 'bootstatus', udid, '-b')
     run('xcrun', 'simctl', 'install', udid, str(app))
