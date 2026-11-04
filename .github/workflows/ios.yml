@@ -10,7 +10,7 @@ on:
         default: unsigned
       build_number:
         description: Numeric build number
-        default: '215345337'
+        default: '215345339'
         required: true
       native_test_only:
         description: Only run the native startup test (no new IPA)
@@ -32,10 +32,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Apply verified client 215345337 source update
+      - name: Apply verified client 215345339 source update
         run: |
-          echo "6f03fe1f8ce7759b21b2025b151b23f209df7b36c651078cbd1034ce5202ab87  ios-source-update-215345337.zip" | shasum -a 256 -c -
-          unzip -oq ios-source-update-215345337.zip -d .
+          echo "5026957ec0ef2f1bac2d58ccbecfdaf24bd57b96fb2d3e2db048bf6ec34ff9d7  ios-source-update-215345339.zip" | shasum -a 256 -c -
+          unzip -oq ios-source-update-215345339.zip -d .
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -64,10 +64,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Apply verified client 215345337 source update
+      - name: Apply verified client 215345339 source update
         run: |
-          echo "6f03fe1f8ce7759b21b2025b151b23f209df7b36c651078cbd1034ce5202ab87  ios-source-update-215345337.zip" | shasum -a 256 -c -
-          unzip -oq ios-source-update-215345337.zip -d .
+          echo "5026957ec0ef2f1bac2d58ccbecfdaf24bd57b96fb2d3e2db048bf6ec34ff9d7  ios-source-update-215345339.zip" | shasum -a 256 -c -
+          unzip -oq ios-source-update-215345339.zip -d .
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
