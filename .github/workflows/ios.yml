@@ -1,6 +1,9 @@
 name: Build iOS IPA
 
 on:
+  push:
+    branches: [main]
+    paths: ['ios-menu-update/**', '.github/workflows/ios.yml']
   workflow_dispatch:
     inputs:
       signing:
@@ -10,7 +13,7 @@ on:
         default: unsigned
       build_number:
         description: Numeric build number
-        default: '215345339'
+        default: '215345340'
         required: true
       native_test_only:
         description: Only run the native startup test (no new IPA)
@@ -26,7 +29,7 @@ jobs:
     timeout-minutes: 30
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
-      BUILD_NUMBER: ${{ inputs.build_number }}
+      BUILD_NUMBER: ${{ inputs.build_number || '215345340' }}
       SIGNING_MODE: unsigned
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +39,7 @@ jobs:
         run: |
           echo "5026957ec0ef2f1bac2d58ccbecfdaf24bd57b96fb2d3e2db048bf6ec34ff9d7  ios-source-update-215345339.zip" | shasum -a 256 -c -
           unzip -oq ios-source-update-215345339.zip -d .
+          cp ios-menu-update/*.java src/beatdz/
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -49,7 +53,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: iOS-native-startup-log-${{ inputs.build_number }}
+          name: iOS-native-startup-log-${{ inputs.build_number || '215345340' }}
           path: ios-native-smoke.log
           if-no-files-found: warn
   ipa:
@@ -58,8 +62,8 @@ jobs:
     timeout-minutes: 90
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
-      BUILD_NUMBER: ${{ inputs.build_number }}
-      SIGNING_MODE: ${{ inputs.signing }}
+      BUILD_NUMBER: ${{ inputs.build_number || '215345340' }}
+      SIGNING_MODE: ${{ inputs.signing || 'unsigned' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -68,6 +72,7 @@ jobs:
         run: |
           echo "5026957ec0ef2f1bac2d58ccbecfdaf24bd57b96fb2d3e2db048bf6ec34ff9d7  ios-source-update-215345339.zip" | shasum -a 256 -c -
           unzip -oq ios-source-update-215345339.zip -d .
+          cp ios-menu-update/*.java src/beatdz/
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -99,7 +104,7 @@ jobs:
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: LangLa-iOS-${{ inputs.build_number }}-${{ inputs.signing }}
+          name: LangLa-iOS-${{ inputs.build_number || '215345340' }}-${{ inputs.signing || 'unsigned' }}
           path: ios/build/robovm/**/*.ipa
           if-no-files-found: error
           retention-days: 7
