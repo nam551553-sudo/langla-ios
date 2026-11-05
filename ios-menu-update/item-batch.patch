@@ -1,0 +1,65 @@
+--- a/src/beatdz/GameSrc.java
++++ b/src/beatdz/GameSrc.java
+@@ -531,6 +531,7 @@
+     public boolean cB;
+     private int dK = 0;
+     final RenderMotion renderMotion = new RenderMotion();
++    private boolean refreshItemUseInventory;
+ 
+     public GameSrc() {
+         this.vItemMap = new Vector();
+@@ -1559,6 +1560,14 @@
+ 
+     public void j() {
+         try {
++            if (refreshItemUseInventory) {
++                refreshItemUseInventory = false;
++                if (this.H() instanceof LangLa_kl) {
++                    LangLa_kl inventory = (LangLa_kl) this.H();
++                    inventory.d = false;
++                    inventory.e(0);
++                }
++            }
+             int var1 = Char.gI().cx - DataCenter.gI().widthScreen / 2;
+             int var2 = Char.gI().cy - DataCenter.gI().heightScreen / 2 - Char.gI().height / 2;
+             int var3 = Char.gI().cx + DataCenter.gI().widthScreen / 2;
+@@ -5869,12 +5878,7 @@
+                 Char.gI().arrItemBag[var2] = var3;
+             }
+ 
+-            LangLa_cx var8;
+-            if ((var8 = this.H()) instanceof LangLa_kl) {
+-                LangLa_kl var10;
+-                (var10 = (LangLa_kl) var8).d = false;
+-                var10.e(0);
+-            }
++            refreshItemUseInventory = true;
+ 
+             if (var3.z()) {
+                 this.g();
+@@ -7919,12 +7923,19 @@
+     }
+ 
+     public static void a(Item var0) {
+-        try {
+-            Message var1;
+-            (var1 = new Message((byte) 116)).writeShort(var0.index);
+-            var1.send();
+-        } catch (Exception var2) {
+-            Utlis.println(var2);
++        useItem(var0, 1);
++    }
++
++    static final int MAX_ITEM_USE_AMOUNT = 1000;
++
++    static void useItem(Item item, int amount) {
++        try {
++            Message message = new Message((byte) 116);
++            message.writeShort(item.index);
++            if (amount > 1) message.writeShort(amount);
++            message.send();
++        } catch (Exception error) {
++            Utlis.println(error);
+         }
+     }
+ 
