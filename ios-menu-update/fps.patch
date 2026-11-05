@@ -1,0 +1,185 @@
+--- a/src/beatdz/Canvas.java
++++ b/src/beatdz/Canvas.java
+@@ -154,7 +154,7 @@
+                 ++DataCenter.gI().h;
+                 DataCenter.gI().aO.a = false;
+                 GameSrc motionGame = DataCenter.gI().currentScreen instanceof GameSrc ? (GameSrc)DataCenter.gI().currentScreen : null;
+-                boolean smooth = isMobile() && motionGame != null;
++                boolean smooth = smoothMotion() && motionGame != null;
+                 if (smooth) motionGame.renderMotion.before(motionGame);
+                 this.update();
+                 if (smooth) motionGame.renderMotion.after(motionGame);
+@@ -276,15 +276,14 @@
+     }
+ 
+     public void render(float var1) {
+-        // Android schedules complete frames on display vsync; iOS uses preferredFramesPerSecond.
+-        // Returning without drawing here still swaps the Android surface's back buffer.
+-        // Preserve the measured 30 Hz gameplay while rendering up to 60 FPS.
++        FrameRate.apply();
++        // Gameplay stays at 30 Hz regardless of the selected presentation rate.
+         this.logicAccumulator += Math.min(var1, 0.1F);
+         float logicInterval = 1.0F / 30.0F;
+         int logicSteps = (int) (this.logicAccumulator / logicInterval);
+         this.logicAccumulator -= logicSteps * logicInterval;
+ 
+-        renderAlpha = isMobile() ? Math.max(0f, Math.min(1f, this.logicAccumulator / logicInterval)) : 1f;
++        renderAlpha = smoothMotion() ? Math.max(0f, Math.min(1f, this.logicAccumulator / logicInterval)) : 1f;
+         this.render(true, logicSteps);
+         this.stage.act(Math.min(Gdx.graphics.getDeltaTime(), 0.033333335F));
+         this.stage.draw();
+@@ -302,6 +301,7 @@
+     public static boolean isMobile() {
+         return Gdx.app.getType() == ApplicationType.Android || Gdx.app.getType() == ApplicationType.iOS;
+     }
++    static boolean smoothMotion() { return isMobile() || FrameRate.target() > 60; }
+     public void applyZoomScreen() { display.apply(); }
+     public void preparePointerInput() { display.prepareInput(); }
+     public void cancelPointer() { }
+--- a/src/beatdz/GameSrc.java
++++ b/src/beatdz/GameSrc.java
+@@ -531,6 +531,7 @@
+     public boolean cB;
+     private int dK = 0;
+     final RenderMotion renderMotion = new RenderMotion();
++    private boolean refreshItemUseInventory;
+ 
+     public GameSrc() {
+         this.vItemMap = new Vector();
+@@ -1518,7 +1519,7 @@
+     }
+ 
+     private void applyRenderMotion(Graphics g, Entity entity) {
+-        if (!Canvas.isMobile()) return;
++        if (!Canvas.smoothMotion()) return;
+         Entity subject = entity instanceof LangLa_ir ? ((LangLa_ir)entity).renderSubject() : entity;
+         if (subject == null) return;
+         float alpha = AppListener.gI().canvas.renderAlpha;
+@@ -1559,6 +1560,14 @@
+ 
+     public void j() {
+         try {
++            if (refreshItemUseInventory) {
++                refreshItemUseInventory = false;
++                if (this.H() instanceof LangLa_kl) {
++                    LangLa_kl inventory = (LangLa_kl) this.H();
++                    inventory.d = false;
++                    inventory.e(0);
++                }
++            }
+             int var1 = Char.gI().cx - DataCenter.gI().widthScreen / 2;
+             int var2 = Char.gI().cy - DataCenter.gI().heightScreen / 2 - Char.gI().height / 2;
+             int var3 = Char.gI().cx + DataCenter.gI().widthScreen / 2;
+@@ -3302,7 +3311,7 @@
+                 }
+ 
+                 this.a(var1, -DataCenter.gI().j, -DataCenter.gI().k);
+-                if (Canvas.isMobile()) {
++                if (Canvas.smoothMotion()) {
+                     var1.motionX = -renderMotion.cameraOffsetX(AppListener.gI().canvas.renderAlpha);
+                     var1.motionY = -renderMotion.cameraOffsetY(AppListener.gI().canvas.renderAlpha);
+                 }
+@@ -5869,12 +5878,7 @@
+                 Char.gI().arrItemBag[var2] = var3;
+             }
+ 
+-            LangLa_cx var8;
+-            if ((var8 = this.H()) instanceof LangLa_kl) {
+-                LangLa_kl var10;
+-                (var10 = (LangLa_kl) var8).d = false;
+-                var10.e(0);
+-            }
++            refreshItemUseInventory = true;
+ 
+             if (var3.z()) {
+                 this.g();
+@@ -7919,12 +7923,19 @@
+     }
+ 
+     public static void a(Item var0) {
+-        try {
+-            Message var1;
+-            (var1 = new Message((byte) 116)).writeShort(var0.index);
+-            var1.send();
+-        } catch (Exception var2) {
+-            Utlis.println(var2);
++        useItem(var0, 1);
++    }
++
++    static final int MAX_ITEM_USE_AMOUNT = 1000;
++
++    static void useItem(Item item, int amount) {
++        try {
++            Message message = new Message((byte) 116);
++            message.writeShort(item.index);
++            if (amount > 1) message.writeShort(amount);
++            message.send();
++        } catch (Exception error) {
++            Utlis.println(error);
+         }
+     }
+ 
+--- a/ios/Info.plist.xml
++++ b/ios/Info.plist.xml
+@@ -9,6 +9,7 @@
+ <key>CFBundlePackageType</key><string>APPL</string>
+ <key>LSRequiresIPhoneOS</key><true/>
+ <key>MinimumOSVersion</key><string>12.0</string>
++<key>CADisableMinimumFrameDurationOnPhone</key><true/>
+ <key>UILaunchStoryboardName</key><string>LaunchScreen</string>
+ <key>UIStatusBarHidden</key><true/>
+ <key>UIViewControllerBasedStatusBarAppearance</key><true/>
+--- a/ios/src/main/java/com/beatdz/langlalau/IOSLauncher.java
++++ b/ios/src/main/java/com/beatdz/langlalau/IOSLauncher.java
+@@ -19,6 +19,8 @@
+         config.statusBarVisible = false;
+         config.hideHomeIndicator = true;
+         IOSApplication app = new IOSApplication(GameM.l(), config);
++        beatdz.FrameRate.install(fps -> ((org.robovm.apple.glkit.GLKViewController)
++                app.getUIViewController()).setPreferredFramesPerSecond(fps));
+         checkForUpdate(app);
+         return app;
+     }
+--- a/src/beatdz/mConfig.java
++++ b/src/beatdz/mConfig.java
+@@ -8,7 +8,7 @@
+    void copySettingsFrom(mConfig source) { this.config = source.config.clone(); }
+    
+    private byte[] config = Binary.read("arr_config");
+-   private int length = 26;
++   private int length = 27;
+ 
+    public mConfig() {
+       if (this.config == null || this.config.length != this.length) {
+--- a/src/beatdz/SettingsTab.java
++++ b/src/beatdz/SettingsTab.java
+@@ -263,6 +263,11 @@
+                 this.zoomRadios[zoomOption] = this.a(zoomX, zoomY, "Zoom " + (zoomOption + 1), this, this.zoomKC);
+                 this.B.a((LangLa_cs) this.zoomRadios[zoomOption], 2);
+             }
++            LangLa_kc fpsChoice = new LangLa_kc(1008, FrameRate.selection());
++            for (int option = 0; option < 3; option++) {
++                this.B.a((LangLa_cs) this.a(16 + option * 78, this.A + 145,
++                        FrameRate.label(option), this, fpsChoice), 2);
++            }
+ 
+             if (Gdx.app.getType() == ApplicationType.Desktop) {
+                 this.l = 24;
+@@ -745,6 +750,9 @@
+                         case 1007:
+                             AppListener.gI().canvas.setZoom(((LangLa_kc)var2).b + 1);
+                             break;
++                        case 1008:
++                            FrameRate.select(((LangLa_kc)var2).b);
++                            break;
+                     }
+                 }
+ 
+@@ -806,6 +814,7 @@
+         } else if (this.B.b.b == 2) {
+             int zoom = Math.max(1, Math.min(4, mConfig.gI().readByte(25)));
+             mFont.b(mFont.d, var1, "Zoom: " + (50 + zoom * 25) + "%", 130, this.A + 88, 0, -1, -16777216);
++            mFont.b(mFont.d, var1, "FPS thực tế: " + Gdx.graphics.getFramesPerSecond(), 16, this.A + 124, 0, -1, -16777216);
+         } else {
+             if (this.B.b.b == 4) {
+                 Graphics var2 = var1;
