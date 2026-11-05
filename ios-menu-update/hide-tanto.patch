@@ -1,0 +1,66 @@
+--- a/src/beatdz/Char.java
++++ b/src/beatdz/Char.java
+@@ -233,6 +233,7 @@
+     public boolean aT;
+     public int aU;
+     public int selectCaiTrang;
++    private static final int HIDE_TANTO = 4;
+     public int aW;
+     public int aX;
+     public int aY;
+@@ -2827,22 +2828,22 @@
+                 this.a(var3, var1[10].getItemTemplate().idChar, 0);
+             }
+ 
++            Item tanto = this.selectCaiTrang == HIDE_TANTO ? null : var1[15];
++            Item reserveTanto = this.selectCaiTrang == HIDE_TANTO ? null : this.arrItemBody2[15];
+             if (this.aP >= 0 && DataCenter.gI().ItemTemplate[this.aP].idChar > 0) {
+                 this.a(var3, DataCenter.gI().ItemTemplate[this.aP].idChar, 0);
+-            } else if (var1[15] != null && var1[15].id >= 908 && var1[15].id <= 911) {
+-                this.a(var3, var1[15].getItemTemplate().idMob, 0);
+-            } else if (this.arrItemBody2[15] != null && this.arrItemBody2[15].id >= 908 && this.arrItemBody2[15].id <= 911) {
+-                this.a(var3, this.arrItemBody2[15].getItemTemplate().idMob, 0);
+-            } else if (var1[15] != null && var1[15].getItemTemplate().idMob > 0) {
++            } else if (tanto != null && tanto.id >= 908 && tanto.id <= 911) {
++                this.a(var3, tanto.getItemTemplate().idMob, 0);
++            } else if (reserveTanto != null && reserveTanto.id >= 908 && reserveTanto.id <= 911) {
++                this.a(var3, reserveTanto.getItemTemplate().idMob, 0);
++            } else if (tanto != null && tanto.getItemTemplate().idMob > 0) {
+                 if (var1[16] != null && var1[16].getItemTemplate().idChar > 0) {
+-                    this.a(var3, var1[15].getItemTemplate().idMob, 9);
++                    this.a(var3, tanto.getItemTemplate().idMob, 9);
+                 } else if (!this.aQ && var1[14] != null && var1[14].getItemTemplate().idChar > 0) {
+-                    this.a(var3, var1[15].getItemTemplate().idMob, 9);
++                    this.a(var3, tanto.getItemTemplate().idMob, 9);
+                 } else {
+-                    this.a(var3, var1[15].getItemTemplate().idMob, 0);
+-                }
+-            } else if (var1[15] != null && var1[15].id >= 908 && var1[15].id <= 911) {
+-                this.a(var3, var1[15].getItemTemplate().idMob, 0);
++                    this.a(var3, tanto.getItemTemplate().idMob, 0);
++                }
+             } else if (var1[1] != null) {
+                 if (var1[16] != null && var1[16].getItemTemplate().idChar > 0) {
+                     this.a(var3, var1[1].getItemTemplate().idChar, var1[1].level, 9, var1[1].getItemTemplate().levelNeed);
+--- a/src/beatdz/LangLa_kl.java
++++ b/src/beatdz/LangLa_kl.java
+@@ -245,7 +245,7 @@
+          var10000 = this.a_() + this.G() - 61;
+          DataCenter.gI();
+          var9 = var10000 + 0;
+-         this.A = this.a(var7, var9, 64, 4, var11, this, 1);
++         this.A = this.a(var7, var9, 64, Caption.tJ.length, var11, this, 1);
+          this.A.a(var2.selectCaiTrang);
+          this.b.a((LangLa_cs)this.A, 0);
+          (var8 = this.a(super.width - 8 - 55, this.height - 68, Caption.bj, this, 4001, 7)).setSize(50, 20);
+--- a/src/com/tgame/model/Caption.java
++++ b/src/com/tgame/model/Caption.java
+@@ -2175,7 +2175,7 @@
+         tG = new String[]{"Sora", "Inuzuka", "Yamato", "Karu", "Kikunojou", "Kuranai", "Haruna", "Tamanaka", "Yakomo"};
+         tH = new String[]{"Lớp: Kiếm\nĐịnh vị: Cận chiến\nHệ: Lôi\nMức thao tác: Khó\nThầy: Fugaki", "Lớp: Ám khí\nĐịnh vị: Viễn chiến\nHệ: Thổ\nMức thao tác: Dễ\nThầy: Doria", "Lớp: Gậy\nĐịnh vị: Viễn chiến\nHệ: Thủy\nMức thao tác: Khó\nCô: Nohara", "Lớp: Đao\nĐịnh vị: Viễn chiến\nHệ: Hỏa\nMức thao tác: Vừa\nThầy: Nawasaki", "Lớp: Dao\nĐịnh vị: Cận chiến\nHệ: Phong\nMức thao tác: Vừa\nThầy: Ultimo"};
+         tI = new String[]{"Set 1", "Set 2", "Set 3", "All"};
+-        tJ = new String[]{"Mặc định", "Ẩn cải trang", "Ẩn thời trang", "Ẩn cải trang và thời trang"};
++        tJ = new String[]{"Mặc định", "Ẩn cải trang", "Ẩn thời trang", "Ẩn cải trang và thời trang", "Ẩn Tanto"};
+     }
+ 
+     static {

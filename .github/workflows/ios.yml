@@ -13,7 +13,7 @@ on:
         default: unsigned
       build_number:
         description: Numeric build number
-        default: '215345343'
+        default: '215345344'
         required: true
       native_test_only:
         description: Only run the native startup test (no new IPA)
@@ -29,7 +29,7 @@ jobs:
     timeout-minutes: 30
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
-      BUILD_NUMBER: ${{ inputs.build_number || '215345343' }}
+      BUILD_NUMBER: ${{ inputs.build_number || '215345344' }}
       SIGNING_MODE: unsigned
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +41,8 @@ jobs:
           unzip -oq ios-source-update-215345339.zip -d .
           cp ios-menu-update/LangLa_x.java ios-menu-update/ReleaseNotesDialog.java ios-menu-update/LangLa_mq.java ios-menu-update/LangLa_ij.java ios-menu-update/LangLa_ge.java src/beatdz/
           python3 -c 'from pathlib import Path; p = Path("src/beatdz/GameSrc.java"); p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8")'
-          git apply ios-menu-update/item-batch.patch
+          python3 -c 'from pathlib import Path; paths = map(Path, ("src/beatdz/Char.java", "src/beatdz/LangLa_kl.java", "src/com/tgame/model/Caption.java")); [(p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8")) for p in paths]'
+          git apply ios-menu-update/item-batch.patch ios-menu-update/hide-tanto.patch
           cp ios-menu-update/LangLa_av.java src/beatdz/
           cp ios-menu-update/IOSStartupSmoke.java ios/src/smoke/java/com/beatdz/langlalau/
       - uses: actions/setup-java@v4
@@ -57,7 +58,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: iOS-native-startup-log-${{ inputs.build_number || '215345343' }}
+          name: iOS-native-startup-log-${{ inputs.build_number || '215345344' }}
           path: ios-native-smoke.log
           if-no-files-found: warn
   ipa:
@@ -66,7 +67,7 @@ jobs:
     timeout-minutes: 90
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
-      BUILD_NUMBER: ${{ inputs.build_number || '215345343' }}
+      BUILD_NUMBER: ${{ inputs.build_number || '215345344' }}
       SIGNING_MODE: ${{ inputs.signing || 'unsigned' }}
     steps:
       - uses: actions/checkout@v4
@@ -78,7 +79,8 @@ jobs:
           unzip -oq ios-source-update-215345339.zip -d .
           cp ios-menu-update/LangLa_x.java ios-menu-update/ReleaseNotesDialog.java ios-menu-update/LangLa_mq.java ios-menu-update/LangLa_ij.java ios-menu-update/LangLa_ge.java src/beatdz/
           python3 -c 'from pathlib import Path; p = Path("src/beatdz/GameSrc.java"); p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8")'
-          git apply ios-menu-update/item-batch.patch
+          python3 -c 'from pathlib import Path; paths = map(Path, ("src/beatdz/Char.java", "src/beatdz/LangLa_kl.java", "src/com/tgame/model/Caption.java")); [(p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8")) for p in paths]'
+          git apply ios-menu-update/item-batch.patch ios-menu-update/hide-tanto.patch
           cp ios-menu-update/LangLa_av.java src/beatdz/
           cp ios-menu-update/IOSStartupSmoke.java ios/src/smoke/java/com/beatdz/langlalau/
       - uses: actions/setup-java@v4
@@ -112,7 +114,7 @@ jobs:
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: LangLa-iOS-${{ inputs.build_number || '215345343' }}-${{ inputs.signing || 'unsigned' }}
+          name: LangLa-iOS-${{ inputs.build_number || '215345344' }}-${{ inputs.signing || 'unsigned' }}
           path: ios/build/robovm/**/*.ipa
           if-no-files-found: error
           retention-days: 7
