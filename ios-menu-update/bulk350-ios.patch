@@ -1,0 +1,61 @@
+--- a/src/beatdz/GameSrc.java
++++ b/src/beatdz/GameSrc.java
+@@ -532,6 +532,7 @@
+     private int dK = 0;
+     final RenderMotion renderMotion = new RenderMotion();
+     private boolean refreshItemUseInventory;
++    private final BulkItemUse bulkItemUse = new BulkItemUse();
+ 
+     public GameSrc() {
+         this.vItemMap = new Vector();
+@@ -1560,6 +1561,7 @@
+ 
+     public void j() {
+         try {
++            bulkItemUse.update(this);
+             if (refreshItemUseInventory) {
+                 refreshItemUseInventory = false;
+                 if (this.H() instanceof LangLa_kl) {
+@@ -5840,6 +5842,10 @@
+     public void n(Message var1) {
+         try {
+             short var2 = var1.reader.dis.readShort();
++            if (var2 == -1) {
++                bulkItemUse.acknowledge(var1.reader.dis.readInt(), var1.readShort());
++                return;
++            }
+             Item var3;
+             (var3 = Char.gI().arrItemBag[var2]).isLock = var1.reader.dis.readBoolean();
+             Char.gI().arrItemBag[var2] = null;
+@@ -7923,20 +7929,23 @@
+     }
+ 
+     public static void a(Item var0) {
+-        useItem(var0, 1);
+-    }
+-
+-    static final int MAX_ITEM_USE_AMOUNT = 1000;
+-
+-    static void useItem(Item item, int amount) {
+         try {
+             Message message = new Message((byte) 116);
+-            message.writeShort(item.index);
+-            if (amount > 1) message.writeShort(amount);
++            message.writeShort(var0.index);
+             message.send();
+         } catch (Exception error) {
+             Utlis.println(error);
+         }
++    }
++
++    boolean startBulkUse(Item item, int amount) {
++        if (bulkItemUse.active()) {
++            showMessage("Đang xử lý lượt dùng vật phẩm trước.", -65536);
++            return false;
++        }
++        if (amount == 1) a(item);
++        else bulkItemUse.start(item, amount);
++        return true;
+     }
+ 
+     private Item h(boolean var1) {

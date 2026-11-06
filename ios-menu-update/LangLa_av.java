@@ -66,7 +66,7 @@ public class LangLa_av extends LangLa_fo {
          this.a.a(var6);
          return;
       case 1002:
-         this.a.a(Math.min(Math.min(this.b.getAmount(), GameSrc.MAX_ITEM_USE_AMOUNT), this.a.e() + 1));
+         if (this.a.e() < this.b.getAmount()) this.a.a(this.a.e() + 1);
          return;
       case 1003:
          int amount = this.a.e();
@@ -77,12 +77,8 @@ public class LangLa_av extends LangLa_fo {
             GameSrc.gI().showMessage(Caption.mh, -65536);
             return;
          }
-         if (amount > GameSrc.MAX_ITEM_USE_AMOUNT) {
-            GameSrc.gI().showMessage("Mỗi lần chỉ dùng tối đa " + GameSrc.MAX_ITEM_USE_AMOUNT + " vật phẩm.", -65536);
-            return;
-         }
+         if (!GameSrc.gI().startBulkUse(this.b, amount)) return;
          this.J();
-         GameSrc.useItem(this.b, amount);
          return;
       default:
       }
