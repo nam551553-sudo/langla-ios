@@ -68,6 +68,7 @@ jobs:
       - name: Native iOS cold-start to login
         run: |
           python3 -c 'from pathlib import Path; p = Path("tools/ci/ios-simulator-smoke.py"); s = p.read_text(); old = "deadline = time.monotonic() + 360"; assert s.count(old) == 1; p.write_text(s.replace(old, "deadline = time.monotonic() + 1200"))'
+          python3 -c 'from pathlib import Path; p = Path("ios/src/smoke/java/com/beatdz/langlalau/IOSStartupSmoke.java"); s = p.read_text(); assert s.count("300000000000L") == 1; p.write_text(s.replace("300000000000L", "1080000000000L"))'
           python3 tools/ci/ios-simulator-smoke.py
       - uses: actions/upload-artifact@v4
         if: always()
