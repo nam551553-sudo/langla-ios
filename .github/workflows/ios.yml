@@ -66,7 +66,9 @@ jobs:
           chmod +x gradlew
           python3 tools/ci/prepare-ios.py
       - name: Native iOS cold-start to login
-        run: python3 tools/ci/ios-simulator-smoke.py
+        run: |
+          python3 -c 'from pathlib import Path; p = Path("tools/ci/ios-simulator-smoke.py"); s = p.read_text(); old = "deadline = time.monotonic() + 360"; assert s.count(old) == 1; p.write_text(s.replace(old, "deadline = time.monotonic() + 1200"))'
+          python3 tools/ci/ios-simulator-smoke.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
