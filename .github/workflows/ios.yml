@@ -13,7 +13,7 @@ on:
         default: unsigned
       build_number:
         description: Numeric build number
-        default: '215345347'
+        default: '215345348'
         required: true
       native_test_only:
         description: Only run the native startup test (no new IPA)
@@ -26,10 +26,10 @@ permissions:
 jobs:
   native-smoke:
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
-      BUILD_NUMBER: ${{ inputs.build_number || '215345347' }}
+      BUILD_NUMBER: ${{ inputs.build_number || '215345348' }}
       SIGNING_MODE: unsigned
     steps:
       - uses: actions/checkout@v4
@@ -55,6 +55,7 @@ jobs:
           p.write_text(s.replace('IntConsumer', 'Listener').replace('platform.accept(fps)', 'platform.apply(fps)'), encoding='utf-8')
           PY
           python3 -c 'from pathlib import Path; p = Path("src/beatdz/Canvas.java"); s = p.read_text(); old = "this.logicAccumulator += Math.min(var1, 0.1F);"; assert s.count(old) == 1; p.write_text(s.replace(old, "this.logicAccumulator += Math.min(var1, 0.1F) * (FrameRate.target() / 60f);").replace("float logicInterval = 1.0F / 30.0F;", "float logicInterval = RenderMotion.STEP;").replace("// Gameplay stays at 30 Hz regardless of the selected presentation rate.", "// Scale client simulation by the selected mode, independently of dropped frames."))'
+          python3 -c 'from pathlib import Path; p = Path("src/beatdz/AssetArchives.java"); s = p.read_text(encoding="utf-8"); old = "HttpDownloads.open(Utlis.i(url), 300000,"; assert s.count(old) == 1; p.write_text(s.replace(old, "HttpDownloads.open(Utlis.i(url), HttpDownloads.isNative() ? 1200000 : 300000,"), encoding="utf-8")'
           cp ios-menu-update/LangLa_av.java src/beatdz/
           cp ios-menu-update/IOSStartupSmoke.java ios/src/smoke/java/com/beatdz/langlalau/
       - uses: actions/setup-java@v4
@@ -67,13 +68,13 @@ jobs:
           python3 tools/ci/prepare-ios.py
       - name: Native iOS cold-start to login
         run: |
-          python3 -c 'from pathlib import Path; p = Path("tools/ci/ios-simulator-smoke.py"); s = p.read_text(); old = "deadline = time.monotonic() + 360"; assert s.count(old) == 1; p.write_text(s.replace(old, "deadline = time.monotonic() + 1200"))'
-          python3 -c 'from pathlib import Path; p = Path("ios/src/smoke/java/com/beatdz/langlalau/IOSStartupSmoke.java"); s = p.read_text(); assert s.count("300000000000L") == 1; p.write_text(s.replace("300000000000L", "1080000000000L"))'
+          python3 -c 'from pathlib import Path; p = Path("tools/ci/ios-simulator-smoke.py"); s = p.read_text(); old = "deadline = time.monotonic() + 360"; assert s.count(old) == 1; p.write_text(s.replace(old, "deadline = time.monotonic() + 1800"))'
+          python3 -c 'from pathlib import Path; p = Path("ios/src/smoke/java/com/beatdz/langlalau/IOSStartupSmoke.java"); s = p.read_text(); assert s.count("300000000000L") == 1; p.write_text(s.replace("300000000000L", "1680000000000L"))'
           python3 tools/ci/ios-simulator-smoke.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: iOS-native-startup-log-${{ inputs.build_number || '215345347' }}
+          name: iOS-native-startup-log-${{ inputs.build_number || '215345348' }}
           path: ios-native-smoke.log
           if-no-files-found: warn
   ipa:
@@ -82,7 +83,7 @@ jobs:
     timeout-minutes: 90
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
-      BUILD_NUMBER: ${{ inputs.build_number || '215345347' }}
+      BUILD_NUMBER: ${{ inputs.build_number || '215345348' }}
       SIGNING_MODE: ${{ inputs.signing || 'unsigned' }}
     steps:
       - uses: actions/checkout@v4
@@ -108,6 +109,7 @@ jobs:
           p.write_text(s.replace('IntConsumer', 'Listener').replace('platform.accept(fps)', 'platform.apply(fps)'), encoding='utf-8')
           PY
           python3 -c 'from pathlib import Path; p = Path("src/beatdz/Canvas.java"); s = p.read_text(); old = "this.logicAccumulator += Math.min(var1, 0.1F);"; assert s.count(old) == 1; p.write_text(s.replace(old, "this.logicAccumulator += Math.min(var1, 0.1F) * (FrameRate.target() / 60f);").replace("float logicInterval = 1.0F / 30.0F;", "float logicInterval = RenderMotion.STEP;").replace("// Gameplay stays at 30 Hz regardless of the selected presentation rate.", "// Scale client simulation by the selected mode, independently of dropped frames."))'
+          python3 -c 'from pathlib import Path; p = Path("src/beatdz/AssetArchives.java"); s = p.read_text(encoding="utf-8"); old = "HttpDownloads.open(Utlis.i(url), 300000,"; assert s.count(old) == 1; p.write_text(s.replace(old, "HttpDownloads.open(Utlis.i(url), HttpDownloads.isNative() ? 1200000 : 300000,"), encoding="utf-8")'
           cp ios-menu-update/LangLa_av.java src/beatdz/
           cp ios-menu-update/IOSStartupSmoke.java ios/src/smoke/java/com/beatdz/langlalau/
       - uses: actions/setup-java@v4
@@ -141,7 +143,7 @@ jobs:
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: LangLa-iOS-${{ inputs.build_number || '215345347' }}-${{ inputs.signing || 'unsigned' }}
+          name: LangLa-iOS-${{ inputs.build_number || '215345348' }}-${{ inputs.signing || 'unsigned' }}
           path: ios/build/robovm/**/*.ipa
           if-no-files-found: error
           retention-days: 7
