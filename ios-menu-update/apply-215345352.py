@@ -59,6 +59,7 @@ edits = {
     ]
 }
 
+edits.pop("LangLa_ar.java")
 for filename, changes in edits.items():
     path = Path("src/beatdz") / filename
     source = path.read_text(encoding="utf-8")

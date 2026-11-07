@@ -2,7 +2,7 @@ name: Build iOS IPA
 
 on:
   push:
-    branches: [ios-build-215345352]
+    branches: [ios-build-215345353]
     paths: ['ios-menu-update/**', '.github/workflows/ios.yml']
   workflow_dispatch:
     inputs:
@@ -13,7 +13,7 @@ on:
         default: unsigned
       build_number:
         description: Numeric build number
-        default: '215345352'
+        default: '215345353'
         required: true
       native_test_only:
         description: Only run the native startup test (no new IPA)
@@ -45,7 +45,7 @@ jobs:
     timeout-minutes: 45
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
-      BUILD_NUMBER: ${{ inputs.build_number || '215345352' }}
+      BUILD_NUMBER: ${{ inputs.build_number || '215345353' }}
       SIGNING_MODE: unsigned
     steps:
       - uses: actions/checkout@v4
@@ -75,6 +75,9 @@ jobs:
           git apply ios-menu-update/bulk350-ios.patch
           cp ios-menu-update/LangLa_av.java ios-menu-update/BulkItemUse.java src/beatdz/
           cp ios-menu-update/IOSStartupSmoke.java ios/src/smoke/java/com/beatdz/langlalau/
+          python3 -c 'from pathlib import Path; paths = map(Path, ("LangLa_am.java", "LangLa_ar.java", "LangLa_mk.java", "ReleaseNotesDialog.java")); [p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8") for p in (Path("src/beatdz") / name for name in paths)]'
+          git apply ios-menu-update/preview353.patch
+          python3 -c 'from pathlib import Path; p = Path("src/beatdz/Canvas.java"); s = p.read_text(); old = "FrameRate.target() / 60f"; assert s.count(old) == 1; p.write_text(s.replace(old, "(DataCenter.gI().currentScreen instanceof GameSrc && java.util.Arrays.asList(13, 46, 47).contains(((GameSrc) DataCenter.gI().currentScreen).mapID) ? 1f : FrameRate.target() / 60f)"))'
           python3 ios-menu-update/apply-215345352.py
       - uses: actions/download-artifact@v4
         with:
@@ -96,7 +99,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: iOS-native-startup-log-${{ inputs.build_number || '215345352' }}
+          name: iOS-native-startup-log-${{ inputs.build_number || '215345353' }}
           path: ios-native-smoke.log
           if-no-files-found: warn
   ipa:
@@ -106,7 +109,7 @@ jobs:
     timeout-minutes: 90
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
-      BUILD_NUMBER: ${{ inputs.build_number || '215345352' }}
+      BUILD_NUMBER: ${{ inputs.build_number || '215345353' }}
       SIGNING_MODE: ${{ inputs.signing || 'unsigned' }}
     steps:
       - uses: actions/checkout@v4
@@ -136,6 +139,9 @@ jobs:
           git apply ios-menu-update/bulk350-ios.patch
           cp ios-menu-update/LangLa_av.java ios-menu-update/BulkItemUse.java src/beatdz/
           cp ios-menu-update/IOSStartupSmoke.java ios/src/smoke/java/com/beatdz/langlalau/
+          python3 -c 'from pathlib import Path; paths = map(Path, ("LangLa_am.java", "LangLa_ar.java", "LangLa_mk.java", "ReleaseNotesDialog.java")); [p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8") for p in (Path("src/beatdz") / name for name in paths)]'
+          git apply ios-menu-update/preview353.patch
+          python3 -c 'from pathlib import Path; p = Path("src/beatdz/Canvas.java"); s = p.read_text(); old = "FrameRate.target() / 60f"; assert s.count(old) == 1; p.write_text(s.replace(old, "(DataCenter.gI().currentScreen instanceof GameSrc && java.util.Arrays.asList(13, 46, 47).contains(((GameSrc) DataCenter.gI().currentScreen).mapID) ? 1f : FrameRate.target() / 60f)"))'
           python3 ios-menu-update/apply-215345352.py
       - uses: actions/download-artifact@v4
         with:
@@ -172,7 +178,7 @@ jobs:
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: LangLa-iOS-${{ inputs.build_number || '215345352' }}-${{ inputs.signing || 'unsigned' }}
+          name: LangLa-iOS-${{ inputs.build_number || '215345353' }}-${{ inputs.signing || 'unsigned' }}
           path: ios/build/robovm/**/*.ipa
           if-no-files-found: error
           retention-days: 7
