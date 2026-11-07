@@ -154,7 +154,7 @@
 +        for (Item stone : this.b) {
 +            if (stone != null) {
 +                String name = stone.getItemTemplate().name;
-+                materials.put(name, materials.getOrDefault(name, 0) + 1);
++                materials.put(name, materials.containsKey(name) ? materials.get(name) + 1 : 1);
 +            }
 +        }
 +        for (java.util.Map.Entry<String, Integer> material : materials.entrySet()) {

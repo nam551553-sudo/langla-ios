@@ -4,7 +4,7 @@ edits = {
     "DataCenter.java": [
         [
             "                skill.strOptions = reader.readUTF();",
-            "                skill.strOptions = reader.readUTF();\n                if (skill.idTemplate == 38) {\n                    String[] options = skill.strOptions.split(\";\", -1);\n                    for (int i = 0; i < options.length; i++) {\n                        if (options[i].startsWith(\"318,\")) {\n                            int reduction = Integer.parseInt(options[i].substring(4));\n                            options[i] = \"318,\" + Math.round(reduction * 0.70);\n                        }\n                    }\n                    skill.strOptions = String.join(\";\", options);\n                }"
+            "                skill.strOptions = reader.readUTF();\n                if (skill.idTemplate == 38) {\n                    String[] options = skill.strOptions.split(\";\", -1);\n                    for (int i = 0; i < options.length; i++) {\n                        if (options[i].startsWith(\"318,\")) {\n                            int reduction = Integer.parseInt(options[i].substring(4));\n                            options[i] = \"318,\" + Math.round(reduction * 0.70);\n                        }\n                    }\n                    StringBuilder rebuilt = new StringBuilder();\n                    for (String option : options) {\n                        if (rebuilt.length() > 0) rebuilt.append(\u0027;\u0027);\n                        rebuilt.append(option);\n                    }\n                    skill.strOptions = rebuilt.toString();\n                }"
         ]
     ],
     "Item.java": [
