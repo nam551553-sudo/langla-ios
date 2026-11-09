@@ -675,13 +675,17 @@ public class DataCenter {
                 skill.strOptions = reader.readUTF();
                 if (skill.idTemplate == 38) {
                     String[] options = skill.strOptions.split(";", -1);
+                    StringBuilder adjustedOptions = new StringBuilder(skill.strOptions.length());
                     for (int i = 0; i < options.length; i++) {
-                        if (options[i].startsWith("318,")) {
-                            int reduction = Integer.parseInt(options[i].substring(4));
-                            options[i] = "318," + Math.round(reduction * 0.70);
-                        }
+                        if (i > 0) adjustedOptions.append(';');
+                        String option = options[i];
+                        if (option.startsWith("318,")) {
+                            int reduction = Integer.parseInt(option.substring(4));
+                            adjustedOptions.append("318,").append(Math.round(reduction * 0.70));
+                        } else adjustedOptions.append(option);
                     }
-                    skill.strOptions = String.join(";", options);
+                    // The iOS RoboVM runtime does not provide String.join.
+                    skill.strOptions = adjustedOptions.toString();
                 }
                 this.Skill[skill.id] = skill;
 

@@ -414,6 +414,10 @@ public class Graphics {
 
     }
 
+    static boolean fontsReady() {
+        return E != null && F != null && G != null && H != null;
+    }
+
     public static void createFont() {
         if (n != DataCenter.gI().zoomLevel) {
             try {
