@@ -478,6 +478,9 @@ public class LangLa_ar extends LangLa_kj {
                     }
                 }
 
+                if (this.a[0] != null && this.w > 0 && this.d == 0) {
+                    mFont.b(mFont.d, var1, "Điểm đá: " + this.v + "/" + this.w, 149, this.a_() + 154, 0, -30976, -16777216);
+                }
                 this.a(var1, this.h[3]);
 
                 for (int var6 = 0; var6 < this.h[3].i; ++var6) {
@@ -539,7 +542,7 @@ public class LangLa_ar extends LangLa_kj {
                 case 1002:
                     this.c = 2;
                     this.a(var1.j, var1.j.k);
-                    this.cL = a(var1, this, this.a[1]);
+                    if (this.a[1] != null) showUpgradePreview();
                     return;
                 case 1003:
                     this.c = 3;
@@ -576,6 +579,36 @@ public class LangLa_ar extends LangLa_kj {
             }
         }
 
+    }
+
+    private void showUpgradePreview() {
+        Item result = this.a[1];
+        StringBuilder text = new StringBuilder(result.getItemTemplate().name)
+                .append(" +").append(result.level).append("\n\nNguyên liệu và chi phí\n");
+        text.append("Điểm đá đã chọn: ").append(this.v).append(" / ").append(this.w).append('\n');
+        text.append("Lệ phí bạc: ").append(Utlis.numberFormat(this.y)).append('\n');
+        if (this.a[2] != null) {
+            text.append(this.a[2].getItemTemplate().name).append('\n');
+        }
+        java.util.Map<String, Integer> materials = new java.util.LinkedHashMap<>();
+        for (Item stone : this.b) {
+            if (stone != null) {
+                String name = stone.getItemTemplate().name;
+                materials.put(name, materials.getOrDefault(name, 0) + 1);
+            }
+        }
+        for (java.util.Map.Entry<String, Integer> material : materials.entrySet()) {
+            text.append(material.getValue()).append(" × ").append(material.getKey()).append('\n');
+        }
+        text.append("\nChỉ số sau khi nâng cấp\n");
+        ItemOption[] options = result.L();
+        if (options != null) {
+            for (ItemOption option : options) {
+                String label = option.a(Char.gI().idChar);
+                text.append(label != null ? label : option.getItemOptionTemplate().name + " " + option.a[1]).append('\n');
+            }
+        }
+        this.p.a((LangLa_cx) new ReleaseNotesDialog(this.p, "Xem trước nâng cấp", text.toString()));
     }
 
     private void a(Item var1) {

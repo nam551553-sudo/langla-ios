@@ -11,8 +11,13 @@ package beatdz;
                }
             }
 
-            while(beatdz.LangLa_cz.$state_LangLa_cz().cX.size() > 0) {
-               LangLa_cz.b((LangLa_fb)beatdz.LangLa_cz.$state_LangLa_cz().cX.remove(0));
+            while (true) {
+               LangLa_fb next;
+               synchronized (beatdz.LangLa_cz.$state_LangLa_cz().cX) {
+                  if (beatdz.LangLa_cz.$state_LangLa_cz().cX.isEmpty()) break;
+                  next = (LangLa_fb)beatdz.LangLa_cz.$state_LangLa_cz().cX.remove(0);
+               }
+               LangLa_cz.b(next);
             }
          } catch (Exception var5) {
             Utlis.println(var5);

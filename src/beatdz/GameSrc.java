@@ -91,7 +91,7 @@ public class GameSrc extends MainScreen {
                                 if (SettingsTab.gI().a[3] != -1) {
                                     for (int var5 = 0; var5 < var0.aE.size(); ++var5) {
                                         Skill var6;
-                                        if ((var6 = (Skill) var0.aE.elementAt(var5)) != null && (var6.d() || var6.idTemplate == 4 || var6.getSkillTemplate().type == 0 && AutoPro.isAuto(7) || var6.idTemplate == 7 || var6.idTemplate == 31 || var6.idTemplate == 1 || var6.idTemplate == 32 || var6.idTemplate == 13 || var6.idTemplate == 34 || var6.idTemplate == 19 || var6.idTemplate == 33 || var6.idTemplate == 25) && Char.gI().level() >= var6.getSkillTemplate().levelNeed && var6.a(Char.gI()) && var6.getSkillTemplate().levelNeed < 60) {
+                                        if ((var6 = (Skill) var0.aE.elementAt(var5)) != null && (var6.d() || var6.idTemplate == 4 || var6.idTemplate == 7 || var6.idTemplate == 31 || var6.idTemplate == 1 || var6.idTemplate == 32 || var6.idTemplate == 13 || var6.idTemplate == 34 || var6.idTemplate == 19 || var6.idTemplate == 33 || var6.idTemplate == 25) && Char.gI().level() >= var6.getSkillTemplate().levelNeed && var6.a(Char.gI()) && var6.getSkillTemplate().levelNeed < 60) {
                                             var0.a(var6, false);
 
                                         }
@@ -152,10 +152,7 @@ public class GameSrc extends MainScreen {
                                     if (Char.gI().a(var22) && var22.item.id != 223) {
                                         var0.aA = null;
                                     } else if (Utlis.getRange(var0.aA.cx, var0.aA.cy, Char.gI().cx, Char.gI().cy) > 50) {
-                                        if (AutoPro.isAuto(8)) {
-                                            Char.gI().cx = var0.aA.cx;
-                                            Char.gI().cy = var0.aA.cy;
-                                        }
+
 
                                         Char.gI().setDir(var0.aA);
                                         Char.gI().pointMove = new PointMove(var0.aA.cx, var0.aA.cy, Char.gI().speedMove);
@@ -534,6 +531,8 @@ public class GameSrc extends MainScreen {
     public boolean cB;
     private int dK = 0;
     final RenderMotion renderMotion = new RenderMotion();
+    private boolean refreshItemUseInventory;
+    private final BulkItemUse bulkItemUse = new BulkItemUse();
 
     public GameSrc() {
         this.vItemMap = new Vector();
@@ -1521,7 +1520,7 @@ public class GameSrc extends MainScreen {
     }
 
     private void applyRenderMotion(Graphics g, Entity entity) {
-        if (!Canvas.isMobile()) return;
+        if (!Canvas.smoothMotion()) return;
         Entity subject = entity instanceof LangLa_ir ? ((LangLa_ir)entity).renderSubject() : entity;
         if (subject == null) return;
         float alpha = AppListener.gI().canvas.renderAlpha;
@@ -1562,6 +1561,15 @@ public class GameSrc extends MainScreen {
 
     public void j() {
         try {
+            bulkItemUse.update(this);
+            if (refreshItemUseInventory) {
+                refreshItemUseInventory = false;
+                if (this.H() instanceof LangLa_kl) {
+                    LangLa_kl inventory = (LangLa_kl) this.H();
+                    inventory.d = false;
+                    inventory.e(0);
+                }
+            }
             int var1 = Char.gI().cx - DataCenter.gI().widthScreen / 2;
             int var2 = Char.gI().cy - DataCenter.gI().heightScreen / 2 - Char.gI().height / 2;
             int var3 = Char.gI().cx + DataCenter.gI().widthScreen / 2;
@@ -2676,10 +2684,7 @@ public class GameSrc extends MainScreen {
             Char.gI().setDir(this.aA);
             Char.gI().pointMove = new PointMove(this.aA.cx, this.aA.cy, Char.gI().speedMove);
         }
-        if (AutoPro.isAuto(8)) {
-            Char.gI().cx = this.aA.cx;
-            Char.gI().cy = this.aA.cy;
-        }
+
     }
 
     private void g(boolean var1) {
@@ -3308,7 +3313,7 @@ public class GameSrc extends MainScreen {
                 }
 
                 this.a(var1, -DataCenter.gI().j, -DataCenter.gI().k);
-                if (Canvas.isMobile()) {
+                if (Canvas.smoothMotion()) {
                     var1.motionX = -renderMotion.cameraOffsetX(AppListener.gI().canvas.renderAlpha);
                     var1.motionY = -renderMotion.cameraOffsetY(AppListener.gI().canvas.renderAlpha);
                 }
@@ -4686,7 +4691,7 @@ public class GameSrc extends MainScreen {
     }
 
     public void s() {
-        this.X.d();
+        this.X.resetUnlessAndroidHeld();
     }
 
     public void e(Message var1) throws java.io.IOException {
@@ -4713,6 +4718,7 @@ public class GameSrc extends MainScreen {
         Char.gI().idCharPk = -1;
         this.zoneID = msg.reader.dis.readShort();
         this.mapID = msg.reader.dis.readShort();
+        MapAssetPrefetch.schedule(this.mapID);
         Char.gI().cx = beatdz.SessionMove.$state_SessionMove().x = msg.reader.dis.readShort();
         Char.gI().cy = beatdz.SessionMove.$state_SessionMove().y = msg.reader.dis.readShort();
         this.vItemMap.clear();
@@ -4984,6 +4990,7 @@ public class GameSrc extends MainScreen {
                 case 38:
                 case 39:
                 case 40:
+                case 119:
                     var46 = var1;
                     var2 = var2;
                     var25 = this;
@@ -4991,6 +4998,12 @@ public class GameSrc extends MainScreen {
                     try {
                         var25.l.clear();
                         short var43;
+                        int cardId = 0;
+                        if (var2 == LucDaoShopUI.TYPE) {
+                            cardId = var46.reader.dis.readShort();
+                            LucDaoShopUI.state().icon = var46.reader.dis.readShort();
+                            if (cardId != LucDaoShopUI.CARD) throw new java.io.IOException("Invalid Luc Dao currency");
+                        }
                         Item[][] var38 = new Item[var43 = var46.reader.dis.readShort()][3];
                         boolean[] var44 = new boolean[var43];
 
@@ -5006,6 +5019,7 @@ public class GameSrc extends MainScreen {
                             var34.vangKhoaBuy = var46.reader.dis.readInt();
                             var34.bacKhoaBuy = var46.reader.dis.readInt();
                             var34.bacBuy = var46.reader.dis.readInt();
+                            if (var2 == LucDaoShopUI.TYPE) { var34.shopCurrencyId = cardId;var34.shopIcon = var46.reader.dis.readShort(); }
                             var25.l.add(var34);
                             if (var2 == 39) {
                                 var44[var10] = var46.reader.dis.readBoolean();
@@ -5103,6 +5117,9 @@ public class GameSrc extends MainScreen {
                             case 40:
                                 var47 = 3;
                                 break;
+                            case 119:
+                                var47 = 4;
+                                break;
                             case 38:
                                 var45 = Caption.ao;
                                 var47 = 4;
@@ -5114,7 +5131,7 @@ public class GameSrc extends MainScreen {
                             return;
                         }
                         LangLa_cx var36 = var25.H();
-                        if (var2 != 6 && var2 != 7 && var2 != 39 && var2 != 40) {
+                        if (var2 != 6 && var2 != 7 && var2 != 39 && var2 != 40 && var2 != LucDaoShopUI.TYPE) {
                             LangLa_br var52;
                             if (var36 instanceof LangLa_br) {
                                 (var52 = (LangLa_br) var36).b(var47);
@@ -5334,10 +5351,14 @@ public class GameSrc extends MainScreen {
                         (var12 = (LangLa_br) var11).b(var33);
                     } catch (Exception var21) {
                     }
+                    return;
                 case 41:
+                    String title = var1.readUTF();
+                    String details = var1.readUTF();
+                    String imageUrl = var1.readUTF();
                     GoldTopUpPanel topup = H() instanceof GoldTopUpPanel ? (GoldTopUpPanel)H() : new GoldTopUpPanel(this);
                     if (H() != topup) a((LangLa_cx)topup);
-                    topup.receive(var1.readUTF(), var1.readUTF(), var1.readUTF());
+                    topup.receive(title, details, imageUrl);
                     return;
                 case 31:
                 case 42:
@@ -5825,6 +5846,10 @@ public class GameSrc extends MainScreen {
     public void n(Message var1) {
         try {
             short var2 = var1.reader.dis.readShort();
+            if (var2 == -1) {
+                bulkItemUse.acknowledge(var1.reader.dis.readInt(), var1.readShort());
+                return;
+            }
             Item var3;
             (var3 = Char.gI().arrItemBag[var2]).isLock = var1.reader.dis.readBoolean();
             Char.gI().arrItemBag[var2] = null;
@@ -5863,12 +5888,7 @@ public class GameSrc extends MainScreen {
                 Char.gI().arrItemBag[var2] = var3;
             }
 
-            LangLa_cx var8;
-            if ((var8 = this.H()) instanceof LangLa_kl) {
-                LangLa_kl var10;
-                (var10 = (LangLa_kl) var8).d = false;
-                var10.e(0);
-            }
+            refreshItemUseInventory = true;
 
             if (var3.z()) {
                 this.g();
@@ -7393,7 +7413,7 @@ public class GameSrc extends MainScreen {
                 try {
                     var6.y.levelCheTao = var8.reader.dis.readInt();
                     var6.y.hoatLuc = var8.reader.dis.readInt();
-                    var6.y.sachChienDau = var8.reader.dis.readByte();
+                    var6.y.sachChienDau = (byte) Math.max(0, Math.min(18, var8.reader.dis.readByte()));
                     var6.v = var8.reader.dis.readShort();
                     var6.i = var6.u = var8.reader.dis.readShort();
                     LangLa_ce var10 = var6.B;
@@ -7914,12 +7934,22 @@ public class GameSrc extends MainScreen {
 
     public static void a(Item var0) {
         try {
-            Message var1;
-            (var1 = new Message((byte) 116)).writeShort(var0.index);
-            var1.send();
-        } catch (Exception var2) {
-            Utlis.println(var2);
+            Message message = new Message((byte) 116);
+            message.writeShort(var0.index);
+            message.send();
+        } catch (Exception error) {
+            Utlis.println(error);
         }
+    }
+
+    boolean startBulkUse(Item item, int amount) {
+        if (bulkItemUse.active()) {
+            showMessage("Đang xử lý lượt dùng vật phẩm trước.", -65536);
+            return false;
+        }
+        if (amount == 1) a(item);
+        else bulkItemUse.start(item, amount);
+        return true;
     }
 
     private Item h(boolean var1) {
@@ -8969,7 +8999,7 @@ public class GameSrc extends MainScreen {
             var2.idhe = var1.reader.dis.readByte();
             var2.idClass = var1.reader.dis.readByte();
             var2.gioiTinh = var1.reader.dis.readByte();
-            var2.sachChienDau = var1.reader.dis.readByte();
+            var2.sachChienDau = (byte) Math.max(0, Math.min(18, var1.reader.dis.readByte()));
             var2.arrItemBody = Char.readItemBody(var1, var2.arrItemBody);
             var2.arrItemBody2 = Char.readItemBody(var1, var2.arrItemBody2);
             Skill[] var3 = new Skill[var1.reader.dis.readShort()];
@@ -11004,6 +11034,7 @@ public class GameSrc extends MainScreen {
     }
 
     public void updateMove() {
+        MapAssetPrefetch.approach(this.mapID, Char.gI().cx, Char.gI().cy, DataCenter.gI().dataWayPoint);
         int var21;
         Item var5;
         boolean var4 = false;
@@ -11183,10 +11214,7 @@ public class GameSrc extends MainScreen {
 
             var13 = true;
             var23.t();
-            int c = 100;
-            while (var23.pointMove != null && var23.pointMove.getRe() >= 20 && AutoPro.isAuto(3) && c-- > 0) {
-                var23.t();
-            }
+
         }
     }
 

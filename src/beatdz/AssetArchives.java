@@ -13,18 +13,36 @@ final class AssetArchives {
     private AssetArchives() { }
 
     static int download(String url, boolean refreshImages) throws IOException {
-        try (HttpDownloads.Response response = HttpDownloads.open(Utlis.i(url), 300000, 192L * 1024 * 1024)) {
-            long expected = response.length;
-            CountingInputStream counter = new CountingInputStream(response.input, !response.progressCounted);
-            try (BufferedInputStream input = new BufferedInputStream(counter, 32768)) {
-                unpack(input, (name, bytes) -> cache(name, bytes, refreshImages));
-                // ZipInputStream stops at the central directory. Count the rest for the archive revision marker.
-                byte[] buffer = new byte[16384];
-                while (input.read(buffer) != -1) { }
-                if (expected >= 0 && counter.count != expected) throw new EOFException("Incomplete image archive");
-                if (counter.count > Integer.MAX_VALUE) throw new IOException("Image archive is too large");
-                return (int)counter.count;
+        return download(url, refreshImages, -1);
+    }
+
+    static int download(String url, boolean refreshImages, int revisionSize) throws IOException {
+        if (HttpDownloads.isNative() && revisionSize > 0 && url.endsWith("/iconClient.zip")) {
+            int density = DataCenter.a("iconClient.zip") + 1;
+            com.badlogic.gdx.files.FileHandle bundled = com.badlogic.gdx.Gdx.files.internal(
+                    "data/ios-hd/zoom" + density + "/iconClient.zip");
+            if (bundled.exists() && bundled.length() == revisionSize) {
+                try (InputStream input = bundled.read()) {
+                    return extract(input, revisionSize, true, refreshImages);
+                }
             }
+        }
+        int timeoutMillis = HttpDownloads.isNative() ? 1200000 : 300000;
+        try (HttpDownloads.Response response = HttpDownloads.open(Utlis.i(url), timeoutMillis, 192L * 1024 * 1024)) {
+            return extract(response.input, response.length, !response.progressCounted, refreshImages);
+        }
+    }
+
+    private static int extract(InputStream stream, long expected, boolean countProgress, boolean refreshImages) throws IOException {
+        CountingInputStream counter = new CountingInputStream(stream, countProgress);
+        try (BufferedInputStream input = new BufferedInputStream(counter, 32768)) {
+            unpack(input, (name, bytes) -> cache(name, bytes, refreshImages));
+            // ZipInputStream stops at the central directory. Count the rest for the archive revision marker.
+            byte[] buffer = new byte[16384];
+            while (input.read(buffer) != -1) { }
+            if (expected >= 0 && counter.count != expected) throw new EOFException("Incomplete image archive");
+            if (counter.count > Integer.MAX_VALUE) throw new IOException("Image archive is too large");
+            return (int)counter.count;
         }
     }
 

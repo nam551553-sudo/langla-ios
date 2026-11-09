@@ -31,27 +31,26 @@ public class LangLa_ij extends LangLa_ii {
       if (!Utlis.inRange(0, 0, this.width, this.height, var1, var2)) {
          this.k = -1;
          this.l = -1;
-      } else if (this.m != this.j) {
-         this.k = -1;
-      } else if (this.n == 1 && this.h != 0 && this.l < this.i && this.l == (this.f + var2) / this.h || this.n == 0 && this.h != 0 && this.l < this.i && this.l == (this.f + var1) / this.h) {
-         this.k = this.l;
       }
 
-      this.k = this.p;
+      this.k = -1;
+      if (this.m != this.j || this.l < 0) {
+         this.p = -1;
+         return;
+      }
+
       int var3 = -1;
       if (this.n == 1 && this.h != 0) {
          var3 = var1 / this.h + (var2 + this.f) / this.h * (this.width / this.h);
       } else if (this.n == 0 && this.h != 0) {
-         var3 = var2 / this.h * this.i + this.l;
+         var3 = var2 / this.h * this.i + (this.f + var1) / this.h;
       }
 
-      if (this.p != var3) {
-         this.k = this.p = -1;
-      }
-
-      if (this.k >= 0) {
+      if (this.p >= 0 && this.p == var3) {
+         this.k = this.p;
          LangLa_dp.a().h();
       }
+      this.p = -1;
 
    }
 

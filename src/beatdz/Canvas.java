@@ -24,6 +24,7 @@ public abstract class Canvas implements Screen {
     public int height;
     public Viewport viewport;
     private InputMultiplexer input;
+    private mInputProcessor gameInput;
     public Stage stage;
     public int g = 30;
     public static Vector vTexture = new Vector();
@@ -62,7 +63,8 @@ public abstract class Canvas implements Screen {
             ((MyViewport) this.viewport).y = y;
             this.stage = new Stage(this.viewport, this.graphics.getSpriteBatch());
             this.input = new InputMultiplexer();
-            this.input.addProcessor(new mInputProcessor(this, -x, 0));
+            this.gameInput = new mInputProcessor(this, -x, 0);
+            this.input.addProcessor(this.gameInput);
             this.input.addProcessor(this.stage);
             MultiSession.attach(this.input);
             this.viewport.update(this.width, this.height, true);
@@ -114,6 +116,7 @@ public abstract class Canvas implements Screen {
     }
 
     private float logicAccumulator;
+    private long nextImageCleanupAt;
 
 
     private void render(boolean var1) {
@@ -153,7 +156,7 @@ public abstract class Canvas implements Screen {
                 ++DataCenter.gI().h;
                 DataCenter.gI().aO.a = false;
                 GameSrc motionGame = DataCenter.gI().currentScreen instanceof GameSrc ? (GameSrc)DataCenter.gI().currentScreen : null;
-                boolean smooth = isMobile() && motionGame != null;
+                boolean smooth = smoothMotion() && motionGame != null;
                 if (smooth) motionGame.renderMotion.before(motionGame);
                 this.update();
                 if (smooth) motionGame.renderMotion.after(motionGame);
@@ -244,22 +247,26 @@ public abstract class Canvas implements Screen {
 
             while (vTexture.size() > 0) {
                 try {
-                    ((Texture) vTexture.remove(0)).dispose();
+                    ((Texture) vTexture.remove(vTexture.size() - 1)).dispose();
                 } catch (Exception var8) {
                     Utlis.println("khong xoa dc textures");
                 }
             }
 
+            // Unused image TTL stays 10 seconds; sweeping 4 times/sec avoids a full cache walk on every frame.
+            if (var2 >= nextImageCleanupAt) {
+                nextImageCleanupAt = var2 + 250L;
             for (var15 = vImage.size() - 1; var15 >= 0; --var15) {
                 try {
                     mImage var17 = (mImage) vImage.get(var15);
                     if (var2 - var17.e > 10000L) {
-                        vImage.remove(var17);
+                        vImage.remove(var15);
                         var17.c();
                     }
                 } catch (Exception var7) {
                     Utlis.println("khong xoa dc textures");
                 }
+            }
             }
         } catch (Exception var13) {
             Utlis.println(var13);
@@ -271,19 +278,28 @@ public abstract class Canvas implements Screen {
     }
 
     public void render(float var1) {
-        // Android schedules complete frames on display vsync; iOS uses preferredFramesPerSecond.
-        // Returning without drawing here still swaps the Android surface's back buffer.
-        // Preserve the measured 30 Hz gameplay while rendering up to 60 FPS.
-        this.logicAccumulator += Math.min(var1, 0.1F);
-        float logicInterval = 1.0F / 30.0F;
+        FrameRate.apply();
+        // Scale client simulation by the selected mode, independently of dropped frames.
+        this.logicAccumulator += Math.min(var1, 0.1F) * simulationSpeed();
+        float logicInterval = RenderMotion.STEP;
         int logicSteps = (int) (this.logicAccumulator / logicInterval);
         this.logicAccumulator -= logicSteps * logicInterval;
 
-        renderAlpha = isMobile() ? Math.max(0f, Math.min(1f, this.logicAccumulator / logicInterval)) : 1f;
+        renderAlpha = smoothMotion() ? Math.max(0f, Math.min(1f, this.logicAccumulator / logicInterval)) : 1f;
         this.render(true, logicSteps);
         this.stage.act(Math.min(Gdx.graphics.getDeltaTime(), 0.033333335F));
         this.stage.draw();
         MultiSession.drawBar();
+    }
+
+    private float simulationSpeed() {
+        if (isMobile()
+                && DataCenter.gI().currentScreen instanceof GameSrc) {
+            int map = ((GameSrc)DataCenter.gI().currentScreen).mapID;
+            // These instances update many monsters at once. Keep their simulation at 30 Hz.
+            if (map == 13 || map == 46 || map == 47) return 1f;
+        }
+        return FrameRate.target() / 60f;
     }
 
     public int getWidth() {
@@ -297,6 +313,7 @@ public abstract class Canvas implements Screen {
     public static boolean isMobile() {
         return Gdx.app.getType() == ApplicationType.Android || Gdx.app.getType() == ApplicationType.iOS;
     }
+    static boolean smoothMotion() { return isMobile() || FrameRate.target() > 60; }
     public void applyZoomScreen() { display.apply(); }
     public void preparePointerInput() { display.prepareInput(); }
     public void cancelPointer() { }
@@ -314,6 +331,7 @@ public abstract class Canvas implements Screen {
         cancelViewMotion(); applyZoomScreen(); display.refresh();
     }
     private void cancelViewMotion() {
+        if (gameInput != null) gameInput.cancelAndroidMovement();
         cancelPointer();
         logicAccumulator = 0f; renderAlpha = 1f;
         if (DataCenter.gI().currentScreen instanceof GameSrc) ((GameSrc)DataCenter.gI().currentScreen).renderMotion.reset();
@@ -348,6 +366,7 @@ public abstract class Canvas implements Screen {
     }
 
     public void pause() {
+        if (gameInput != null) gameInput.cancelAndroidMovement();
         LangLa_dp var1;
         (var1 = LangLa_dp.a()).a = true;
         var1.b();

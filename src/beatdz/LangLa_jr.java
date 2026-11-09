@@ -5,6 +5,7 @@ public class LangLa_jr {
    public int b;
    public int c = 0;
    public LangLa_ju[] d;
+   boolean equippedCape;
 
    public LangLa_jr a() {
       LangLa_jr var1;
@@ -12,6 +13,7 @@ public class LangLa_jr {
       var1.b = this.b;
       var1.c = this.c;
       var1.d = this.d;
+      var1.equippedCape = this.equippedCape;
       return var1;
    }
 

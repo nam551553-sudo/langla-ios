@@ -35,9 +35,9 @@ public class LangLa_x extends LangLa_fo {
             var1 = null;
 
             try {
-                Reader var10 = Binary2.b("/4.png");
-                this.f = Binary.createImage(var10.readFully());
-                this.f = Binary2.b(this.f, this.f.c * DataCenter.gI().zoomLevel / 4, this.f.d * DataCenter.gI().zoomLevel / 4);
+                // Bundle the current app logo; downloaded /4.png and old caches carry legacy branding.
+                this.f = Binary.createImage(Gdx.files.internal("resource/icons/icon-128.png").readBytes());
+                this.f = Binary2.b(this.f, 32 * DataCenter.gI().zoomLevel, 32 * DataCenter.gI().zoomLevel);
                 return;
             } catch (Exception var6) {
             } finally {
@@ -246,16 +246,16 @@ public class LangLa_x extends LangLa_fo {
                             var6 = true;
                             break;
                         case 16:
-                            this.p.a(new LangLa_cd1(this.p, null));
+                            this.p.a(new ReleaseNotesDialog(this.p));
                             var6 = true;
                             break;
                         case 17:
-                            Gdx.net.openURI("https://www.facebook.com/beatdz.miramon/");
-                            var6 = false;
+                            this.p.l("Mob-By Krin");
+                            var6 = true;
                             break;
                         case 18:
 //                            this.p.a("Nếu bạn không tìm thấy Server muốn chơi trong phiên bản, hãy liên hệ Tác Giả để thêm Server vào phiên bản nhé.", 2004, this);
-                            Gdx.net.openURI("https://langlaanhhung.vn/");
+                            Gdx.net.openURI("https://langlabue.com/");
                             var6 = false;
                             break;
 
@@ -294,7 +294,7 @@ public class LangLa_x extends LangLa_fo {
                     (var4 = LoginPCScreen.getScreenLogin()).k(1000);
                     DataCenter.gI().setScreen((MainScreen) var4);
                 case 2004:
-                    Gdx.net.openURI("https://langlaanhhung.vn/");
+                    Gdx.net.openURI("https://langlabue.com/");
                     break;
             }
 

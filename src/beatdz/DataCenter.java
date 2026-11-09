@@ -673,6 +673,16 @@ public class DataCenter {
                 skill.rangeDoc = reader.dis.readShort();
                 skill.maxTarget = reader.dis.readByte();
                 skill.strOptions = reader.readUTF();
+                if (skill.idTemplate == 38) {
+                    String[] options = skill.strOptions.split(";", -1);
+                    for (int i = 0; i < options.length; i++) {
+                        if (options[i].startsWith("318,")) {
+                            int reduction = Integer.parseInt(options[i].substring(4));
+                            options[i] = "318," + Math.round(reduction * 0.70);
+                        }
+                    }
+                    skill.strOptions = String.join(";", options);
+                }
                 this.Skill[skill.id] = skill;
 
                 //   System.out.println(skill.id+" - "+skill.getSkillTemplate().name);

@@ -1739,7 +1739,7 @@ public class LangLa_mk extends LangLa_fm {
          }
       }
 
-      var1.a(var1.e);
+      var1.a(this.b == var1.a[0] ? null : var1.a[0]);
    }
 
    private void l() {

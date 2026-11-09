@@ -16,3 +16,23 @@ subprojects {
         targetCompatibility = '1.8'
     }
 }
+// Shared endpoints are generated from the editable deployment configuration.
+def deployment = new groovy.json.JsonSlurper().parse(file('release-config.json'), 'UTF-8')
+[project(':core'), project(':launcher')].each { target ->
+    def generated = target.layout.buildDirectory.dir('generated/endpoints')
+    target.plugins.withId('java') {
+        target.afterEvaluate { target.sourceSets.main.java.srcDir(generated) }
+        def generate = target.tasks.register('generateEndpoints') {
+            inputs.file(rootProject.file('release-config.json'))
+            inputs.property('releaseBuild', rootProject.releaseBuild)
+            outputs.dir(generated)
+            doLast {
+                def dest = new File(generated.get().asFile, 'com/langla/config/Endpoints.java')
+                dest.parentFile.mkdirs()
+                def literal = { value -> groovy.json.JsonOutput.toJson(value.toString()) }
+                dest.text = "package com.langla.config; public final class Endpoints { public static final int BUILD = ${rootProject.releaseBuild}; public static final String UPDATE_BASE = ${literal(deployment.publicBaseUrl.toString().replaceAll('/+$','') + '/')}; public static final String DATA_URL = ${literal(deployment.dataUrl.toString().replaceAll('/+$','') + '/')}; public static final String SERVER_IP = ${literal(deployment.serverIp)}; }"
+            }
+        }
+        target.tasks.named('compileJava') { dependsOn generate }
+    }
+}

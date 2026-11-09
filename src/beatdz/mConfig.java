@@ -8,7 +8,7 @@ public class mConfig {
    void copySettingsFrom(mConfig source) { this.config = source.config.clone(); }
    
    private byte[] config = Binary.read("arr_config");
-   private int length = 26;
+   private int length = 27;
 
    public mConfig() {
       if (this.config == null || this.config.length != this.length) {

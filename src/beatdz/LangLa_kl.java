@@ -245,7 +245,7 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
          var10000 = this.a_() + this.G() - 61;
          DataCenter.gI();
          var9 = var10000 + 0;
-         this.A = this.a(var7, var9, 64, 4, var11, this, 1);
+         this.A = this.a(var7, var9, 64, Caption.tJ.length, var11, this, 1);
          this.A.a(var2.selectCaiTrang);
          this.b.a((LangLa_cs)this.A, 0);
          (var8 = this.a(super.width - 8 - 55, this.height - 68, Caption.bj, this, 4001, 7)).setSize(50, 20);

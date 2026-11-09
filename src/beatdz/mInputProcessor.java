@@ -12,6 +12,8 @@ public class mInputProcessor implements InputProcessor {
    private int e;
    private int f;
    private int g;
+   private int androidMovePointer = -1;
+   private LangLa_ea androidJoystick;
 
    public mInputProcessor(Canvas var1, int var2, int var3) {
       this.a = var1;
@@ -219,6 +221,21 @@ public class mInputProcessor implements InputProcessor {
 
    public boolean touchDown(int var1, int var2, int var3, int var4) {
       if (var2 < MultiSession.barHeight()) return true;
+      if (Gdx.app.getType() == ApplicationType.Android) {
+         MainScreen screen = DataCenter.gI().currentScreen;
+         if (screen instanceof GameSrc && screen.cE == screen && screen.cL == null) {
+            LangLa_ea joystick = ((GameSrc)screen).X;
+            int x = this.a(var1), y = this.b(var2);
+            if (joystick != null && joystick.containsAndroidTouch(x, y)) {
+               if (androidJoystick == null && joystick.beginAndroidTouch(x, y)) {
+                  androidMovePointer = var3;
+                  androidJoystick = joystick;
+               }
+               return true;
+            }
+         }
+         if (this.b >= 0) return true;
+      }
       this.a.preparePointerInput();
       this.b = var3;
       LangLa_gg var6;
@@ -231,6 +248,10 @@ public class mInputProcessor implements InputProcessor {
    }
 
    public boolean touchUp(int var1, int var2, int var3, int var4) {
+      if (var3 == androidMovePointer) {
+         cancelAndroidMovement();
+         return true;
+      }
       if (this.b != var3) return false;
       this.b = -1;
       if (var2 < MultiSession.barHeight()) {
@@ -243,6 +264,14 @@ public class mInputProcessor implements InputProcessor {
    }
 
    public boolean touchDragged(int var1, int var2, int var3) {
+      if (var3 == androidMovePointer) {
+         MainScreen screen = DataCenter.gI().currentScreen;
+         if (screen == null || screen != androidJoystick.s || screen.cE != screen
+               || !androidJoystick.moveAndroidTouch(this.a(var1), this.b(var2))) {
+            cancelAndroidMovement();
+         }
+         return true;
+      }
       if (var2 < MultiSession.barHeight()) return true;
       if (this.b != var3) {
          return false;
@@ -265,10 +294,20 @@ public class mInputProcessor implements InputProcessor {
    }
 
    public boolean touchCancelled(int screenX, int screenY, int pointer, int button) {
+      if (pointer == androidMovePointer) {
+         cancelAndroidMovement();
+         return true;
+      }
       if (pointer != this.b) return false;
       this.b = -1;
       this.a.cancelPointer();
       return true;
+   }
+
+   void cancelAndroidMovement() {
+      if (androidJoystick != null) androidJoystick.d();
+      androidJoystick = null;
+      androidMovePointer = -1;
    }
 
    private static int c(int var0) {

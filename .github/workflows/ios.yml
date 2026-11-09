@@ -1,9 +1,6 @@
 name: Build iOS IPA
 
 on:
-  push:
-    branches: [ios-build-215345354]
-    paths: ['ios-menu-update/**', '.github/workflows/ios.yml']
   workflow_dispatch:
     inputs:
       signing:
@@ -13,7 +10,7 @@ on:
         default: unsigned
       build_number:
         description: Numeric build number
-        default: '215345354'
+        default: '215345362'
         required: true
       native_test_only:
         description: Only run the native startup test (no new IPA)
@@ -45,42 +42,12 @@ jobs:
     timeout-minutes: 45
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
-      BUILD_NUMBER: ${{ inputs.build_number || '215345354' }}
+      BUILD_NUMBER: ${{ inputs.build_number || '215345362' }}
       SIGNING_MODE: unsigned
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Apply verified client 215345339 source update
-        run: |
-          echo "5026957ec0ef2f1bac2d58ccbecfdaf24bd57b96fb2d3e2db048bf6ec34ff9d7  ios-source-update-215345339.zip" | shasum -a 256 -c -
-          unzip -oq ios-source-update-215345339.zip -d .
-          cp ios-menu-update/LangLa_x.java ios-menu-update/ReleaseNotesDialog.java ios-menu-update/LangLa_mq.java ios-menu-update/LangLa_ij.java ios-menu-update/LangLa_ge.java src/beatdz/
-          python3 -c 'from pathlib import Path; p = Path("src/beatdz/GameSrc.java"); p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8")'
-          python3 -c 'from pathlib import Path; paths = map(Path, ("src/beatdz/Char.java", "src/beatdz/LangLa_kl.java", "src/com/tgame/model/Caption.java")); [(p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8")) for p in paths]'
-          python3 -c 'from pathlib import Path; paths = map(Path, ("src/beatdz/Canvas.java", "src/beatdz/SettingsTab.java", "src/beatdz/mConfig.java", "ios/src/main/java/com/beatdz/langlalau/IOSLauncher.java", "ios/Info.plist.xml")); [p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8") for p in paths]'
-          git apply ios-menu-update/fps.patch ios-menu-update/hide-tanto.patch
-          cp ios-menu-update/FrameRate.java src/beatdz/
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('src/beatdz/FrameRate.java')
-          s = p.read_text(encoding='utf-8')
-          assert 'import java.util.function.IntConsumer;' in s
-          s = s.replace('import java.util.function.IntConsumer;\n\n', '')
-          s = s.replace('public final class FrameRate {', 'public final class FrameRate {\n    @FunctionalInterface\n    public interface Listener {\n        void apply(int fps);\n    }\n')
-          p.write_text(s.replace('IntConsumer', 'Listener').replace('platform.accept(fps)', 'platform.apply(fps)'), encoding='utf-8')
-          PY
-          python3 -c 'from pathlib import Path; p = Path("src/beatdz/Canvas.java"); s = p.read_text(); old = "this.logicAccumulator += Math.min(var1, 0.1F);"; assert s.count(old) == 1; p.write_text(s.replace(old, "this.logicAccumulator += Math.min(var1, 0.1F) * (FrameRate.target() / 60f);").replace("float logicInterval = 1.0F / 30.0F;", "float logicInterval = RenderMotion.STEP;").replace("// Gameplay stays at 30 Hz regardless of the selected presentation rate.", "// Scale client simulation by the selected mode, independently of dropped frames."))'
-          cp ios-menu-update/AssetArchives.java ios-menu-update/LangLa_do.java src/beatdz/
-          git apply ios-menu-update/bulk350-ios.patch
-          cp ios-menu-update/LangLa_av.java ios-menu-update/BulkItemUse.java src/beatdz/
-          cp ios-menu-update/IOSStartupSmoke.java ios/src/smoke/java/com/beatdz/langlalau/
-          python3 -c 'from pathlib import Path; paths = map(Path, ("LangLa_am.java", "LangLa_ar.java", "LangLa_mk.java", "ReleaseNotesDialog.java")); [p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8") for p in (Path("src/beatdz") / name for name in paths)]'
-          git apply ios-menu-update/preview353.patch
-          python3 -c 'from pathlib import Path; p = Path("src/beatdz/Canvas.java"); s = p.read_text(); old = "FrameRate.target() / 60f"; assert s.count(old) == 1; p.write_text(s.replace(old, "(DataCenter.gI().currentScreen instanceof GameSrc && java.util.Arrays.asList(13, 46, 47).contains(((GameSrc) DataCenter.gI().currentScreen).mapID) ? 1f : FrameRate.target() / 60f)"))'
-          python3 ios-menu-update/apply-215345352.py
-          cp ios-menu-update/GoldTopUpPanel.java src/beatdz/
-          python3 ios-menu-update/apply-topup-354.py
       - uses: actions/download-artifact@v4
         with:
           name: ios-hd-assets
@@ -101,7 +68,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: iOS-native-startup-log-${{ inputs.build_number || '215345354' }}
+          name: iOS-native-startup-log-${{ inputs.build_number || '215345362' }}
           path: ios-native-smoke.log
           if-no-files-found: warn
   ipa:
@@ -111,42 +78,12 @@ jobs:
     timeout-minutes: 90
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
-      BUILD_NUMBER: ${{ inputs.build_number || '215345354' }}
+      BUILD_NUMBER: ${{ inputs.build_number || '215345362' }}
       SIGNING_MODE: ${{ inputs.signing || 'unsigned' }}
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Apply verified client 215345339 source update
-        run: |
-          echo "5026957ec0ef2f1bac2d58ccbecfdaf24bd57b96fb2d3e2db048bf6ec34ff9d7  ios-source-update-215345339.zip" | shasum -a 256 -c -
-          unzip -oq ios-source-update-215345339.zip -d .
-          cp ios-menu-update/LangLa_x.java ios-menu-update/ReleaseNotesDialog.java ios-menu-update/LangLa_mq.java ios-menu-update/LangLa_ij.java ios-menu-update/LangLa_ge.java src/beatdz/
-          python3 -c 'from pathlib import Path; p = Path("src/beatdz/GameSrc.java"); p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8")'
-          python3 -c 'from pathlib import Path; paths = map(Path, ("src/beatdz/Char.java", "src/beatdz/LangLa_kl.java", "src/com/tgame/model/Caption.java")); [(p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8")) for p in paths]'
-          python3 -c 'from pathlib import Path; paths = map(Path, ("src/beatdz/Canvas.java", "src/beatdz/SettingsTab.java", "src/beatdz/mConfig.java", "ios/src/main/java/com/beatdz/langlalau/IOSLauncher.java", "ios/Info.plist.xml")); [p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8") for p in paths]'
-          git apply ios-menu-update/fps.patch ios-menu-update/hide-tanto.patch
-          cp ios-menu-update/FrameRate.java src/beatdz/
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('src/beatdz/FrameRate.java')
-          s = p.read_text(encoding='utf-8')
-          assert 'import java.util.function.IntConsumer;' in s
-          s = s.replace('import java.util.function.IntConsumer;\n\n', '')
-          s = s.replace('public final class FrameRate {', 'public final class FrameRate {\n    @FunctionalInterface\n    public interface Listener {\n        void apply(int fps);\n    }\n')
-          p.write_text(s.replace('IntConsumer', 'Listener').replace('platform.accept(fps)', 'platform.apply(fps)'), encoding='utf-8')
-          PY
-          python3 -c 'from pathlib import Path; p = Path("src/beatdz/Canvas.java"); s = p.read_text(); old = "this.logicAccumulator += Math.min(var1, 0.1F);"; assert s.count(old) == 1; p.write_text(s.replace(old, "this.logicAccumulator += Math.min(var1, 0.1F) * (FrameRate.target() / 60f);").replace("float logicInterval = 1.0F / 30.0F;", "float logicInterval = RenderMotion.STEP;").replace("// Gameplay stays at 30 Hz regardless of the selected presentation rate.", "// Scale client simulation by the selected mode, independently of dropped frames."))'
-          cp ios-menu-update/AssetArchives.java ios-menu-update/LangLa_do.java src/beatdz/
-          git apply ios-menu-update/bulk350-ios.patch
-          cp ios-menu-update/LangLa_av.java ios-menu-update/BulkItemUse.java src/beatdz/
-          cp ios-menu-update/IOSStartupSmoke.java ios/src/smoke/java/com/beatdz/langlalau/
-          python3 -c 'from pathlib import Path; paths = map(Path, ("LangLa_am.java", "LangLa_ar.java", "LangLa_mk.java", "ReleaseNotesDialog.java")); [p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8") for p in (Path("src/beatdz") / name for name in paths)]'
-          git apply ios-menu-update/preview353.patch
-          python3 -c 'from pathlib import Path; p = Path("src/beatdz/Canvas.java"); s = p.read_text(); old = "FrameRate.target() / 60f"; assert s.count(old) == 1; p.write_text(s.replace(old, "(DataCenter.gI().currentScreen instanceof GameSrc && java.util.Arrays.asList(13, 46, 47).contains(((GameSrc) DataCenter.gI().currentScreen).mapID) ? 1f : FrameRate.target() / 60f)"))'
-          python3 ios-menu-update/apply-215345352.py
-          cp ios-menu-update/GoldTopUpPanel.java src/beatdz/
-          python3 ios-menu-update/apply-topup-354.py
       - uses: actions/download-artifact@v4
         with:
           name: ios-hd-assets
@@ -182,7 +119,7 @@ jobs:
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: LangLa-iOS-${{ inputs.build_number || '215345354' }}-${{ inputs.signing || 'unsigned' }}
+          name: LangLa-iOS-${{ inputs.build_number || '215345362' }}-${{ inputs.signing || 'unsigned' }}
           path: ios/build/robovm/**/*.ipa
           if-no-files-found: error
           retention-days: 7

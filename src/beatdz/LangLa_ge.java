@@ -101,7 +101,7 @@ public class LangLa_ge extends LangLa_fn {
          case 5001:
             this.b = 0;
             this.a(var1.j, var1.j.k);
-            if (var1.j.k >= 0) {
+            if (var1.j.k >= 0 && var1.j.k < this.t.length) {
                this.cL = a(var1, this, this.t[var1.j.k]);
                return;
             }
@@ -110,7 +110,7 @@ public class LangLa_ge extends LangLa_fn {
             this.b = 1;
             this.a(var1.j, var1.j.k);
             DataCenter.gI();
-            if (var1.j.k >= 0) {
+            if (var1.j.k >= 0 && var1.j.k < Char.gI().arrItemExtend.length) {
                this.cL = a(var1, this, Char.gI().arrItemExtend[var1.j.k]);
                return;
             }

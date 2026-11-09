@@ -108,9 +108,9 @@ public class LangLa_am extends LangLa_kj {
                mFont.b(mFont.d, var1, Caption.nI, 149, this.a_() + 108, 0, -2560, -16777216);
             }
          } else if (this.e != null) {
-            mFont.b(mFont.d, var1, Utlis.replaceAll(Caption.nG, "" + this.e.level * 6), 149, this.a_() + 108, 0, -30976, -16777216);
-            mFont.b(mFont.d, var1, Caption.nJ, 149, this.a_() + 124, 0, -10831436, -16777216);
-            mFont.b(mFont.d, var1, Caption.nK, 149, this.a_() + 140, 0, -10831436, -16777216);
+            mFont.b(mFont.d, var1, "Nguyên liệu: " + (this.e.level + 1) + " cải trang", 149, this.a_() + 108, 0, -30976, -16777216);
+            mFont.b(mFont.d, var1, "Chạm ô kết quả để xem", 149, this.a_() + 124, 0, -10831436, -16777216);
+            mFont.b(mFont.d, var1, "chỉ số và nguyên liệu", 149, this.a_() + 140, 0, -10831436, -16777216);
          }
 
          a(var1, this.g[0].cx, this.g[0].cy, this.e, this.g[0].k >= 0, Caption.I);
@@ -163,19 +163,14 @@ public class LangLa_am extends LangLa_kj {
 
             this.c = 1;
             this.a(var1.j, var1.j.k);
-            this.cL = a(var1, this, this.e);
-            return;
-         case 1002:
-            this.c = 0;
-            this.a(var1.j, var1.j.k);
-            this.cL = a(var1, this, this.a[1]);
+            showPreview();
             return;
          case 1003:
+            int index = var1.j.k;
+            if (index < 0 || index >= this.b.length) return;
             this.c = 0;
             this.a(var1.j, var1.j.k);
-            var2 = var1.j.k / 5;
-            var3 = var1.j.k % 5;
-            this.cL = b(var1, this, this.b[var2 * 4 + var3]);
+            this.cL = b(var1, this, this.b[index]);
             return;
          case 2001:
             this.a(false);
@@ -216,7 +211,7 @@ public class LangLa_am extends LangLa_kj {
                int var3;
                for(var3 = 0; var3 < this.b.length; ++var3) {
                   if (this.b[var3] != null) {
-                     if (this.b[var3].id == this.e.id) {
+                     if (this.b[var3] == this.a[0]) {
                         var2.insertElementAt(this.b[var3], 0);
                      } else {
                         var2.add(this.b[var3]);
@@ -260,20 +255,11 @@ public class LangLa_am extends LangLa_kj {
          }
 
          Vector var10 = new Vector();
-         Vector var2 = new Vector();
 
          for(int var3 = 0; var3 < this.b.length; ++var3) {
             ItemOption[] var4;
             if (this.b[var3] != null && (var4 = this.b[var3].L()) != null) {
                int var5;
-               if (!this.b[var3].equals(this.a[0])) {
-                  for(var5 = 0; var5 < DataCenter.gI().ItemOptionTemplate.length; ++var5) {
-                     if (DataCenter.gI().ItemOptionTemplate[var5].name.trim().toLowerCase().equals(this.b[var3].getItemTemplate().name.trim().toLowerCase())) {
-                        var2.add(new ItemOption(DataCenter.gI().ItemOptionTemplate[var5].id + ",0,0"));
-                        break;
-                     }
-                  }
-               }
 
                for(var5 = 0; var5 < var4.length; ++var5) {
                   boolean var6 = true;
@@ -286,17 +272,36 @@ public class LangLa_am extends LangLa_kj {
                      }
                   }
 
-                  if (var6) {
-                     var10.add(var4[var5]);
-                  }
+                  if (var6) var10.add(new ItemOption(var4[var5].a[0] + "," + var4[var5].a[1]));
                }
             }
          }
 
-         var10.addAll(var2);
          this.e.strOptions = Item.a(var10);
-         this.e.level = (byte)var2.size();
          this.e.isLock = true;
       }
+   }
+
+   private void showPreview() {
+      if (this.e == null) return;
+      StringBuilder text = new StringBuilder(this.e.getItemTemplate().name)
+              .append(" +").append(this.e.level).append("\n\nNguyên liệu đã chọn\n");
+      for (Item material : this.b) {
+         if (material != null) {
+            text.append("1 × ").append(material.getItemTemplate().name);
+            if (material == this.a[0]) text.append(" (giữ ngoại hình)");
+            text.append('\n');
+         }
+      }
+      text.append("\nChỉ số sau khi ghép\n");
+      ItemOption[] options = this.e.L();
+      if (options != null) {
+         for (ItemOption option : options) {
+            String label = option.a(Char.gI().idChar);
+            text.append(label != null ? label : option.getItemOptionTemplate().name + " " + option.a[1]).append('\n');
+         }
+      }
+      text.append("\nCải trang sau khi ghép sẽ bị khóa.");
+      this.p.a((LangLa_cx) new ReleaseNotesDialog(this.p, "Xem trước cải trang", text.toString()));
    }
 }

@@ -67,7 +67,7 @@ public class AppListener extends Game {
     public void create() {
         String var2;
         if (Gdx.app.getGraphics().getGLVersion().getMajorVersion() < 2) {
-            var2 = "Rất tiếc! Máy tính của bạn cần hổ trợ tối thiểu phiên bản OpenGL 2.0 trở lên để chơi được Làng Lá Test.";
+            var2 = "Rất tiếc! Máy tính của bạn cần hổ trợ tối thiểu phiên bản OpenGL 2.0 trở lên để chơi được Làng Lá Blue.";
             String var3 = "Thông báo";
             LangLa_dd.a.a(var3, var2);
             gI();

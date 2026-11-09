@@ -56,7 +56,7 @@ public final class MultiSession {
     private static final InheritableThreadLocal<Context> OWNER = new InheritableThreadLocal<Context>();
     private static volatile Context active = ROOT;
     private static volatile int tabCount = 1;
-    static final java.util.concurrent.Semaphore PREFETCH_NETWORK = new java.util.concurrent.Semaphore(1);
+    static final java.util.concurrent.Semaphore PREFETCH_NETWORK = new java.util.concurrent.Semaphore(2, true);
     private static Stage bar;
     private static BitmapFont font;
     private static int barCount = -1;

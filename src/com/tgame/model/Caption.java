@@ -1743,7 +1743,7 @@ public class Caption {
         ls = "Chưa đủ bộ cường hóa cấp 4";
         lt = "% bỏ qua kháng tính";
         lu = "Tăng thêm";
-        lv = "Làng Lá Test";
+        lv = "Làng Lá Blue";
         lw = "Đề cử";
         lx = "Vứt bỏ vật phẩm sẽ tắt chế độ tự động nhặt vật phẩm. Bạn có đồng ý vứt bỏ vật phẩm không?";
         ly = "Tùy chỉnh tối ưu:";
@@ -2062,7 +2062,7 @@ public class Caption {
         rx = new String[]{"Ghép đá", "Cường hóa", "Nâng cấp bùa nổ", "Tách cường hóa", "Dịch chuyển trang bị", "Khảm ngọc", "Tách ngọc khảm", "Ghép cải trang", "Tách cải trang"};
         ry = new String[]{"Giá cũ: ", "Giá mới: ", "Còn: # lượt mua", "Hết hàng"};
         rz = new String[]{"- Sau khi tách cường hóa trang bị", "sẽ trở về trạng thái ban đầu"};
-        rA = new String[]{"Khu vàng", "Vàng khóa", "Khu Rank", "Khuyến mãi"};
+        rA = new String[]{"Khu vàng", "Vàng khóa", "Khu Rank", "Khuyến mãi", "Lục Đạo"};
         rB = new String[]{"Mua vào", "Bán ra"};
         rC = new String[]{"gần", "hết giờ"};
         rD = new String[]{"Số vỏ sò hiện có:", "Mức cược: ", "Bắt đầu", "vỏ sò", "Thưởng", "Vỏ sò", "Tiếp", "", "", ""};
@@ -2175,7 +2175,7 @@ public class Caption {
         tG = new String[]{"Sora", "Inuzuka", "Yamato", "Karu", "Kikunojou", "Kuranai", "Haruna", "Tamanaka", "Yakomo"};
         tH = new String[]{"Lớp: Kiếm\nĐịnh vị: Cận chiến\nHệ: Lôi\nMức thao tác: Khó\nThầy: Fugaki", "Lớp: Ám khí\nĐịnh vị: Viễn chiến\nHệ: Thổ\nMức thao tác: Dễ\nThầy: Doria", "Lớp: Gậy\nĐịnh vị: Viễn chiến\nHệ: Thủy\nMức thao tác: Khó\nCô: Nohara", "Lớp: Đao\nĐịnh vị: Viễn chiến\nHệ: Hỏa\nMức thao tác: Vừa\nThầy: Nawasaki", "Lớp: Dao\nĐịnh vị: Cận chiến\nHệ: Phong\nMức thao tác: Vừa\nThầy: Ultimo"};
         tI = new String[]{"Set 1", "Set 2", "Set 3", "All"};
-        tJ = new String[]{"Mặc định", "Ẩn cải trang", "Ẩn thời trang", "Ẩn cải trang và thời trang"};
+        tJ = new String[]{"Mặc định", "Ẩn cải trang", "Ẩn thời trang", "Ẩn cải trang và thời trang", "Ẩn Tanto"};
     }
 
     static {

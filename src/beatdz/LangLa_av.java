@@ -66,28 +66,20 @@ public class LangLa_av extends LangLa_fo {
          this.a.a(var6);
          return;
       case 1002:
-         this.a.a(this.a.e() + 1);
+         if (this.a.e() < this.b.getAmount()) this.a.a(this.a.e() + 1);
          return;
       case 1003:
-         LangLa_av var5 = this;
-
-         try {
-            if (var5.a.e() >= 0 && var5.a.e() <= var5.b.getAmount()) {
-               var5.J();
-
-               for(var2 = 0; var2 < var5.a.e(); ++var2) {
-                  GameSrc.gI();
-                  GameSrc.a(var5.b);
-               }
-
-               return;
-            }
-
+         int amount = this.a.e();
+         Item[] bag = Char.gI().arrItemBag;
+         int index = this.b.index;
+         if (index < 0 || index >= bag.length || bag[index] != this.b
+               || amount < 1 || amount > this.b.getAmount()) {
             GameSrc.gI().showMessage(Caption.mh, -65536);
             return;
-         } catch (Exception var4) {
-            Utlis.println(var4);
          }
+         if (!GameSrc.gI().startBulkUse(this.b, amount)) return;
+         this.J();
+         return;
       default:
       }
    }

@@ -49,7 +49,8 @@ public class LangLa_cz extends XYEntity {
       beatdz.LangLa_cz.$state_LangLa_cz().cY = true;
       (new Thread(new LangLa_da())).start();
       (new Thread(new LangLa_db())).start();
-      (new Thread(new LangLa_fg())).start();
+      (new Thread(new LangLa_fg(), "map-assets-1")).start();
+      (new Thread(new LangLa_fg(), "map-assets-2")).start();
    }
 
    public void setSize(int var1, int var2) {
@@ -132,6 +133,7 @@ public class LangLa_cz extends XYEntity {
 
    public static void a(Graphics var0, int var1, int var2, String var3, byte var4) {
       var1 = var1 + mFont.b(mFont.d, var3) + 5;
+      if (var4 == 7) { LucDaoShopUI.drawCard(var0,var1 - 3,var2 - 7);return; }
       switch(var4) {
       case 0:
       case 1:
@@ -149,6 +151,7 @@ public class LangLa_cz extends XYEntity {
          LangLa_fq.a(var0, 377, 0, var1 - 3, var2 - 6, 0);
       }
 
+      if (var4 == 7) { LucDaoShopUI.drawCard(var0,var1 - 3,var2 - 7);return; }
       switch(var4) {
       case 1:
       case 5:
@@ -402,19 +405,23 @@ public class LangLa_cz extends XYEntity {
          StringBuilder var10000 = (new StringBuilder()).append(DataCenter.gI().aU).append(DataCenter.gI().aY);
          DataCenter.gI();
          byte[] var2;
-         if ((var2 = Binary.b(var10000.append(DataCenter.a(var0.d) + 1).append("/").append(var0.d).toString())) != null) {
-            Binary.write(var0.e, var2);
+         if ((var2 = MapAssetDownloads.load(var10000.append(DataCenter.a(var0.d) + 1).append("/").append(var0.d).toString())) != null) {
+
             if (var0.e.startsWith("mapscale_")) {
+               Binary.write(var0.e, var2);
                GameSrc.gI().al.a(GameSrc.gI().mapID);
                return;
             }
 
             if (var0.e.startsWith("mapsmall_") && GameSrc.gI().cE instanceof LangLa_u) {
+               Binary.write(var0.e, var2);
                ((LangLa_u)((LangLa_u)GameSrc.gI().cE)).f();
                return;
             }
 
             var1 = Binary.createImage(Utlis.a(var2));
+            if (var1 == null) return;
+            Binary.write(var0.e, var2);
             var0.g.put(var0.a, var1);
             return;
          }

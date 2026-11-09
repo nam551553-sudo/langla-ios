@@ -88,6 +88,7 @@ public class LangLa_dz extends LangLa_cs {
             case -10:
                 this.setSize(102, 20);
                 return;
+            case -120:
             case -9:
             case -6:
             case -5:
@@ -624,7 +625,8 @@ public class LangLa_dz extends LangLa_cs {
                                                                                                                                                                                                                                                     LangLa_fq.b(var1, 14, 67, 0, 1, this.width, 20);
                                                                                                                                                                                                                                                     mFont.b(mFont.d, var1, this.a, 7, this.height / 2, 0, -1, -16777216);
                                                                                                                                                                                                                                                     break label2811;
-                                                                                                                                                                                                                                                case -9:
+                                                                                                                                                                                                                                                case -120:
+            case -9:
                                                                                                                                                                                                                                                 case -6:
                                                                                                                                                                                                                                                 case -5:
                                                                                                                                                                                                                                                 case -4:
@@ -648,7 +650,9 @@ public class LangLa_dz extends LangLa_cs {
                                                                                                                                                                                                                                                         var21 = 0;
                                                                                                                                                                                                                                                     } else if (this.d == -6) {
                                                                                                                                                                                                                                                         var21 = 1;
-                                                                                                                                                                                                                                                    } else if (this.d == -9) {
+                                                                                                                                                                                                                                                    } else if (this.d == -120) {
+                        var21 = 7;
+                    } else if (this.d == -9) {
                                                                                                                                                                                                                                                         var21 = 4;
                                                                                                                                                                                                                                                         var6 += 3;
                                                                                                                                                                                                                                                     }

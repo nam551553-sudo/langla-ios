@@ -3,16 +3,16 @@ package beatdz;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
+
+
+
+
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-/** One background worker. No map/world mutation, server movement requests, or GL calls. */
+/** Bounded background image preparation. No world mutation, movement requests, or GL calls. */
 public final class MapAssetPrefetch {
     
     
@@ -33,7 +33,7 @@ public final class MapAssetPrefetch {
     
     
 
-    private static Set<Short> hintedTrees(int map) throws IOException {
+    private static synchronized Set<Short> hintedTrees(int map) throws IOException {
         if (beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().hints == null) {
             beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().hints = new LinkedHashMap<Integer, Set<Short>>();
             try (DataInputStream input = new DataInputStream(com.badlogic.gdx.Gdx.files.internal("resource/map-prefetch.bin").read())) {
@@ -107,54 +107,120 @@ public final class MapAssetPrefetch {
     }
 
     public static void schedule(int map) {
-        synchronized (beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().LOCK) {
-            beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().pendingMap = map;
-            beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().revision++;
-            if (beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().worker == null) {
-                beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().worker = new Thread(MapAssetPrefetch::run, "map-prefetch");
-                beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().worker.setDaemon(true);
-                beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().worker.start();
+        SessionState state = $state_MapAssetPrefetch();
+        String view = Binary2.a("tree_0") + ":" + DataCenter.a("iconTree/0.png");
+        synchronized (state.LOCK) {
+            if (state.scheduledMap == map && view.equals(state.scheduledView)) return;
+            state.scheduledView = view;
+            state.tasks.clear();
+            state.scheduledMap = map;
+            state.priorityMap = -1;
+            state.pendingMap = map;
+            state.revision++;
+            if (state.worker == null) {
+                // Two speculative requests globally leave room for visible-map downloads.
+                for (int i = 0; i < 2; i++) {
+                    Thread worker = new Thread(MultiSession.bind(MapAssetPrefetch::run), "map-prefetch-" + i);
+                    worker.setDaemon(true);
+                    if (state.worker == null) state.worker = worker;
+                    worker.start();
+                }
             }
-            beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().LOCK.notifyAll();
+            state.LOCK.notifyAll();
         }
+    }
+
+    /** Reorder speculation near a portal; never move the character or request a map change. */
+    public static void approach(int map, int x, int y, short[][] links) {
+        SessionState state = $state_MapAssetPrefetch();
+        long now = System.currentTimeMillis();
+        if (now < state.nextPortalCheck) return;
+        state.nextPortalCheck = now + 500;
+        int target = nearest(map, x, y, links);
+        if (target < 0) return;
+        synchronized (state.LOCK) {
+            if (state.scheduledMap != map || state.priorityMap == target) return;
+            state.priorityMap = target;
+            state.pendingMap = map;
+            state.tasks.clear();
+            state.LOCK.notifyAll();
+        }
+    }
+
+    static int nearest(int map, int x, int y, short[][] links) {
+        int target = -1;
+        long best = 360L * 360L;
+        if (links != null) for (short[] link : links) {
+            if (link == null || link.length < 10) continue;
+            int other, px, py;
+            if (link[0] == map) { other = link[5]; px = (link[1] + link[3]) / 2; py = link[4]; }
+            else if (link[5] == map) { other = link[0]; px = (link[6] + link[8]) / 2; py = link[9]; }
+            else continue;
+            long dx = (long)x - px, dy = (long)y - py, distance = dx*dx + dy*dy;
+            if (other >= 0 && other != map && distance < best) { best = distance; target = other; }
+        }
+        return target;
+    }
+
+    static Set<Integer> order(int map, int priority, short[][] links) {
+        LinkedHashSet<Integer> result = new LinkedHashSet<Integer>();
+        if (priority >= 0) result.add(priority);
+        result.add(map);
+        result.addAll(neighbours(map, links));
+        return result;
+    }
+    private static LinkedHashSet<Short> plan(int map, int priority) {
+        LinkedHashSet<Short> unique = new LinkedHashSet<Short>();
+        for (int next : order(map, priority, DataCenter.gI().dataWayPoint)) {
+            try {
+                byte[] layout = Binary.read("arr_map_" + next);
+                Set<Short> trees;
+                try { trees = layout == null ? hintedTrees(next) : treeIds(layout); }
+                catch (IOException invalidLayout) { trees = hintedTrees(next); }
+                unique.addAll(trees);
+            } catch (Exception missingHints) {
+                com.badlogic.gdx.Gdx.app.debug("MapPrefetch", "No hints for map " + next);
+            }
+        }
+        return unique;
     }
 
     private static void run() {
+        SessionState state = $state_MapAssetPrefetch();
         while (true) {
-            int map, ticket;
-            synchronized (beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().LOCK) {
-                while (beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().pendingMap < 0) try { beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().LOCK.wait(); } catch (InterruptedException e) { return; }
-                map = beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().pendingMap; beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().pendingMap = -1; ticket = beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().revision;
+            short id = -1;
+            int map = -1, priority = -1, ticket;
+            synchronized (state.LOCK) {
+                while (state.pendingMap < 0 && state.tasks.isEmpty()) {
+                    try { state.LOCK.wait(); } catch (InterruptedException interrupted) { return; }
+                }
+                ticket = state.revision;
+                if (state.pendingMap >= 0) {
+                    map = state.pendingMap;
+                    priority = state.priorityMap;
+                    state.pendingMap = -1;
+                } else id = state.tasks.removeFirst();
             }
-            try {
-                Set<Integer> maps = neighbours(map, DataCenter.gI().dataWayPoint);
-                // Current map first fills off-screen tiles as well, then the adjacent maps.
-                LinkedHashSet<Integer> order = new LinkedHashSet<Integer>();
-                order.add(map); order.addAll(maps);
-                for (int next : order) {
-                    if (stale(ticket)) break;
-                    byte[] layout = Binary.read("arr_map_" + next);
-                    // Hints contain only image IDs, never collision, character or monster state.
-                    // They allow first-visit prefetch before the server sends that map's layout.
-                    Set<Short> trees;
-                    try { trees = layout == null ? hintedTrees(next) : treeIds(layout); }
-                    catch (IOException invalidLayout) { trees = hintedTrees(next); }
-                    for (short id : trees) {
-                        if (stale(ticket)) break;
-                        while (!beatdz.LangLa_cz.$state_LangLa_cz().cX.isEmpty() || !beatdz.LangLa_cz.$state_LangLa_cz().cW.isEmpty()) {
-                            if (stale(ticket)) break;
-                            Thread.sleep(150);
-                        }
-                        if (stale(ticket)) break;
-                        prefetch(id, ticket);
+            if (map >= 0) {
+                // File IO and layout parsing must never hold the lock used by the rendering thread's take().
+                LinkedHashSet<Short> tasks = plan(map, priority);
+                synchronized (state.LOCK) {
+                    if (ticket == state.revision && priority == state.priorityMap && state.pendingMap < 0) {
+                        state.tasks.addAll(tasks);
+                        state.LOCK.notifyAll();
                     }
                 }
-            } catch (Exception ignored) {
-                // Foreground loading remains the fallback for missing or newer map formats.
+                continue;
+            }
+            try {
+                // Foreground traffic has its own workers: do not wait for its entire queue to empty.
+                prefetch(id, ticket);
+            } catch (Exception failed) {
+                // One unavailable image must not abort the rest of the next map.
+                com.badlogic.gdx.Gdx.app.debug("MapPrefetch", "Image " + id + ": " + failed.getMessage());
             }
         }
     }
-
     private static boolean stale(int ticket) {
         synchronized (beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().LOCK) { return ticket != beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().revision; }
     }
@@ -164,21 +230,25 @@ public final class MapAssetPrefetch {
     }
 
     private static void prefetch(short id, int ticket) throws Exception {
-        if (id < 0) return;
+        if (id < 0 || stale(ticket)) return;
+        mImage current = (mImage)LangLa_fq.$state_LangLa_fq().f.get(Short.valueOf(id));
+        if (current != null && (current.b != null || current.a != null) && current.c > 1 && current.d > 1) return;
         String key = key(id);
         synchronized (beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().LOCK) { if (beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().READY.containsKey(key)) return; }
         String path = "iconTree/" + id + ".png";
+        boolean downloaded = false;
         byte[] data = Binary.read("tree_" + id);
         if (data == null) {
             if (!DataCenter.a() || mConfig.isGDL() != 0) return;
-            data = download(DataCenter.gI().aU + DataCenter.gI().aY + (DataCenter.a(path) + 1) + "/" + path);
+            data = download(DataCenter.gI().aU + DataCenter.gI().aY + (DataCenter.a(path) + 1) + "/" + path, ticket);
             if (!Binary.isImageData(data) || stale(ticket) || !key.equals(key(id))) return;
-            Binary.write("tree_" + id, data);
+            downloaded = true;
             data = Utlis.a(data);
         }
         if (!Binary.isImageData(data) || stale(ticket)) return;
         mImage image = mImage.a(data, 0, data.length);
         if (image == null) return;
+        if (downloaded) Binary.write("tree_" + id, data);
         long size = 4L * image.c * image.d;
         synchronized (beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().LOCK) {
             if (ticket != beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().revision || !key.equals(key(id)) || size > budget() || beatdz.MapAssetPrefetch.$state_MapAssetPrefetch().READY.containsKey(key)) { image.a(); return; }
@@ -200,29 +270,20 @@ public final class MapAssetPrefetch {
         }
     }
 
-    private static byte[] download(String url) throws IOException {
-        if (!MultiSession.PREFETCH_NETWORK.tryAcquire()) return null;
-        HttpURLConnection connection = null;
+    private static byte[] download(String url, int ticket) throws Exception {
+        MultiSession.PREFETCH_NETWORK.acquire();
         try {
-            connection = (HttpURLConnection)new URL(url).openConnection();
-            connection.setConnectTimeout(2500); connection.setReadTimeout(3500);
-            if (connection.getResponseCode() != 200) return null;
-            try (InputStream input = connection.getInputStream(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-                byte[] buffer = new byte[8192]; int count;
-                while ((count = input.read(buffer)) != -1) {
-                    if (output.size() + count > 4 * 1024 * 1024) return null;
-                    output.write(buffer, 0, count);
-                }
-                return output.toByteArray();
-            }
-        } finally {
-            if (connection != null) connection.disconnect();
-            MultiSession.PREFETCH_NETWORK.release();
-        }
+            if (stale(ticket)) return null;
+            return MapAssetDownloads.load(url);
+        } finally { MultiSession.PREFETCH_NETWORK.release(); }
     }
-
 // Mutable legacy globals belong to the current account, including background callbacks.
 public static final class SessionState implements beatdz.MultiSession.State {
+public int scheduledMap = -1;
+public String scheduledView;
+public int priorityMap = -1;
+public long nextPortalCheck;
+public java.util.LinkedList<Short> tasks = new java.util.LinkedList<Short>();
 public Object LOCK;
 public LinkedHashMap<String, mImage> READY;
 public long bytes;

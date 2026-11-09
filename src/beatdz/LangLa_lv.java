@@ -19,7 +19,9 @@ public class LangLa_lv extends LangLa_fo {
       this.p = var1;
       this.d = var2;
       this.r = false;
-      if (var2.vangBuy > 0) {
+      if (var2.shopCurrencyId == LucDaoShopUI.CARD) {
+         this.e = 7;
+      } else if (var2.vangBuy > 0) {
          this.e = 2;
       } else if (var2.vangKhoaBuy > 0) {
          this.e = 3;
@@ -86,7 +88,7 @@ public class LangLa_lv extends LangLa_fo {
       a(var1, 54, 5 + 90, this.i, this.e);
       if (!this.h && (this.j == 0 || this.j % 10 > 5)) {
          Item var3;
-         mFont.b(mFont.d, var1, Caption.aM + " " + ((var3 = this.d).vangBuy > 0 ? Caption.rs[0] : (var3.vangKhoaBuy > 0 ? Caption.rs[1] : (var3.bacBuy > 0 ? Caption.rs[2] : (var3.bacKhoaBuy > 0 ? Caption.rs[3] : (var3.tinhThachBuy > 0 ? Caption.rs[4] : ""))))), 9, 5 + 108, 0, -65536, -16777216);
+         mFont.b(mFont.d, var1, Caption.aM + " " + ((var3 = this.d).shopCurrencyId == LucDaoShopUI.CARD ? LucDaoShopUI.NAME : (var3.vangBuy > 0 ? Caption.rs[0] : (var3.vangKhoaBuy > 0 ? Caption.rs[1] : (var3.bacBuy > 0 ? Caption.rs[2] : (var3.bacKhoaBuy > 0 ? Caption.rs[3] : (var3.tinhThachBuy > 0 ? Caption.rs[4] : "")))))), 9, 5 + 108, 0, -65536, -16777216);
       }
 
    }
@@ -94,7 +96,11 @@ public class LangLa_lv extends LangLa_fo {
    public void b() {
       this.h = true;
       this.g = (long)this.c.e() * (long)this.d.d();
-      if (this.d.vangBuy > 0) {
+      if (this.d.shopCurrencyId == LucDaoShopUI.CARD) {
+         long balance = LucDaoShopUI.balance();
+         this.i = Long.toString(balance);
+         this.h = balance >= this.g;
+      } else if (this.d.vangBuy > 0) {
          this.i = "" + Char.gI().vang;
          if ((long)Char.gI().vang < this.g) {
             this.h = false;

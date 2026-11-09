@@ -278,12 +278,12 @@ public class Controller implements IMessageHandler {
 
                     return;
                 case -110:
-                    DataCenter.gI().getScreen().l(msg.readUTF());
+                    DataCenter.gI().getScreen().l(GameBrand.systemNotice(msg.readUTF()));
                     return;
                 case -109:
                     MainScreen var90 = DataCenter.gI().getScreen();
                     // System.out.println(msg.reader.dis.available());
-                    String var10001 = msg.readUTF();
+                    String var10001 = GameBrand.systemNotice(msg.readUTF());
                     var77 = msg.readByte();
                
                     var65 = var10001;

@@ -69,6 +69,10 @@ public class DesktopLauncher implements AppEventListener, IDialogTextListener {
                 config.foregroundFPS = 60;
                 config.backgroundFPS = 15;
                 config.vSyncEnabled = true;
+                beatdz.FrameRate.install(fps -> {
+                    config.foregroundFPS = fps;
+                    Gdx.graphics.setVSync(fps == 60);
+                });
                 GameM.a((IDialogTextListener) (b));
                 short[] sc = Binary.b();
                 config.width = sc[0];
@@ -76,7 +80,7 @@ public class DesktopLauncher implements AppEventListener, IDialogTextListener {
                 config.addIcon("resource/icons/icon-128.png", FileType.Internal);
                 config.addIcon("resource/icons/icon-32.png", FileType.Internal);
                 config.addIcon("resource/icons/icon-16.png", FileType.Internal);
-                config.title = "Làng Lá Test";
+                config.title = "Làng Lá Blue";
                 config.resizable = false;
                 GameM.b(b);
                 new LwjglApplication(GameM.l(), config);

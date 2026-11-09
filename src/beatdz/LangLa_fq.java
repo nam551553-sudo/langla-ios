@@ -413,7 +413,7 @@ public class LangLa_fq {
    private static void a(int var0, String var1, Hashtable var2) {
       if ("tree".equals(var1)) {
          mImage ready = MapAssetPrefetch.take((short)var0);
-         if (ready != null) { var2.put((short)var0, ready); return; }
+         if (ready != null) { var2.put((short)var0, ready); GameSrc.gI().cb.add(ready); return; }
       }
       mImage var3 = beatdz.LangLa_fq.$state_LangLa_fq().a;
       var2.put(new Short((short)var0), var3);

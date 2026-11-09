@@ -1,13 +1,17 @@
 package beatdz;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.utils.Base64Coder;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 
 /** Client for the server's existing bank top-up events; never credits currency locally. */
 public final class GoldTopUpPanel extends LangLa_fo {
+    private static final Pattern EMBEDDED_PNG = Pattern.compile("href=\"data:image/png;base64,([A-Za-z0-9+/=]+)\"");
     @Override public void a(int event, Object value) { }
     @Override public void a(int event, Object value, LangLa_cy source) { }
     @Override public void b() { tiers.b(); }
@@ -57,7 +61,12 @@ public final class GoldTopUpPanel extends LangLa_fo {
             byte[] result = null;
             HttpURLConnection connection = null;
             try {
-                connection = (HttpURLConnection)new URI(source).toURL().openConnection();
+                URI imageUri = new URI(source);
+                if (imageUri.getPath().endsWith(".png")) {
+                    String svgUrl = source.replaceFirst("\\.png(?=\\?|$)", ".svg");
+                    imageUri = new URI(svgUrl);
+                }
+                connection = (HttpURLConnection)imageUri.toURL().openConnection();
                 connection.setConnectTimeout(10000);
                 connection.setReadTimeout(10000);
                 connection.setInstanceFollowRedirects(false);
@@ -69,7 +78,14 @@ public final class GoldTopUpPanel extends LangLa_fo {
                         if (output.size() + count > 2 * 1024 * 1024) throw new java.io.IOException();
                         output.write(buffer, 0, count);
                     }
-                    result = output.toByteArray();
+                    byte[] bytes = output.toByteArray();
+                    String contentType = connection.getContentType();
+                    if (contentType != null && contentType.startsWith("image/svg+xml")) {
+                        java.util.regex.Matcher png = EMBEDDED_PNG.matcher(new String(bytes, StandardCharsets.UTF_8));
+                        if (png.find()) result = Base64Coder.decode(png.group(1));
+                    } else if (contentType != null && contentType.startsWith("image/png")) {
+                        result = bytes;
+                    }
                 }
             } catch (Exception ignored) {
                 // The browser fallback remains available; never log payment references or URLs.

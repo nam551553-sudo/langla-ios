@@ -41,7 +41,7 @@ public class LangLa_bw extends LangLa_fo {
    }
 
    public void a(int var1, Item[][] var2, boolean[] var3) {
-      if (this.b[this.a.b.b] == null) {
+      if (this.b[var1] == null) {
          this.t[var1] = false;
          this.b[var1] = new Item[GameSrc.gI().l.size()];
          int var4 = this.j;
@@ -141,6 +141,10 @@ public class LangLa_bw extends LangLa_fo {
          case 3:
             GameSrc.gI();
             GameSrc.openFunc(40);
+            return;
+         case 4:
+            GameSrc.openFunc(LucDaoShopUI.TYPE);
+            return;
          }
       }
 

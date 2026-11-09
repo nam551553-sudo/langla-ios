@@ -15,7 +15,8 @@ public class IOSStartupSmoke extends IOSLauncher {
         Thread monitor = new Thread(() -> {
             while (true) {
                 try { Thread.sleep(1000); } catch (InterruptedException error) { return; }
-                if (Gdx.app == null) continue;
+                // Gdx.app is assigned before IOSApplication finishes creating its graphics backend.
+                if (Gdx.app == null || Gdx.graphics == null) continue;
                 Gdx.app.postRunnable(() -> {
                     DataCenter data = DataCenter.gI();
                     System.out.println("IOS_SMOKE phase=" + data.startupPhase + " bytes=" + Session.gI().countRecv

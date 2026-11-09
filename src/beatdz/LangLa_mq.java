@@ -44,6 +44,7 @@ public class LangLa_mq extends LangLa_fm {
       beatdz.LangLa_mq.$state_LangLa_mq().k = Utlis.time();
       if (var6 == null) {
          this.f = true;
+         this.setXY(this.a.cx, this.a.cy);
       } else {
          Item var7 = var3.b;
          int var4 = mFont.b(mFont.f, var7.getItemTemplate().name + " (+" + var7.level + ")");
@@ -73,6 +74,7 @@ public class LangLa_mq extends LangLa_fm {
          }
 
          this.h = a(this.g);
+         this.setXY(this.b, this.c);
          if (var7.equals(beatdz.LangLa_mq.$state_LangLa_mq().i) && beatdz.LangLa_mq.$state_LangLa_mq().k - beatdz.LangLa_mq.$state_LangLa_mq().j < 1000L) {
             this.l = true;
             this.s.cL = null;
@@ -88,7 +90,7 @@ public class LangLa_mq extends LangLa_fm {
       if (this.l) {
          this.a();
          this.s.cL = null;
-      } else if (Utlis.time() - beatdz.LangLa_mq.$state_LangLa_mq().k >= 100L) {
+      } else {
          int var2 = var1.a;
          int var3 = var1.b;
          if (this.f) {
@@ -234,6 +236,7 @@ public class LangLa_mq extends LangLa_fm {
             return;
          case 101:
             this.f = true;
+            this.setXY(this.a.cx, this.a.cy);
             return;
          case 1011:
             return;
