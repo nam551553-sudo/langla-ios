@@ -1323,9 +1323,8 @@ public class Char extends Entity {
             var10 = Integer.MIN_VALUE;
         }
 
-        boolean fitCape = customCostume != null && hasCape;
-        boolean backPose = fitCape && CostumeCape.showsBack(var5);
-        if (fitCape && !backPose) CostumeCape.draw(var1, var4, customCostume, var5, var2, var3, var7);
+        boolean fitCape = hasCape && CostumeCape.canFit(customCostume, var5);
+        if (fitCape) CostumeCape.draw(var1, var4, customCostume, var5, var2, var3, var7, true);
 
         for (var11 = 0; var11 < var4.size(); ++var11) {
             var8 = (LangLa_jr) var4.elementAt(var11);
@@ -1361,8 +1360,8 @@ public class Char extends Entity {
                 var1.setClip(0, 0, DataCenter.gI().widthScreen, DataCenter.gI().heightScreen);
                 var1.a(var12, var13);
             }
-            if (fitCape && backPose && var8 == customCostume) {
-                CostumeCape.draw(var1, var4, customCostume, var5, var2, var3, var7);
+            if (fitCape && var8 == customCostume) {
+                CostumeCape.draw(var1, var4, customCostume, var5, var2, var3, var7, false);
             }
         }
 

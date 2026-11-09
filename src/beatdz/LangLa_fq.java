@@ -92,6 +92,25 @@ public class LangLa_fq {
       return a(var0, var1, var2, var3, var4, 0, 0, var5, "char", beatdz.LangLa_fq.$state_LangLa_fq().g, (byte)2, beatdz.LangLa_fq.$state_LangLa_fq().d, DataCenter.gI().ak);
    }
 
+   static void drawCapeRows(Graphics graphics, short icon, int transform, int x, int bottom,
+                            int width, int height, int firstRow, int endRow) {
+      Hashtable images = $state_LangLa_fq().g;
+      mImage sprite = (mImage) images.get(icon);
+      if (sprite == null) {
+         a(icon, "char", images);
+         return;
+      }
+      if (sprite.c <= 1 && sprite.d <= 1) return;
+
+      int sourceTop = Math.round(firstRow * sprite.d / (float) height);
+      int sourceBottom = Math.round(endRow * sprite.d / (float) height);
+      if (sourceTop >= sourceBottom) return;
+
+      int zoom = DataCenter.gI().zoomLevel;
+      graphics.drawImagePixelRows(sprite, sourceTop, sourceBottom - sourceTop,
+              transform, x, bottom, width * zoom, (endRow - firstRow) * zoom);
+   }
+
    public static short[] b(Graphics var0, int var1, int var2, int var3, int var4, int var5, int var6, int var7) {
       return a(var0, var1, var2, var3, var4, 51, var6, 33, "char", beatdz.LangLa_fq.$state_LangLa_fq().g, (byte)2, beatdz.LangLa_fq.$state_LangLa_fq().d, DataCenter.gI().ak);
    }

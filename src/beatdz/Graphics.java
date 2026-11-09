@@ -856,6 +856,19 @@ public class Graphics {
     }
 
     public void a(mImage var1, int var2, int var3, int var4, int var5, int var6, int var7, int var8, int var9, int var10, int var11) {
+        drawImage(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, false);
+    }
+
+    void drawImagePixelRows(mImage image, int top, int rows, int transform, int x, int bottom, int width, int height) {
+        if (this.k && transform < 0) {
+            drawRotatedImage(image, 0, top, image.c, rows, transform, x, bottom, width, height, 33, true);
+        } else {
+            drawImage(image, 0, top, image.c, rows, transform, x, bottom, width, height, 33, true);
+        }
+    }
+
+    private void drawImage(mImage var1, int var2, int var3, int var4, int var5, int var6, int var7, int var8,
+                           int var9, int var10, int var11, boolean sourceInPixels) {
         if (mConfig.gI().readByte(18) > 1) {
             if (this.spriteBatch == null) {
                 this.dispose();
@@ -872,7 +885,7 @@ public class Graphics {
                 var8 += this.b;
                 var7 *= DataCenter.gI().zoomLevel;
                 var8 *= DataCenter.gI().zoomLevel;
-                if (var4 > 1 && var5 > 1) {
+                if (!sourceInPixels && var4 > 1 && var5 > 1) {
                     var2 *= DataCenter.gI().zoomLevel;
                     var3 *= DataCenter.gI().zoomLevel;
                 }
@@ -994,6 +1007,11 @@ public class Graphics {
     }
 
     public void b(mImage var1, int var2, int var3, int var4, int var5, int var6, int var7, int var8, int var9, int var10, int var11) {
+        drawRotatedImage(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, false);
+    }
+
+    private void drawRotatedImage(mImage var1, int var2, int var3, int var4, int var5, int var6, int var7, int var8,
+                                  int var9, int var10, int var11, boolean sourceInPixels) {
         if (mConfig.gI().readByte(18) > 1) {
             if (this.spriteBatch == null) {
                 this.dispose();
@@ -1007,7 +1025,7 @@ public class Graphics {
                     var8 += this.b;
                     var7 *= DataCenter.gI().zoomLevel;
                     var8 *= DataCenter.gI().zoomLevel;
-                    if (var4 > 1 && var5 > 1) {
+                    if (!sourceInPixels && var4 > 1 && var5 > 1) {
                         var2 = 0 * DataCenter.gI().zoomLevel;
                         var3 *= DataCenter.gI().zoomLevel;
                     }
