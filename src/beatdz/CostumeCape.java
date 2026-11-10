@@ -4,19 +4,19 @@ import java.util.Vector;
 
 final class CostumeCape {
     private static final int FIRST_FULL_BODY_PART = 926;
-    private static final int LAST_FULL_BODY_PART = 959;
     private static final int HOKAGE_CAPE_FABRIC = 22;
     private static final int HOKAGE_CAPE_COLLAR = 27;
     private static final int FRONT_COLLAR_SCALE = 86;
 
-    // Shoulder offsets in game pixels for parts 926–959 (costume items 1091–1124).
+    // Shoulder offsets in game pixels for full-body parts starting at 926.
     // These account for asymmetry from hair, hats and auras in the full-body images.
     private static final int[][] SHOULDER_OFFSETS = {
         {1, -2}, {-1, 0}, {0, -1}, {0, -2}, {2, -1}, {3, -1}, {2, -1}, {2, -2},
         {0, -1}, {1, -2}, {2, -2}, {1, 1}, {1, 1}, {2, -1}, {2, 1}, {2, -3},
         {2, -3}, {1, -1}, {1, 0}, {-1, 0}, {1, 0}, {1, -1}, {1, -1}, {2, 0},
         {1, -1}, {2, -1}, {0, -1}, {3, -1}, {2, -1}, {-1, -2}, {1, -1}, {0, -2},
-        {1, 2}, {3, 3} // Buroto and Sunade Xinh V
+        {1, 2}, {3, 3}, // Buroto and Sunade Xinh V
+        {1, 0} // Han
     };
     private static final int[] SHOULDER_POSE_X = {
         0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, -1,
@@ -31,7 +31,7 @@ final class CostumeCape {
     private CostumeCape() { }
 
     static boolean isNewBody(LangLa_jr part) {
-        return part.a >= FIRST_FULL_BODY_PART && part.a <= LAST_FULL_BODY_PART;
+        return part.a >= FIRST_FULL_BODY_PART && part.a < FIRST_FULL_BODY_PART + SHOULDER_OFFSETS.length;
     }
 
     private static boolean showsBack(int pose) {
