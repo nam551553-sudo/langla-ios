@@ -2175,7 +2175,7 @@ public class Caption {
         tG = new String[]{"Sora", "Inuzuka", "Yamato", "Karu", "Kikunojou", "Kuranai", "Haruna", "Tamanaka", "Yakomo"};
         tH = new String[]{"Lớp: Kiếm\nĐịnh vị: Cận chiến\nHệ: Lôi\nMức thao tác: Khó\nThầy: Fugaki", "Lớp: Ám khí\nĐịnh vị: Viễn chiến\nHệ: Thổ\nMức thao tác: Dễ\nThầy: Doria", "Lớp: Gậy\nĐịnh vị: Viễn chiến\nHệ: Thủy\nMức thao tác: Khó\nCô: Nohara", "Lớp: Đao\nĐịnh vị: Viễn chiến\nHệ: Hỏa\nMức thao tác: Vừa\nThầy: Nawasaki", "Lớp: Dao\nĐịnh vị: Cận chiến\nHệ: Phong\nMức thao tác: Vừa\nThầy: Ultimo"};
         tI = new String[]{"Set 1", "Set 2", "Set 3", "All"};
-        tJ = new String[]{"Mặc định", "Ẩn cải trang", "Ẩn thời trang", "Ẩn cải trang và thời trang", "Ẩn Tanto"};
+        tJ = new String[]{"Mặc định", "Ẩn cải trang", "Ẩn thời trang", "Ẩn cải trang và thời trang", "Ẩn Tanto", "Ẩn áo choàng"};
     }
 
     static {

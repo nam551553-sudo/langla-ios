@@ -48,6 +48,7 @@ public class Char extends Entity {
         public int size = 60;//100%
         public TextureRegion[] array = new TextureRegion[0];
         public int[] array_Id = new int[0];
+        private TextureRegion lastFrame;
 
         public DanhHieuByBeatdz(String url) throws Exception {
             //DanhHieu\0
@@ -68,7 +69,7 @@ public class Char extends Entity {
             array = listTextureRegion.toArray(new TextureRegion[listTextureRegion.size()]);
         }
 
-        public DanhHieuByBeatdz(int... array) throws Exception {
+        public DanhHieuByBeatdz(int... array) {
             array_Id = array;
             this.array = new TextureRegion[array.length];
 //            //DanhHieu\0
@@ -234,6 +235,10 @@ public class Char extends Entity {
     public int aU;
     public int selectCaiTrang;
     private static final int HIDE_TANTO = 4;
+    private static final int HIDE_CAPE = 5;
+    private static final int CUU_VI_TITLE_FIRST_FRAME = 32228;
+    private static final int CUU_VI_TITLE_FRAME_COUNT = 24;
+    private DanhHieuByBeatdz cuuViCapeTitle;
     public int aW;
     public int aX;
     public int aY;
@@ -2866,10 +2871,12 @@ public class Char extends Entity {
                 }
             }
 
-            if (this.arrItemBody2[12] != null && this.arrItemBody2[12].id == 127) {
-                this.addEquippedCape(var3, this.arrItemBody2[12]);
-            } else if (var1[12] != null && (this.aS || var1[16] == null || var1[16].id != 861)) {
-                this.addEquippedCape(var3, var1[12]);
+            if (this.selectCaiTrang != HIDE_CAPE) {
+                if (this.arrItemBody2[12] != null && this.arrItemBody2[12].id == 127) {
+                    this.addEquippedCape(var3, this.arrItemBody2[12]);
+                } else if (var1[12] != null && (this.aS || var1[16] == null || var1[16].id != 861)) {
+                    this.addEquippedCape(var3, var1[12]);
+                }
             }
 
             return var3;
@@ -3093,6 +3100,9 @@ public class Char extends Entity {
         }
         if (this.selectDanhHieu == 0) {
             if (this.arrItemBody[12] != null) {
+                if (this.arrItemBody[12].id == CostumeCape.CUU_VI_ITEM_ID) {
+                    return this.drawAnimatedTitle(var1, var2, var3, this.getCuuViCapeTitle());
+                }
                 String var4 = this.arrItemBody[12].getItemTemplate().name.replaceAll(Caption.kU, "").trim().replaceAll(Caption.oc, "").trim();
                 switch (this.V()) {
                     case 1:
@@ -3140,25 +3150,9 @@ public class Char extends Entity {
                 }
             }
         } else if (this.selectDanhHieu >= 0 && this.selectDanhHieu < this.aG.length) {
-            if(this.aG[this.selectDanhHieu].isNew){
-                if (this.aG[this.selectDanhHieu].data != null) {
-                    var2 += this.aG[this.selectDanhHieu].data.x;
-                    var3 += this.aG[this.selectDanhHieu].data.y;
-                    int index = ((int) ((System.currentTimeMillis() / this.aG[this.selectDanhHieu].data.timeMS) % this.aG[this.selectDanhHieu].data.array.length));
-                    TextureRegion data = this.aG[this.selectDanhHieu].data.array[index];
-                    if (data != null) {
-                        var1.a2(var1, data, 0, var2, var3, getZ(data.getRegionWidth(), this.aG[this.selectDanhHieu].data.size), getZ(data.getRegionHeight(), this.aG[this.selectDanhHieu].data.size));
-                    } else {
-                        mImage var23 = LangLa_fq.a((int) this.aG[this.selectDanhHieu].data.array_Id[index]); // => iconClient
-                        //mImage var23 = LangLa_fq.a2((int) this.data.array_Id[index]); => iconChar
-                        if (var23 != beatdz.LangLa_fq.$state_LangLa_fq().a) {
-                            this.aG[this.selectDanhHieu].data.array[index] = (new TextureRegion(var23.b()));
-                            Canvas.vImage.remove(var23);
-                        }
-                    }
-                    return var3;
-                }
-            }else {
+            if (this.aG[this.selectDanhHieu].isNew) {
+                return this.drawAnimatedTitle(var1, var2, var3, this.aG[this.selectDanhHieu].data);
+            } else {
                 if (this.aG[this.selectDanhHieu].c > 0) {
                     mFont.a(mFont.h, var1, this.aG[this.selectDanhHieu].a.trim(), var2, var3 - 10, 2, -this.aG[this.selectDanhHieu].c, 3, 1, 1, 3);
                     return var3 - 12;
@@ -3170,6 +3164,42 @@ public class Char extends Entity {
         }
 
         return var3 + 2;
+    }
+
+    private DanhHieuByBeatdz getCuuViCapeTitle() {
+        if (this.cuuViCapeTitle == null) {
+            int[] frames = new int[CUU_VI_TITLE_FRAME_COUNT];
+            for (int index = 0; index < frames.length; index++) {
+                frames[index] = CUU_VI_TITLE_FIRST_FRAME + index;
+            }
+            this.cuuViCapeTitle = new DanhHieuByBeatdz(frames);
+            this.cuuViCapeTitle.y = -10;
+            this.cuuViCapeTitle.timeMS = 40;
+            this.cuuViCapeTitle.size = 100;
+        }
+        return this.cuuViCapeTitle;
+    }
+
+    private int drawAnimatedTitle(Graphics graphics, int x, int y, DanhHieuByBeatdz title) {
+        if (title == null || title.timeMS <= 0 || title.array.length == 0) return y + 2;
+        int frame = (int) (System.currentTimeMillis() / title.timeMS % title.array.length);
+        TextureRegion texture = title.array[frame];
+        if (texture == null) {
+            mImage image = LangLa_fq.a(title.array_Id[frame]);
+            if (image != null && image != LangLa_fq.$state_LangLa_fq().a) {
+                texture = new TextureRegion(image.b());
+                title.array[frame] = texture;
+                Canvas.vImage.remove(image);
+            }
+        }
+        if (texture != null) title.lastFrame = texture;
+        texture = title.lastFrame;
+        int titleY = y + title.y;
+        if (texture != null) {
+            graphics.a2(graphics, texture, 0, x + title.x, titleY,
+                    getZ(texture.getRegionWidth(), title.size), getZ(texture.getRegionHeight(), title.size));
+        }
+        return titleY;
     }
 
     private int e(Graphics var1, int var2, int var3) {

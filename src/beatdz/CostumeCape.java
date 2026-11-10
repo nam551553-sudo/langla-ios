@@ -3,9 +3,12 @@ package beatdz;
 import java.util.Vector;
 
 final class CostumeCape {
+    static final int CUU_VI_ITEM_ID = 1128;
     private static final int FIRST_FULL_BODY_PART = 926;
     private static final int HOKAGE_CAPE_FABRIC = 22;
     private static final int HOKAGE_CAPE_COLLAR = 27;
+    private static final int CUU_VI_FABRIC = 962;
+    private static final int CUU_VI_COLLAR = 963;
     private static final int FRONT_COLLAR_SCALE = 86;
 
     // Shoulder offsets in game pixels for full-body parts starting at 926.
@@ -95,7 +98,7 @@ final class CostumeCape {
                 top = Math.max(top, bottom - 12);
             }
 
-            if (collar && !back) {
+            if (collar && !back && part.a != CUU_VI_COLLAR) {
                 // Fit the collar around the narrower front shoulders. The upper
                 // ornament sits behind the hair and the clasp crosses the chest.
                 width = fitCollar(width);
@@ -123,7 +126,7 @@ final class CostumeCape {
 
     private static boolean isCollar(int part) {
         switch (part) {
-            case 25: case 26: case 27: case 28: case 414: case 469: case 737: case 837:
+            case 25: case 26: case 27: case 28: case 414: case 469: case 737: case 837: case CUU_VI_COLLAR:
                 return true;
             default:
                 return false;
@@ -133,7 +136,7 @@ final class CostumeCape {
     private static boolean isFabric(int part) {
         switch (part) {
             case 19: case 20: case 21: case 22: case 23: case 24: case 29:
-            case 415: case 470: case 616: case 738: case 838:
+            case 415: case 470: case 616: case 738: case 838: case CUU_VI_FABRIC:
                 return true;
             default:
                 return false;
