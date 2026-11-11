@@ -30,19 +30,38 @@ jobs:
         with:
           persist-credentials: false
       - uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: ios-hd-assets
           path: ios/bootstrap/data/ios-hd/
-          run-id: 43098225873
+          run-id: 43105376122
           github-token: ${{ github.token }}
-      - name: Verify reused HD archives
-        working-directory: ios/bootstrap/data/ios-hd
+      - name: Verify or fetch source HD archives
         run: |
-          echo '3dba78831aaec114912d7cddc601c111bc4874b137fdaabc6650ac1addac0015  zoom3/iconClient.zip' | sha256sum -c
-          echo '696edf3c0ba4f34e8b17a3a83a78a0663c0dc038fc9b670b1915f835e4bed6a3  zoom4/iconClient.zip' | sha256sum -c
+          root=ios/bootstrap/data/ios-hd
+          verify() {
+            (cd "$root" && sha256sum -c <<'SHA256'
+          3dba78831aaec114912d7cddc601c111bc4874b137fdaabc6650ac1addac0015  zoom3/iconClient.zip
+          696edf3c0ba4f34e8b17a3a83a78a0663c0dc038fc9b670b1915f835e4bed6a3  zoom4/iconClient.zip
+          SHA256
+            )
+          }
+          if ! verify; then
+            python3 tools/ci/prepare-ios-hd.py
+            verify
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: ios-hd-assets
+          path: ios/bootstrap/data/ios-hd/
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
+      - name: Pack the UI icons needed on startup
+        run: python3 tools/ci/compact-ios-icons.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-startup-icons
           path: ios/bootstrap/data/ios-hd/
           compression-level: 0
           if-no-files-found: error
@@ -61,7 +80,7 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
-          name: ios-hd-assets
+          name: ios-startup-icons
           path: ios/bootstrap/data/ios-hd/
       - uses: actions/setup-java@v4
         with:
@@ -97,7 +116,7 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
-          name: ios-hd-assets
+          name: ios-startup-icons
           path: ios/bootstrap/data/ios-hd/
       - uses: actions/setup-java@v4
         with:
@@ -127,6 +146,11 @@ jobs:
             args+=(-Probovm.iosSkipSigning=true)
           fi
           ./gradlew "${args[@]}" '-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8' :ios:createIPA --max-workers=2 --no-daemon --stacktrace
+          while IFS= read -r -d '' ipa; do
+            if zipinfo -1 "$ipa" | awk '/^Symbols\// {found=1} END {exit !found}'; then
+              zip -dq "$ipa" 'Symbols/*'
+            fi
+          done < <(find ios/build/robovm -type f -name '*.ipa' -print0)
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:

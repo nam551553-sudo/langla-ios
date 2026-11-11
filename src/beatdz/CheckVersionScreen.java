@@ -374,7 +374,7 @@ public class CheckVersionScreen extends ScreenLogin {
                     var0.h += (long) var18.b;
                     DataCenter.gI().ba = false;
                 } else if (var18.b != 0 && var18.b != var18.c) {
-                    var0.h += (long) var18.b;
+                    var0.h += AssetArchives.startupBytes(var18.d, var18.b);
                     if (var18.a()) {
                         DataCenter.gI().ba = false;
                     } else if (var18.d.contains("Client")) {

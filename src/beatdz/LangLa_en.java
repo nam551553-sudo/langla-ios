@@ -27,10 +27,8 @@ public class LangLa_en {
                var1 = 28;
             }
 
-            byte[] var2 = Utlis.b(Utlis.internal("music/" + var1).readBytes());
-            Binary.write("music" + var1, var2, "mp3");
-            this.e = Gdx.audio.newSound(Utlis.external(Binary.a + "music" + var1 + ".mp3"));
-            Binary.deleteStartsWith("music");
+            this.e = Gdx.audio.newSound(AudioAssets.open("music", var1));
+            AudioAssets.cleanLegacyFiles("music");
             this.e.play();
          }
 

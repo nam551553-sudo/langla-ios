@@ -8,6 +8,45 @@ allprojects {
 }
 ext.gdxVersion = '1.12.1'
 ext.roboVMVersion = '2.3.23'
+ext.desktopRuntimeModules = 'java.desktop,java.logging,java.management,jdk.unsupported,jdk.crypto.ec,jdk.localedata'
+ext.desktopRuntimeOptions = '--strip-debug --no-man-pages --no-header-files'
+
+// Audio is stored in the source tree with the legacy byte shift. Package the same MP3 data
+// with its real extension so each platform can open it directly, without a runtime file copy.
+@groovy.transform.CompileStatic
+static byte[] decodeAudio(File source) {
+    byte[] audio = source.bytes
+    int shift = audio.length & 255
+    if (shift == 0) shift = 100
+    for (int i = 0; i < audio.length; i++) audio[i] = (byte) (audio[i] - shift)
+    return audio
+}
+
+def gameAssets = layout.buildDirectory.dir('gameAssets')
+tasks.register('prepareGameAssets') {
+    inputs.files(fileTree('resource'), fileTree('DanhHieu'), fileTree('music'), fileTree('sound'))
+    outputs.dir(gameAssets)
+    doLast {
+        File output = gameAssets.get().asFile
+        project.sync {
+            from(rootDir) {
+                include 'resource/**', 'DanhHieu/**'
+                exclude 'resource/icons/*.ico', 'resource/icons/lang-la-blue.png', 'resource/icons/icon-48.png',
+                        'resource/icons/icon-64.png', 'resource/icons/icon-256.png', 'resource/icons/icon-512.png',
+                        'resource/icons/icon-1024.png'
+            }
+            into output
+        }
+        ['music', 'sound'].each { group ->
+            File folder = new File(output, group)
+            folder.mkdirs()
+            fileTree(group).files.findAll { it.name ==~ /[0-9]+/ }.each { source ->
+                new File(folder, source.name + '.mp3').bytes = decodeAudio(source)
+            }
+        }
+    }
+}
+
 subprojects {
     tasks.withType(Jar).configureEach { preserveFileTimestamps = false; reproducibleFileOrder = true }
     tasks.withType(JavaCompile).configureEach {
