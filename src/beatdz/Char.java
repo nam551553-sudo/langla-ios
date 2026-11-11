@@ -1349,7 +1349,9 @@ public class Char extends Entity {
                 var1.d((float) var8.c);
             }
 
-            if (var7) {
+            if (CostumeTanto.draw(var1, customCostume, var5, var8.d[var15], var2, var3, var7)) {
+                // The equipped Tanto is anchored to the full-body pose.
+            } else if (var7) {
                 LangLa_fq.b(var1, var8.d[var15].a, Utlis.b(var8.d[var15].b), var2 - var8.d[var15].d, var3 + var8.d[var15].e, 33);
             } else {
                 LangLa_fq.b(var1, var8.d[var15].a, Utlis.a(var8.d[var15].b), var2 + var8.d[var15].d, var3 + var8.d[var15].e, 33);

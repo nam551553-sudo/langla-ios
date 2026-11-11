@@ -143,7 +143,7 @@ final class CostumeCape {
         }
     }
 
-    private static LangLa_et spriteSize(DataCenter data, short iconId) {
+    static LangLa_et spriteSize(DataCenter data, short iconId) {
         if (iconId == 0) return null;
         LangLa_et size = (LangLa_et) data.ak.get(iconId);
         if (size == null) size = (LangLa_et) data.am.get(iconId);
