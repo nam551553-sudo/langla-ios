@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   hd-assets:
@@ -28,7 +29,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - run: python3 tools/ci/prepare-ios-hd.py
+      - uses: actions/download-artifact@v4
+        with:
+          name: ios-hd-assets
+          path: ios/bootstrap/data/ios-hd/
+          run-id: 42925793890
+          github-token: ${{ github.token }}
+      - name: Verify reused HD archives
+        working-directory: ios/bootstrap/data/ios-hd
+        run: |
+          echo '3dba78831aaec114912d7cddc601c111bc4874b137fdaabc6650ac1addac0015  zoom3/iconClient.zip' | sha256sum -c
+          echo '696edf3c0ba4f34e8b17a3a83a78a0663c0dc038fc9b670b1915f835e4bed6a3  zoom4/iconClient.zip' | sha256sum -c
       - uses: actions/upload-artifact@v4
         with:
           name: ios-hd-assets
