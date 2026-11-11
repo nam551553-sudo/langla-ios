@@ -1349,7 +1349,7 @@ public class Char extends Entity {
                 var1.d((float) var8.c);
             }
 
-            if (CostumeTanto.draw(var1, customCostume, var5, var8.d[var15], var2, var3, var7)) {
+            if (CostumeTanto.draw(var1, customCostume, var5, var8, var8.d[var15], var2, var3, var7)) {
                 // The equipped Tanto is anchored to the full-body pose.
             } else if (var7) {
                 LangLa_fq.b(var1, var8.d[var15].a, Utlis.b(var8.d[var15].b), var2 - var8.d[var15].d, var3 + var8.d[var15].e, 33);
@@ -2847,6 +2847,7 @@ public class Char extends Entity {
                 this.a(var3, var1[10].getItemTemplate().idChar, 0);
             }
 
+            int firstWeaponPart = var3.size();
             Item tanto = this.selectCaiTrang == HIDE_TANTO ? null : var1[15];
             Item reserveTanto = this.selectCaiTrang == HIDE_TANTO ? null : this.arrItemBody2[15];
             if (this.aP >= 0 && DataCenter.gI().ItemTemplate[this.aP].idChar > 0) {
@@ -2870,6 +2871,12 @@ public class Char extends Entity {
                     this.a(var3, var1[1].getItemTemplate().idChar, var1[1].level, 9, var1[1].getItemTemplate().levelNeed);
                 } else {
                     this.a(var3, var1[1].getItemTemplate().idChar, var1[1].level, 0, var1[1].getItemTemplate().levelNeed);
+                }
+            }
+
+            if (this.aP < 0 || DataCenter.gI().ItemTemplate[this.aP].idChar <= 0) {
+                for (int i = firstWeaponPart; i < var3.size(); i++) {
+                    ((LangLa_jr) var3.elementAt(i)).heldWeapon = true;
                 }
             }
 

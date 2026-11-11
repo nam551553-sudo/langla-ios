@@ -2,6 +2,16 @@ package beatdz;
 
 /** Positions the Cuu Vi Tanto grip on full-body costume sprites. */
 final class CostumeTanto {
+    static final int BORUTO_BODY = 974;
+    private static final int BORUTO_FIRST_TEXTURE = 30300;
+    private static final int[][] BORUTO_HAND = {
+        {-10,-10}, {-11,-11}, {-12,-17}, {-12,-16}, {-13,-16}, {-13,-16},
+        {-13,-16}, {-13,-17}, {-15,-22}, {7,-11}, {-15,-19}, {6,-17},
+        {-13,-18}, {3,-13}, {-3,-6}, {-10,-9}, {8,-10}, {-10,-18},
+        {-7,-13}, {-16,-23}, {-16,-24}, {-11,-18}, {-12,-21}, {-15,-21},
+        {-14,-22}, {-8,-15}, {0,-9}
+    };
+
     private static final int FIRST_TANTO_TEXTURE = 30100;
     private static final int LAST_TANTO_TEXTURE = 30159;
 
@@ -19,21 +29,42 @@ final class CostumeTanto {
     private CostumeTanto() {}
 
     static boolean draw(Graphics graphics, LangLa_jr costume, int bodyPose,
-                        LangLa_ju tanto, int x, int y, boolean flip) {
+                        LangLa_jr weapon, LangLa_ju tanto, int x, int y, boolean flip) {
         if (costume == null || bodyPose < 0 || bodyPose >= HAND.length
-                || bodyPose >= costume.d.length || tanto.a < FIRST_TANTO_TEXTURE
-                || tanto.a > LAST_TANTO_TEXTURE) {
-            return false;
-        }
+                || bodyPose >= costume.d.length || tanto.a == 0) return false;
+        boolean cuuVi = tanto.a >= FIRST_TANTO_TEXTURE && tanto.a <= LAST_TANTO_TEXTURE;
+        boolean boruto = costume.a == BORUTO_BODY;
+        if (!cuuVi && !(boruto && weapon.heldWeapon)) return false;
 
         DataCenter data = DataCenter.gI();
         LangLa_ju body = costume.d[bodyPose];
         LangLa_et bodySize = CostumeCape.spriteSize(data, body.a);
-        LangLa_et tantoSize = CostumeCape.spriteSize(data, tanto.a);
-        if (bodySize == null || tantoSize == null) return false;
+        if (bodySize == null) return false;
 
         int handX = body.d + Math.round(bodySize.e * HAND[bodyPose][0] / 100f);
         int handY = body.e + Math.round(bodySize.e * HAND[bodyPose][1] / 100f);
+        if (boruto) {
+            int cel = body.a - BORUTO_FIRST_TEXTURE;
+            if (cel < 0 || cel >= BORUTO_HAND.length) return false;
+            handX = body.d + BORUTO_HAND[cel][0];
+            handY = body.e + BORUTO_HAND[cel][1];
+        }
+
+        if (!cuuVi) {
+            // Preserve the weapon frame's native grip, rotation and layering.
+            LangLa_ju reference = data.F[961].d[bodyPose];
+            LangLa_et referenceSize = CostumeCape.spriteSize(data, reference.a);
+            if (referenceSize == null) return false;
+            int dx = handX - reference.d - Math.round(referenceSize.e * HAND[bodyPose][0] / 100f);
+            int dy = handY - reference.e - Math.round(referenceSize.e * HAND[bodyPose][1] / 100f);
+            int center = tanto.d + dx;
+            LangLa_fq.b(graphics, tanto.a, flip ? Utlis.b(tanto.b) : Utlis.a(tanto.b),
+                    x + (flip ? -center : center), y + tanto.e + dy, 33);
+            return true;
+        }
+
+        LangLa_et tantoSize = CostumeCape.spriteSize(data, tanto.a);
+        if (tantoSize == null) return false;
         int width = tantoSize.d;
         int height = tantoSize.e;
         boolean vertical = width < height;
