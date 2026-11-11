@@ -68,6 +68,13 @@ final class CostumeTanto {
             if (referenceSize == null) return false;
             int dx = handX - reference.d - Math.round(referenceSize.e * HAND[bodyPose][0] / 100f);
             int dy = handY - reference.e - Math.round(referenceSize.e * HAND[bodyPose][1] / 100f);
+            // On rear-facing Kawaki frames, the exposed fist sits nearer the
+            // body than the stock weapon pivot for the same pose.
+            if (kawaki && (bodyPose == 18 || bodyPose == 19 || bodyPose == 21
+                    || bodyPose == 22 || bodyPose == 25 || bodyPose == 26 || bodyPose == 29)) {
+                dx -= 10;
+                dy += 1;
+            }
             int center = tanto.d + dx;
             LangLa_fq.b(graphics, tanto.a, flip ? Utlis.b(tanto.b) : Utlis.a(tanto.b),
                     x + (flip ? -center : center), y + tanto.e + dy, 33);
