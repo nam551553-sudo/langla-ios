@@ -1328,11 +1328,34 @@ public class Char extends Entity {
             var10 = Integer.MIN_VALUE;
         }
 
+        float savedMotionY = var1.motionY;
+        if (customCostume != null && isStandingPose(var5) && isStandingPose(var6)) {
+            // The two standing cels in full-body costumes can shift the face and grip.
+            // Keep one cel and move the costume and all equipped layers together.
+            if (var5 == 1 || var5 == 32) a(var4, --var5);
+            if (var6 == 1 || var6 == 32) --var6;
+            long periodMs = 1080L;
+            long phaseMs = (System.nanoTime() / 1_000_000L + 37L * this.idEntity) % periodMs;
+            var1.motionY -= 0.75f * (1.0f - (float) Math.cos(2.0 * Math.PI * phaseMs / periodMs));
+        }
+        try {
+            drawAppearance(var1, var2, var3, var4, var5, var6, var7, var10, customCostume, hasCape);
+        } finally {
+            var1.motionY = savedMotionY;
+        }
+    }
+
+    private static boolean isStandingPose(int pose) {
+        return pose == 0 || pose == 1 || pose == 31 || pose == 32;
+    }
+
+    private void drawAppearance(Graphics var1, int var2, int var3, Vector var4, int var5, int var6, boolean var7,
+                                int var10, LangLa_jr customCostume, boolean hasCape) {
         boolean fitCape = hasCape && CostumeCape.canFit(customCostume, var5);
         if (fitCape) CostumeCape.draw(var1, var4, customCostume, var5, var2, var3, var7, true);
 
-        for (var11 = 0; var11 < var4.size(); ++var11) {
-            var8 = (LangLa_jr) var4.elementAt(var11);
+        for (int var11 = 0; var11 < var4.size(); ++var11) {
+            LangLa_jr var8 = (LangLa_jr) var4.elementAt(var11);
             if (fitCape && var8.equippedCape) continue;
             int var15 = var5;
             if (var8.e()) {
