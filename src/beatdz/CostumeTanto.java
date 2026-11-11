@@ -5,6 +5,7 @@ final class CostumeTanto {
     static final int BORUTO_BODY = 974;
     static final int KAWAKI_BODY = 975;
     private static final int KAWAKI_FIRST_TEXTURE = 30400;
+    private static final int KAWAKI_IDLE_TEXTURE = 30427;
     private static final int[][] KAWAKI_HAND = {
         {-10,-11}, {-10,-11}, {-12,-18}, {-13,-17}, {-13,-17}, {-13,-17},
         {-13,-18}, {-12,-17}, {-14,-23}, {7,-12}, {-15,-19}, {7,-18},
@@ -55,12 +56,13 @@ final class CostumeTanto {
         int handX = body.d + Math.round(bodySize.e * HAND[bodyPose][0] / 100f);
         int handY = body.e + Math.round(bodySize.e * HAND[bodyPose][1] / 100f);
         if (boruto || kawaki) {
-            int cel = boruto && body.a == BORUTO_IDLE_TEXTURE ? 0
+            boolean kawakiIdle = kawaki && body.a == KAWAKI_IDLE_TEXTURE;
+            int cel = (boruto && body.a == BORUTO_IDLE_TEXTURE) || kawakiIdle ? 0
                     : body.a - (kawaki ? KAWAKI_FIRST_TEXTURE : BORUTO_FIRST_TEXTURE);
             int[][] hand = kawaki ? KAWAKI_HAND : BORUTO_HAND;
             if (cel < 0 || cel >= hand.length) return false;
             handX = body.d + hand[cel][0];
-            handY = body.e + hand[cel][1];
+            handY = body.e + hand[cel][1] - (kawakiIdle ? 1 : 0);
         }
 
         if (!cuuVi) {
