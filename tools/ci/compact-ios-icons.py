@@ -16,7 +16,7 @@ def compact(archive: Path) -> None:
             output.writestr(entry.filename, original.read(entry))
     temporary.replace(archive)
     archive.with_name('source-size.txt').write_text(str(revision) + '\n', encoding='ascii')
-    print(f'{archive.parent.name}: {revision:,} → {archive.stat().st_size:,} bytes')
+    print(f'{archive.parent.name}: {revision:,} -> {archive.stat().st_size:,} bytes')
 
 
 if __name__ == '__main__':
