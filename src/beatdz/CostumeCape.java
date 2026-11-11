@@ -53,7 +53,7 @@ final class CostumeCape {
     }
 
     static void draw(Graphics graphics, Vector parts, LangLa_jr costume, int pose, int x, int y,
-                     boolean flip, boolean behindBody) {
+                     boolean flip, boolean behindBody, int idleDip) {
         boolean back = showsBack(pose);
         if (behindBody && back) return;
         DataCenter data = DataCenter.gI();
@@ -61,7 +61,7 @@ final class CostumeCape {
         int bodyHeight = spriteSize(data, body.a).e;
         int[] shoulder = SHOULDER_OFFSETS[(costume.a == CostumeTanto.BORUTO_BODY || costume.a == CostumeTanto.KAWAKI_BODY) ? 32 : costume.a - FIRST_FULL_BODY_PART];
         int shoulderX = body.d + shoulder[0] + SHOULDER_POSE_X[pose];
-        int shoulderY = body.e + shoulder[1] - Math.round(bodyHeight * SHOULDER_POSE_HEIGHT[pose] / 100f);
+        int shoulderY = body.e + shoulder[1] - Math.round(bodyHeight * SHOULDER_POSE_HEIGHT[pose] / 100f) + idleDip;
 
         // The existing cape styles share the Hokage cape's attachment. The cape
         // artwork has no separate collar in the three turning poses.

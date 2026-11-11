@@ -94,21 +94,54 @@ public class LangLa_fq {
 
    static void drawCapeRows(Graphics graphics, short icon, int transform, int x, int bottom,
                             int width, int height, int firstRow, int endRow) {
+      mImage sprite = getCharacterSprite(icon);
+      if (sprite != null) {
+         drawCharacterRows(graphics, sprite, transform, x, bottom, width, height,
+                 firstRow, endRow, endRow - firstRow);
+      }
+   }
+
+   static void drawStandingCostume(Graphics graphics, short icon, int transform, int x, int bottom, int dip) {
+      LangLa_et size = CostumeCape.spriteSize(DataCenter.gI(), icon);
+      if (size == null || size.e < 8 || transform % 360 != 0) {
+         b(graphics, icon, transform, x, bottom, 33);
+         return;
+      }
+      mImage sprite = getCharacterSprite(icon);
+      if (sprite == null) return;
+
+      // Keep the feet fixed and absorb the upper-body dip in a few rows of the lower legs.
+      int height = size.e;
+      int footRows = Math.max(2, height / 12);
+      int legRows = Math.max(2, height / 12);
+      int feetStart = height - footRows;
+      int upperEnd = feetStart - legRows;
+      drawCharacterRows(graphics, sprite, transform, x, bottom - footRows - legRows + dip,
+              size.d, height, 0, upperEnd, upperEnd);
+      drawCharacterRows(graphics, sprite, transform, x, bottom - footRows,
+              size.d, height, upperEnd, feetStart, legRows - dip);
+      drawCharacterRows(graphics, sprite, transform, x, bottom,
+              size.d, height, feetStart, height, footRows);
+   }
+
+   private static mImage getCharacterSprite(short icon) {
       Hashtable images = $state_LangLa_fq().g;
       mImage sprite = (mImage) images.get(icon);
       if (sprite == null) {
          a(icon, "char", images);
-         return;
       }
-      if (sprite.c <= 1 && sprite.d <= 1) return;
+      return sprite != null && (sprite.c > 1 || sprite.d > 1) ? sprite : null;
+   }
 
+   private static void drawCharacterRows(Graphics graphics, mImage sprite, int transform, int x, int bottom,
+                                         int width, int height, int firstRow, int endRow, int renderedHeight) {
       int sourceTop = Math.round(firstRow * sprite.d / (float) height);
       int sourceBottom = Math.round(endRow * sprite.d / (float) height);
       if (sourceTop >= sourceBottom) return;
 
       int zoom = DataCenter.gI().zoomLevel;
       graphics.drawImagePixelRows(sprite, sourceTop, sourceBottom - sourceTop,
-              transform, x, bottom, width * zoom, (endRow - firstRow) * zoom);
+              transform, x, bottom, width * zoom, renderedHeight * zoom);
    }
 
    public static short[] b(Graphics var0, int var1, int var2, int var3, int var4, int var5, int var6, int var7) {

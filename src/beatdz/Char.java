@@ -1297,10 +1297,8 @@ public class Char extends Entity {
         LangLa_jr customCostume = null;
         boolean hasCape = false;
 
-        LangLa_jr var8;
-        int var11;
-        for (var11 = 0; var11 < var4.size(); ++var11) {
-            var8 = (LangLa_jr) var4.elementAt(var11);
+        for (int var11 = 0; var11 < var4.size(); ++var11) {
+            LangLa_jr var8 = (LangLa_jr) var4.elementAt(var11);
             if (CostumeCape.isNewBody(var8)) customCostume = var8;
             hasCape |= var8.equippedCape;
             if (var8.b()) {
@@ -1328,34 +1326,20 @@ public class Char extends Entity {
             var10 = Integer.MIN_VALUE;
         }
 
-        float savedMotionY = var1.motionY;
+        int idleDip = 0;
         if (customCostume != null && isStandingPose(var5) && isStandingPose(var6)) {
-            // The standing cels in full-body costumes can shift the face and grip.
-            // Keep one cel and move the costume and all equipped layers together.
+            // Use the stock standing cycle. Its upper layers dip one pixel on poses 1 and 32.
+            // Draw the same full-body cel so the eyes and grip stay aligned.
+            idleDip = var5 == 1 || var5 == 32 ? 1 : 0;
             if (var5 != 0) {
                 var5 = 0;
                 a(var4, var5);
             }
             var6 = 0;
-            long periodMs = 1080L;
-            long phaseMs = (System.nanoTime() / 1_000_000L + 37L * this.idEntity) % periodMs;
-            var1.motionY -= 0.75f * (1.0f - (float) Math.cos(2.0 * Math.PI * phaseMs / periodMs));
         }
-        try {
-            drawAppearance(var1, var2, var3, var4, var5, var6, var7, var10, customCostume, hasCape);
-        } finally {
-            var1.motionY = savedMotionY;
-        }
-    }
 
-    private static boolean isStandingPose(int pose) {
-        return pose == 0 || pose == 1 || pose == 31 || pose == 32;
-    }
-
-    private void drawAppearance(Graphics var1, int var2, int var3, Vector var4, int var5, int var6, boolean var7,
-                                int var10, LangLa_jr customCostume, boolean hasCape) {
         boolean fitCape = hasCape && CostumeCape.canFit(customCostume, var5);
-        if (fitCape) CostumeCape.draw(var1, var4, customCostume, var5, var2, var3, var7, true);
+        if (fitCape) CostumeCape.draw(var1, var4, customCostume, var5, var2, var3, var7, true, idleDip);
 
         for (int var11 = 0; var11 < var4.size(); ++var11) {
             LangLa_jr var8 = (LangLa_jr) var4.elementAt(var11);
@@ -1375,12 +1359,15 @@ public class Char extends Entity {
                 var1.d((float) var8.c);
             }
 
-            if (CostumeTanto.draw(var1, customCostume, var5, var8, var8.d[var15], var2, var3, var7)) {
-                // The equipped Tanto is anchored to the full-body pose.
-            } else if (var7) {
-                LangLa_fq.b(var1, var8.d[var15].a, Utlis.b(var8.d[var15].b), var2 - var8.d[var15].d, var3 + var8.d[var15].e, 33);
-            } else {
-                LangLa_fq.b(var1, var8.d[var15].a, Utlis.a(var8.d[var15].b), var2 + var8.d[var15].d, var3 + var8.d[var15].e, 33);
+            LangLa_ju frame = var8.d[var15];
+            int transform = var7 ? Utlis.b(frame.b) : Utlis.a(frame.b);
+            int layerX = var2 + (var7 ? -frame.d : frame.d);
+            int layerY = var3 + frame.e;
+            if (idleDip != 0 && var8 == customCostume) {
+                LangLa_fq.drawStandingCostume(var1, frame.a, transform, layerX, layerY, idleDip);
+            } else if (!CostumeTanto.draw(var1, customCostume, var5, var8, frame, var2, var3 + idleDip, var7)) {
+                int attachmentDip = var8.heldWeapon || var8.equippedCape ? idleDip : 0;
+                LangLa_fq.b(var1, frame.a, transform, layerX, layerY + attachmentDip, 33);
             }
 
             if (var8.c != 0) {
@@ -1394,10 +1381,14 @@ public class Char extends Entity {
                 var1.a(var12, var13);
             }
             if (fitCape && var8 == customCostume) {
-                CostumeCape.draw(var1, var4, customCostume, var5, var2, var3, var7, false);
+                CostumeCape.draw(var1, var4, customCostume, var5, var2, var3, var7, false, idleDip);
             }
         }
 
+    }
+
+    private static boolean isStandingPose(int pose) {
+        return pose == 0 || pose == 1 || pose == 31 || pose == 32;
     }
 
     private void X() {
