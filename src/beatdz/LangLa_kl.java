@@ -2432,7 +2432,7 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
             var5.send();
             break;
          case 1235:
-            int selection = appearanceSelection(Char.gI().selectCaiTrang, ((LangLa_kd) var2).b);
+            int selection = appearanceSelection(((LangLa_kd) var2).b);
             (var5 = Message.c((byte)-58)).writeByte(selection);
             var5.send();
             Char.gI().selectCaiTrang = selection;
@@ -2446,15 +2446,13 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
 
    }
 
-   static int appearanceSelection(int current, int requested) {
-      return (requested == 4 || requested == 5) && requested == current ? 0 : requested;
+   static int appearanceSelection(int requested) {
+      return requested <= 2 ? 0 : requested - 2;
    }
 
    void syncAppearanceSelection(int selection) {
       if (this.A == null) return;
-      this.A.b.c[4] = selection == 4 ? "Hiện Tanto" : Caption.tJ[4];
-      this.A.b.c[5] = selection == 5 ? "Hiện áo choàng" : Caption.tJ[5];
-      this.A.a(selection);
+      this.A.a(selection == 0 ? 0 : selection + 2);
    }
 
    public void b(mTextBox var1) {
