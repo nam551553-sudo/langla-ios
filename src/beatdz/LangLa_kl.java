@@ -238,7 +238,7 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
          var10.addElement(this.X);
          this.b.a((Vector)var10, 3);
          LangLa_kd var11;
-         (var11 = new LangLa_kd(1235)).c = Caption.tJ;
+         (var11 = new LangLa_kd(1235)).c = Caption.tJ.clone();
          var10000 = this.b.c() + 71;
          DataCenter.gI();
          var7 = var10000 + 0;
@@ -246,7 +246,7 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
          DataCenter.gI();
          var9 = var10000 + 0;
          this.A = this.a(var7, var9, 64, Caption.tJ.length, var11, this, 1);
-         this.A.a(var2.selectCaiTrang);
+         this.syncAppearanceSelection(var2.selectCaiTrang);
          this.b.a((LangLa_cs)this.A, 0);
          (var8 = this.a(super.width - 8 - 55, this.height - 68, Caption.bj, this, 4001, 7)).setSize(50, 20);
          this.S = var8;
@@ -2432,14 +2432,29 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
             var5.send();
             break;
          case 1235:
-            (var5 = Message.c((byte)-58)).writeByte(this.A.b.b);
+            int selection = appearanceSelection(Char.gI().selectCaiTrang, ((LangLa_kd) var2).b);
+            (var5 = Message.c((byte)-58)).writeByte(selection);
             var5.send();
+            Char.gI().selectCaiTrang = selection;
+            this.syncAppearanceSelection(selection);
+            return;
          default:
             return;
          }
       } catch (Exception var4) {
       }
 
+   }
+
+   static int appearanceSelection(int current, int requested) {
+      return (requested == 4 || requested == 5) && requested == current ? 0 : requested;
+   }
+
+   void syncAppearanceSelection(int selection) {
+      if (this.A == null) return;
+      this.A.b.c[4] = selection == 4 ? "Hiện Tanto" : Caption.tJ[4];
+      this.A.b.c[5] = selection == 5 ? "Hiện áo choàng" : Caption.tJ[5];
+      this.A.a(selection);
    }
 
    public void b(mTextBox var1) {

@@ -1769,7 +1769,7 @@ public class Controller implements IMessageHandler {
                 case -58:
                     Char.gI().selectCaiTrang = var1.readByte();
                     if (DataCenter.gI().currentScreen.cE instanceof LangLa_kl) {
-                        ((LangLa_kl) DataCenter.gI().currentScreen.cE).A.a(Char.gI().selectCaiTrang);
+                        ((LangLa_kl) DataCenter.gI().currentScreen.cE).syncAppearanceSelection(Char.gI().selectCaiTrang);
                         return;
                     }
                     break;
