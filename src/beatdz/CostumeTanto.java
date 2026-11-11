@@ -37,6 +37,17 @@ final class CostumeTanto {
         {-2,-23}, {-5,-25}, {-5,-25}
     };
 
+    private static final int FIRST_COSTUME_PART = 926;
+    // Palm centers measured on the standing sprite of each legacy full-body costume.
+    private static final int[][] IDLE_PALM = {
+        {-12,-34}, {-12,-32}, {-15,-31}, {-15,-31}, {-9,-34}, {-13,-31},
+        {-15,-27}, {-9,-29}, {-12,-29}, {-12,-28}, {-9,-33}, {-12,-29},
+        {-12,-31}, {-15,-37}, {-12,-34}, {-16,-34}, {-11,-31}, {-16,-30},
+        {-12,-35}, {-16,-30}, {-10,-29}, {-13,-31}, {-14,-27}, {-13,-24},
+        {-12,-21}, {-12,-26}, {-13,-24}, {-12,-25}, {-11,-24}, {-9,-26},
+        {-13,-24}, {-13,-24}, {-19,-25}, {-7,-18}, {-14,-23}, {-5,-24}
+    };
+
     private CostumeTanto() {}
 
     static boolean draw(Graphics graphics, LangLa_jr costume, int bodyPose,
@@ -55,6 +66,18 @@ final class CostumeTanto {
 
         int handX = body.d + Math.round(bodySize.e * HAND[bodyPose][0] / 100f);
         int handY = body.e + Math.round(bodySize.e * HAND[bodyPose][1] / 100f);
+        int costumeIndex = costume.a - FIRST_COSTUME_PART;
+        if (costumeIndex >= 0 && costumeIndex < IDLE_PALM.length) {
+            int[] palm = IDLE_PALM[costumeIndex];
+            boolean standing = bodyPose <= 1 || bodyPose >= 31;
+            if (standing) {
+                handX = body.d + Math.round(bodySize.e * palm[0] / 100f);
+                handY = body.e + Math.round(bodySize.e * palm[1] / 100f);
+            } else {
+                handX += Math.round(bodySize.e * (palm[0] - HAND[0][0]) / 200f);
+                handY += Math.round(bodySize.e * (palm[1] - HAND[0][1]) / 200f);
+            }
+        }
         if (boruto || kawaki) {
             boolean kawakiIdle = kawaki && body.a == KAWAKI_IDLE_TEXTURE;
             int cel = (boruto && body.a == BORUTO_IDLE_TEXTURE) || kawakiIdle ? 0
@@ -90,9 +113,9 @@ final class CostumeTanto {
         int width = tantoSize.d;
         int height = tantoSize.e;
         boolean vertical = width < height;
-        // The vertical textures contain the same artwork rotated 90 degrees.
-        int gripX = Math.round(width * (vertical ? -.14f : -.12f));
-        int gripY = Math.round(height * (vertical ? .12f : -.14f));
+        // The grip sits on the narrow flame stem. Vertical sprites rotate that point with the artwork.
+        int gripX = Math.round(width * (vertical ? -.19f : -.24f));
+        int gripY = Math.round(height * (vertical ? .24f : -.19f));
         int angle = Utlis.a(tanto.b);
         if (angle < 0) gripX = -gripX;
         switch ((angle + 360) % 360) {
