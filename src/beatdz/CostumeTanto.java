@@ -3,6 +3,15 @@ package beatdz;
 /** Positions the Cuu Vi Tanto grip on full-body costume sprites. */
 final class CostumeTanto {
     static final int BORUTO_BODY = 974;
+    static final int KAWAKI_BODY = 975;
+    private static final int KAWAKI_FIRST_TEXTURE = 30400;
+    private static final int[][] KAWAKI_HAND = {
+        {-10,-11}, {-10,-11}, {-12,-18}, {-13,-17}, {-13,-17}, {-13,-17},
+        {-13,-18}, {-12,-17}, {-14,-23}, {7,-12}, {-15,-19}, {7,-18},
+        {-13,-17}, {-10,-11}, {1,-7}, {1,-8}, {10,-11}, {-10,-16},
+        {-8,-13}, {-15,-21}, {-16,-22}, {-1,-12}, {1,-19}, {-14,-22},
+        {-14,-22}, {-9,-15}, {-1,-8}
+    };
     private static final int BORUTO_FIRST_TEXTURE = 30300;
     private static final int[][] BORUTO_HAND = {
         {-10,-10}, {-11,-11}, {-12,-17}, {-12,-16}, {-13,-16}, {-13,-16},
@@ -34,7 +43,8 @@ final class CostumeTanto {
                 || bodyPose >= costume.d.length || tanto.a == 0) return false;
         boolean cuuVi = tanto.a >= FIRST_TANTO_TEXTURE && tanto.a <= LAST_TANTO_TEXTURE;
         boolean boruto = costume.a == BORUTO_BODY;
-        if (!cuuVi && !(boruto && weapon.heldWeapon)) return false;
+        boolean kawaki = costume.a == KAWAKI_BODY;
+        if (!cuuVi && !((boruto || kawaki) && weapon.heldWeapon)) return false;
 
         DataCenter data = DataCenter.gI();
         LangLa_ju body = costume.d[bodyPose];
@@ -43,11 +53,12 @@ final class CostumeTanto {
 
         int handX = body.d + Math.round(bodySize.e * HAND[bodyPose][0] / 100f);
         int handY = body.e + Math.round(bodySize.e * HAND[bodyPose][1] / 100f);
-        if (boruto) {
-            int cel = body.a - BORUTO_FIRST_TEXTURE;
-            if (cel < 0 || cel >= BORUTO_HAND.length) return false;
-            handX = body.d + BORUTO_HAND[cel][0];
-            handY = body.e + BORUTO_HAND[cel][1];
+        if (boruto || kawaki) {
+            int cel = body.a - (kawaki ? KAWAKI_FIRST_TEXTURE : BORUTO_FIRST_TEXTURE);
+            int[][] hand = kawaki ? KAWAKI_HAND : BORUTO_HAND;
+            if (cel < 0 || cel >= hand.length) return false;
+            handX = body.d + hand[cel][0];
+            handY = body.e + hand[cel][1];
         }
 
         if (!cuuVi) {
