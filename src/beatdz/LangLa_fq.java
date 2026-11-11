@@ -429,6 +429,29 @@ public class LangLa_fq {
       Binary2.a(beatdz.LangLa_fq.$state_LangLa_fq().f);
    }
 
+   static void prefetchMapActors(java.util.Set<Short> ids) {
+      if (ids.isEmpty() || LangLa_ep.a()
+            || (mConfig.gI().readBoolean(18) && DataCenter.gI().currentScreen instanceof GameSrc)) return;
+      Hashtable images = $state_LangLa_fq().g;
+      Vector<LangLa_fb> requests = new Vector<LangLa_fb>();
+      synchronized (images) {
+         for (short id : ids) {
+            if (images.containsKey(id)) continue;
+            LangLa_fb request = new LangLa_fb();
+            request.a = id;
+            request.d = "iconChar/" + id + ".png";
+            request.e = "char_icon_" + id;
+            request.g = images;
+            images.put(id, $state_LangLa_fq().a);
+            requests.add(request);
+         }
+      }
+      if (!requests.isEmpty()) {
+         LangLa_cz.$state_LangLa_cz().cW.addAll(0, requests);
+         LangLa_cz.S();
+      }
+   }
+
    private static void a(int var0, String var1, Hashtable var2) {
       if ("tree".equals(var1)) {
          mImage ready = MapAssetPrefetch.take((short)var0);

@@ -744,6 +744,40 @@ public class GameSrc extends MainScreen {
 
     }
 
+    private void prefetchNearbyActors() {
+        Char player = Char.gI();
+        java.util.Set<Short> images = new java.util.LinkedHashSet<Short>();
+        // Load the first visible pose early; the normal renderer still requests later frames.
+        for (Object entity : vNpc.toArray()) {
+            Npc npc = (Npc) entity;
+            if (Math.abs(npc.cx - player.cx) > 420 || Math.abs(npc.cy - player.cy) > 300) continue;
+            NpcTemplate template = npc.getNpcTemplate();
+            if (template != null) addFirstActorFrame(images, template.a, template.b, npc.status, 12);
+            if (images.size() >= 12) break;
+        }
+        for (Object entity : vMob.toArray()) {
+            Mob mob = (Mob) entity;
+            if (Math.abs(mob.cx - player.cx) > 420 || Math.abs(mob.cy - player.cy) > 300) continue;
+            MobTemplate template = mob.getMobTemplate();
+            if (template != null) addFirstActorFrame(images, template.a, template.b, mob.status, 24);
+            if (images.size() >= 24) break;
+        }
+        LangLa_fq.prefetchMapActors(images);
+    }
+
+    private static void addFirstActorFrame(java.util.Set<Short> images, byte[][] animation, LangLa_hz[] frames, int status, int limit) {
+        if (frames == null || animation == null || animation.length == 0) return;
+        if (status < 0 || status >= animation.length) status = 0;
+        byte[] sequence = animation[status];
+        if (sequence == null || sequence.length == 0) return;
+        int frame = sequence[0] & 255;
+        if (frame >= frames.length || frames[frame] == null || frames[frame].a == null) return;
+        for (LangLa_ia layer : frames[frame].a) {
+            if (layer != null && layer.a > 0) images.add(layer.a);
+            if (images.size() >= limit) return;
+        }
+    }
+
     public void createMap() {
         if (this.cx.size() > 0) {
             for (int var1 = this.cx.size() - 1; var1 >= 0; --var1) {
@@ -760,6 +794,11 @@ public class GameSrc extends MainScreen {
             beatdz.LangLa_cx.$state_LangLa_cx().cN = true;
             this.ba = false;
             LangLa_dp.a().b();
+            try {
+                prefetchNearbyActors();
+            } catch (RuntimeException unavailable) {
+                Utlis.println(unavailable, "Map actor prefetch");
+            }
             if ((var27 = Binary.createReader("arr_map_" + this.mapID)) == null) {
                 return;
             }

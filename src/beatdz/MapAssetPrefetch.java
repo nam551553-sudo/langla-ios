@@ -173,6 +173,15 @@ public final class MapAssetPrefetch {
         LinkedHashSet<Short> unique = new LinkedHashSet<Short>();
         for (int next : order(map, priority, DataCenter.gI().dataWayPoint)) {
             try {
+                Set<Short> hints = null;
+                if (next != map && next != priority) {
+                    try { hints = hintedTrees(next); }
+                    catch (Exception unavailable) { /* Fall back to the local layout. */ }
+                }
+                if (hints != null && !hints.isEmpty()) {
+                    unique.addAll(hints);
+                    continue;
+                }
                 byte[] layout = Binary.read("arr_map_" + next);
                 Set<Short> trees;
                 try { trees = layout == null ? hintedTrees(next) : treeIds(layout); }
