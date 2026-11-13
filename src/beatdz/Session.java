@@ -4,13 +4,15 @@ import beatdz.*;
 
 import beatdz.DataCenter;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.Vector;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class Session {
 
     private long s;
-    public boolean isConnected;
-    public boolean isConnecting;
+    public volatile boolean isConnected;
+    public volatile boolean isConnecting;
     public mSocket socket;
     public Writer writer;
     public Reader reader;
@@ -30,6 +32,8 @@ public class Session {
     private Thread threadWaitTimeOut;
     public Thread threadSendMessage;
     public Thread threadRecvMessage;
+    private final ArrayBlockingQueue<Runnable> incoming = new ArrayBlockingQueue<>(512);
+    private volatile int connectionVersion;
     
 
     public static Session gI() {
@@ -88,16 +92,21 @@ public class Session {
         int var4;
         switch (var3) {
             case -128:
-                var3 = var1.dis.readByte();
+                var5 = var1.dis.readByte();
                 var4 = var1.dis.readInt();
                 break;
             case -86:
-                this.vMessage.clear();
-                gI().close();
-                DataCenter.gI().setScreen((MainScreen) LoginPCScreen.getScreenLogin());
+                dispatch(() -> {
+                    close();
+                    DataCenter.gI().setScreen(LoginPCScreen.getScreenLogin());
+                });
                 return;
             case -84:
-                GameSrc.gI().a(var1.dis.readInt(), var1.dis.readShort(), var1.dis.readShort(), true);
+            case 123:
+                final int entity = var1.dis.readInt();
+                final short x = var1.dis.readShort(), y = var1.dis.readShort();
+                final boolean immediate = var3 == -84;
+                dispatch(() -> GameSrc.gI().a(entity, x, y, immediate));
                 return;
             case -80:
                 var5 = var1.dis.readByte();
@@ -107,45 +116,13 @@ public class Session {
                 var6 = var1.dis.readShort();
                 var4 = var1.dis.readShort();
                 break;
-            case 123:
-                final int entity = var1.dis.readInt();
-                final short x = var1.dis.readShort(), y = var1.dis.readShort();
-                dispatch(() -> GameSrc.gI().a(entity, x, y, false));
-                return;
             default:
                 var4 = var1.dis.readUnsignedShort();
         }
 
         byte[] var7 = new byte[var4];
-        int var10;
-        if (var2) {
-            var1.read(var7, 0, var7.length);
-        } else {
-            var10 = 0;
-
-            while (var4 > 0) {
-                int var8;
-                if (var4 - 2048 <= 0) {
-                    var8 = var4;
-                } else {
-                    var8 = 2048;
-                }
-
-                int var9;
-                if ((var9 = this.socket.a.available()) == 0) {
-                    Utlis.sleep(1L);
-                } else {
-                    if (var8 > var9) {
-                        var8 = var9;
-                    }
-
-                    var1.read(var7, var10, var8);
-                    var10 += var8;
-                    this.countRecv += var8;
-                    var4 -= var8;
-                }
-            }
-        }
+        var1.dis.readFully(var7);
+        if (!var2) this.countRecv += var7.length;
 
         //   System.out.println("recv: "+var3+", "+var5);
         if (var3 != -79) {
@@ -157,7 +134,7 @@ public class Session {
         } else {
             var1 = new Reader(Utlis.inflateByteArray(var7));
 
-            for (var10 = 0; var10 < var6; ++var10) {
+            for (int var10 = 0; var10 < var6; ++var10) {
                 this.read(var1, true);
             }
 
@@ -165,17 +142,35 @@ public class Session {
         }
     }
 
-    private void read(Message var1) {
-        // Apply a complete packet between frames, under its owning account.
-        // The receive thread must not expose half-built HUD/settings to rendering.
+    private void read(Message var1) throws IOException {
         dispatch(() -> readOnGameThread(var1));
     }
 
-    private void dispatch(Runnable action) {
-        Runnable owned = MultiSession.bind(action);
-        if (com.badlogic.gdx.Gdx.app != null) com.badlogic.gdx.Gdx.app.postRunnable(owned);
-        else owned.run();
+    private void dispatch(Runnable action) throws InterruptedIOException {
+        if (com.badlogic.gdx.Gdx.app == null) {
+            action.run();
+            return;
+        }
+        int version = connectionVersion;
+        try {
+            incoming.put(() -> {
+                if (version == connectionVersion) action.run();
+            });
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw new InterruptedIOException("Packet delivery interrupted");
+        }
     }
+
+    void applyIncoming(long deadline, int limit) {
+        for (int handled = 0; handled < limit && System.nanoTime() < deadline; handled++) {
+            Runnable action = incoming.poll();
+            if (action == null) return;
+            action.run();
+        }
+    }
+
+    int connectionVersion() { return connectionVersion; }
 
     private void readOnGameThread(Message var1) {
         try {
@@ -213,6 +208,8 @@ public class Session {
 
     public void close() {
         try {
+            connectionVersion++;
+            incoming.clear();
             if (this.isConnecting) {
                 this.handler.b();
             } else if (this.isConnected) {

@@ -531,8 +531,9 @@ public class GameSrc extends MainScreen {
     public boolean cB;
     private int dK = 0;
     final RenderMotion renderMotion = new RenderMotion();
+    private boolean drawOrderDirty;
     private boolean refreshItemUseInventory;
-    private final BulkItemUse bulkItemUse = new BulkItemUse();
+    final BulkItemUse bulkItemUse = new BulkItemUse();
 
     public GameSrc() {
         this.vItemMap = new Vector();
@@ -779,6 +780,7 @@ public class GameSrc extends MainScreen {
     }
 
     public void createMap() {
+        if (Gdx.app.getType() == ApplicationType.Android) renderMotion.reset();
         if (this.cx.size() > 0) {
             for (int var1 = this.cx.size() - 1; var1 >= 0; --var1) {
                 ((LangLa_en) this.cx.get(var1)).d();
@@ -1558,11 +1560,18 @@ public class GameSrc extends MainScreen {
         }
     }
 
-    private void applyRenderMotion(Graphics g, Entity entity) {
-        if (!Canvas.smoothMotion()) return;
+    private void applyRenderMotion(Graphics g, Entity entity, float alpha, float cameraX) {
+        if (renderMotion.usesPreciseCamera() && entity instanceof LangLa_lo) {
+            LangLa_lo scenery = (LangLa_lo) entity;
+            float ratio = scenery.parallaxRatio();
+            if (ratio != 0f) {
+                // Derive the layer from the camera's draw position, including fractional pixels.
+                g.motionX += scenery.l + cameraX * ratio - scenery.cx;
+                return;
+            }
+        }
         Entity subject = entity instanceof LangLa_ir ? ((LangLa_ir)entity).renderSubject() : entity;
         if (subject == null) return;
-        float alpha = AppListener.gI().canvas.renderAlpha;
         g.motionX += renderMotion.exactX(subject, alpha);
         g.motionY += renderMotion.exactY(subject, alpha);
     }
@@ -1601,7 +1610,7 @@ public class GameSrc extends MainScreen {
     public void j() {
         try {
             bulkItemUse.update(this);
-            if (refreshItemUseInventory) {
+            if (refreshItemUseInventory && MultiSession.visible()) {
                 refreshItemUseInventory = false;
                 if (this.H() instanceof LangLa_kl) {
                     LangLa_kl inventory = (LangLa_kl) this.H();
@@ -1639,37 +1648,30 @@ public class GameSrc extends MainScreen {
                 var2 = (short) (this.maxY - DataCenter.gI().heightScreen);
             }
 
-            DataCenter var10000;
-            if (DataCenter.gI().j != var1) {
-                this.dl = var1 - DataCenter.gI().j << 2;
-                this.dm += this.dl;
-                var10000 = DataCenter.gI();
-                var10000.j += this.dm >> 5;
-                this.dm &= 15;
+            DataCenter data = DataCenter.gI();
+            if (Gdx.app.getType() == ApplicationType.Android) {
+                renderMotion.followCamera(data, var1, var2);
+            } else {
+                if (data.j != var1) {
+                    this.dl = var1 - data.j << 2;
+                    this.dm += this.dl;
+                    data.j += this.dm >> 5;
+                    this.dm &= 15;
+                }
+
+                if (data.k != var2) {
+                    this.dn = var2 - data.k << 2;
+                    this.do_ += this.dn;
+                    data.k += this.do_ >> 5;
+                    this.do_ &= 15;
+                }
             }
 
-            if (DataCenter.gI().k != var2) {
-                this.dn = var2 - DataCenter.gI().k << 2;
-                this.do_ += this.dn;
-                var10000 = DataCenter.gI();
-                var10000.k += this.do_ >> 5;
-                this.do_ &= 15;
-            }
-
-            DataCenter.gI().l = DataCenter.gI().j + DataCenter.gI().widthScreen;
-            DataCenter.gI().m = DataCenter.gI().k + DataCenter.gI().heightScreen;
+            data.l = data.j + data.widthScreen;
+            data.m = data.k + data.heightScreen;
 
             for (var2 = 0; var2 < this.d.size(); ++var2) {
-                LangLa_lo var6;
-                if ((var6 = (LangLa_lo) this.d.get(var2)).o().type == 7) {
-                    var6.cx = (short) (var6.l + DataCenter.gI().j * 20 / 23);
-                } else if (var6.o().type == 8) {
-                    var6.cx = (short) (var6.l + DataCenter.gI().j * 10 / 13);
-                } else if (var6.o().type == 9) {
-                    var6.cx = (short) (var6.l + DataCenter.gI().j * 20 / 22);
-                } else if (var6.o().type == 10) {
-                    var6.cx = (short) (var6.l + DataCenter.gI().j * 10 / 12);
-                }
+                ((LangLa_lo)this.d.get(var2)).updateParallax(data.j);
             }
 
         } catch (Exception var5) {
@@ -1937,6 +1939,7 @@ public class GameSrc extends MainScreen {
 
             boolean var13 = true;
             this.K.removeAllElements();
+            drawOrderDirty = true;
             this.M.removeAllElements();
             this.L.removeAllElements();
             if (this.aA != null && (this.aA instanceof Mob && !((Mob) this.aA).x() || this.aA instanceof ItemMap && ((ItemMap) this.aA).item.id == 224 || !this.vItemMap.contains(this.aA) && !this.vChar.contains(this.aA) && !this.vNpc.contains(this.aA) && !this.vMob.contains(this.aA))) {
@@ -1955,6 +1958,9 @@ public class GameSrc extends MainScreen {
 
             int var19;
             int var21;
+            DataCenter data = DataCenter.gI();
+            int sceneryPaddingX = renderMotion.cameraPaddingX(data.j);
+            int sceneryPaddingY = renderMotion.cameraPaddingY(data.k);
             for (var3 = 0; var3 < gI().d.size(); ++var3) {
                 LangLa_lo var16;
                 if ((var16 = (LangLa_lo) gI().d.elementAt(var3)) != null) {
@@ -2056,7 +2062,9 @@ public class GameSrc extends MainScreen {
                         Utlis.println(var11);
                     }
 
-                    if (Utlis.inRange(var16.a(), var16.c(), var16.b(), var16.d(), DataCenter.gI().j, DataCenter.gI().k, DataCenter.gI().l, DataCenter.gI().m)) {
+                    if (Utlis.inRange(var16.a(), var16.c(), var16.b(), var16.d(),
+                            data.j - sceneryPaddingX, data.k - sceneryPaddingY,
+                            data.l + sceneryPaddingX, data.m + sceneryPaddingY)) {
                         this.K.addElement(var16);
                     }
                 }
@@ -2079,13 +2087,13 @@ public class GameSrc extends MainScreen {
 
             this.K.addElement(var23);
             if (var23.status != 6 && var23.D == 0) {
-                this.K.addElement(new LangLa_ir(var23.i(), var23.ai, var23.aj, var23));
+                this.K.addElement(var23.shadow(var23.i(), var23.ai, var23.aj));
                 if (var23.aL != null) {
-                    this.K.addElement(new LangLa_ir(var23.aL.i(), var23.aL.x, var23.aL.y, var23.aL));
+                    this.K.addElement(var23.aL.shadow(var23.aL.i(), var23.aL.x, var23.aL.y));
                 }
 
                 if (var23.bh != null) {
-                    this.K.addElement(new LangLa_ir(var23.bh.i(), var23.bh.ai, var23.bh.aj, var23.bh));
+                    this.K.addElement(var23.bh.shadow(var23.bh.i(), var23.bh.ai, var23.bh.aj));
                 }
             }
 
@@ -2111,9 +2119,9 @@ public class GameSrc extends MainScreen {
 
                     this.K.addElement(var23);
                     if (var23.status != 6 && var23.D == 0) {
-                        this.K.addElement(new LangLa_ir(var23.i(), var23.ai, var23.aj, var23));
+                        this.K.addElement(var23.shadow(var23.i(), var23.ai, var23.aj));
                         if (var23.aL != null) {
-                            this.K.addElement(new LangLa_ir(var23.aL.i(), var23.aL.x, var23.aL.y, var23.aL));
+                            this.K.addElement(var23.aL.shadow(var23.aL.i(), var23.aL.x, var23.aL.y));
                         }
                     }
 
@@ -2182,7 +2190,7 @@ public class GameSrc extends MainScreen {
                 if (Utlis.inRange(var36.a(), var36.c(), var36.b(), var36.s(), DataCenter.gI().j, DataCenter.gI().k, DataCenter.gI().l, DataCenter.gI().m)) {
                     this.K.addElement(var36);
                     if (var36.status != 4 && var36.status != 6) {
-                        this.K.addElement(new LangLa_ir(var36.i(), var36.x, var36.y, var36));
+                        this.K.addElement(var36.shadow(var36.i(), var36.x, var36.y));
                     }
 
                     if (var36.status == 4 || var36.status == 6 || var36.status == 5) {
@@ -2220,7 +2228,7 @@ public class GameSrc extends MainScreen {
                 if (Utlis.inRange(var34.a(), var34.c(), var34.b(), var34.cy + var34.height, DataCenter.gI().j, DataCenter.gI().k, DataCenter.gI().l, DataCenter.gI().m)) {
                     this.K.addElement(var34);
                     if (var34.status != 6) {
-                        this.K.addElement(new LangLa_ir(var34.i(), var34.cx, var34.cy, var34));
+                        this.K.addElement(var34.shadow(var34.i(), var34.cx, var34.cy));
                     }
 
                     if (var34.status != 4 && var34.status != 6 && var34.status != 5) {
@@ -2348,11 +2356,7 @@ public class GameSrc extends MainScreen {
                 }
             }
 
-            try {
-                Collections.sort(this.K, beatdz.XYEntity.$state_XYEntity().db);
-            } catch (Exception var8) {
-                Utlis.println(var8);
-            }
+            if (MultiSession.visible()) sortDrawOrder();
 
             if (this.T != null) {
                 this.T.b();
@@ -2422,7 +2426,17 @@ public class GameSrc extends MainScreen {
             Utlis.println(var12);
         }
 
-        this.W();
+        if (MultiSession.visible()) this.W();
+    }
+
+    private void sortDrawOrder() {
+        if (!drawOrderDirty) return;
+        drawOrderDirty = false;
+        try {
+            Collections.sort(this.K, beatdz.XYEntity.$state_XYEntity().db);
+        } catch (Exception error) {
+            Utlis.println(error);
+        }
     }
 
     public void l() {
@@ -3351,10 +3365,15 @@ public class GameSrc extends MainScreen {
                     this.r();
                 }
 
-                this.a(var1, -DataCenter.gI().j, -DataCenter.gI().k);
-                if (Canvas.smoothMotion()) {
-                    var1.motionX = -renderMotion.cameraOffsetX(AppListener.gI().canvas.renderAlpha);
-                    var1.motionY = -renderMotion.cameraOffsetY(AppListener.gI().canvas.renderAlpha);
+                sortDrawOrder();
+                DataCenter data = DataCenter.gI();
+                this.a(var1, -data.j, -data.k);
+                boolean smooth = Canvas.smoothMotion();
+                float alpha = smooth ? AppListener.gI().canvas.renderAlpha : 1f;
+                float cameraX = smooth ? renderMotion.drawnCameraX(data.j, alpha) : data.j;
+                if (smooth) {
+                    var1.motionX = data.j - cameraX;
+                    var1.motionY = data.k - renderMotion.drawnCameraY(data.k, alpha);
                 }
 
                 for (var14 = 0; var14 < this.K.size(); ++var14) {
@@ -3362,7 +3381,7 @@ public class GameSrc extends MainScreen {
                     var20 = (Entity)this.K.elementAt(var14);
                     int savedX = var1.a, savedY = var1.b;
                     float savedMotionX = var1.motionX, savedMotionY = var1.motionY;
-                    applyRenderMotion(var1, var20);
+                    if (smooth) applyRenderMotion(var1, var20, alpha, cameraX);
                     try {
                     if (var20 instanceof LangLa_hm) {
                         LangLa_hm var22 = (LangLa_hm) var20;
@@ -3380,7 +3399,7 @@ public class GameSrc extends MainScreen {
                     Entity entity = ((Entity) this.K.elementAt(var14));
                     int savedX = var1.a, savedY = var1.b;
                     float savedMotionX = var1.motionX, savedMotionY = var1.motionY;
-                    applyRenderMotion(var1, entity);
+                    if (smooth) applyRenderMotion(var1, entity, alpha, cameraX);
                     try { entity.b(var1); } finally { var1.a = savedX; var1.b = savedY; var1.motionX = savedMotionX; var1.motionY = savedMotionY; }
 //                    if (entity instanceof Char || entity instanceof Mob || entity instanceof Npc || entity instanceof ItemMap) {
 //                        GameM.gI().canvas.graphics.shapeRenderer.setColor(1, 0, 0, 1); // Red line
@@ -3969,6 +3988,7 @@ public class GameSrc extends MainScreen {
                         var2 = var15;
                         GameSrc var8 = this;
 
+                        sortDrawOrder();
                         for (var15 = this.K.size() - 1; var15 >= 0; --var15) {
                             Entity var17;
                             if (!(var17 = (Entity) var8.K.elementAt(var15)).j() && (var17 instanceof Char && (Char) var17 != Char.gI() || var17 instanceof Npc || var17 instanceof Mob || var17 instanceof ItemMap || var17 instanceof WayPoint) && Utlis.inRange(var17.a(), var17.c(), var17.b(), var17.d(), var2, var3)) {
@@ -5886,7 +5906,7 @@ public class GameSrc extends MainScreen {
         try {
             short var2 = var1.reader.dis.readShort();
             if (var2 == -1) {
-                bulkItemUse.acknowledge(var1.reader.dis.readInt(), var1.readShort());
+                bulkItemUse.acknowledge(this, var1.reader.dis.readInt(), var1.readShort());
                 return;
             }
             Item var3;
@@ -6103,8 +6123,11 @@ public class GameSrc extends MainScreen {
             Char.gI().arrItemBag[var1.index] = var1;
             if (var1.expiry != 0L) {
                 if (var1.id < 269 || var1.id > 273) {
-                    LangLa_kw.a(7, Caption.bz, Caption.k + " " + var4 + " " + var1.getItemTemplate().name);
-                    DataCenter.gI().currentScreen.showMessage(Caption.k + " " + var4 + " " + var1.getItemTemplate().name, -1);
+                    String name = var1.getItemTemplate().name;
+                    if (!gI().bulkItemUse.recordReward(name, var4)) {
+                        LangLa_kw.a(7, Caption.bz, Caption.k + " " + var4 + " " + name);
+                        DataCenter.gI().currentScreen.showMessage(Caption.k + " " + var4 + " " + name, -1);
+                    }
                 }
 
                 return;

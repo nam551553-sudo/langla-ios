@@ -1,5 +1,8 @@
 package beatdz;
 public class LangLa_lo extends Entity {
+   private static final int FIRST_PARALLAX_TYPE = 7;
+   private static final int[] PARALLAX_NUMERATOR = {20, 10, 20, 10};
+   private static final int[] PARALLAX_DENOMINATOR = {23, 13, 22, 12};
    public byte j;
    public short k;
    public short l;
@@ -19,6 +22,18 @@ public class LangLa_lo extends Entity {
    public LangLa_lo(int var1) {
       this.k = (short)var1;
       this.p = this.o().type;
+   }
+
+   void updateParallax(int cameraX) {
+      int layer = this.p - FIRST_PARALLAX_TYPE;
+      if (layer < 0 || layer >= PARALLAX_NUMERATOR.length) return;
+      this.cx = (short)(this.l + cameraX * PARALLAX_NUMERATOR[layer] / PARALLAX_DENOMINATOR[layer]);
+   }
+
+   float parallaxRatio() {
+      int layer = this.p - FIRST_PARALLAX_TYPE;
+      if (layer < 0 || layer >= PARALLAX_NUMERATOR.length || this.o != null || this.n != null) return 0f;
+      return (float)PARALLAX_NUMERATOR[layer] / PARALLAX_DENOMINATOR[layer];
    }
 
    public int a() {

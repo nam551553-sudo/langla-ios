@@ -1,5 +1,13 @@
 {
-  "publicBaseUrl": "http://103.77.172.222/langlaapp/",
-  "dataUrl": "http://103.77.172.222/langlaapp/",
-  "serverIp": "103.77.172.222"
+    "mode": "ssh",
+    "localWebRoot": "C:/xampp/htdocs/langlaapp",
+    "publicBaseUrl": "http://103.77.172.222/langlaapp/",
+    "dataUrl": "http://103.77.172.222/langlaapp/",
+    "serverIp": "103.77.172.222",
+    "javaHome": "C:/Program Files/Java/jdk-21.0.12.1",
+    "sshConfig": "update-ssh.json",
+    "compatibilityWebRoots": [
+        "C:/xampp/htdocs/langlaapp/langla-test"
+    ],
+    "preservePublishedAndroid": false
 }

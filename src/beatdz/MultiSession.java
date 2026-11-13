@@ -34,6 +34,8 @@ public final class MultiSession {
         public final int slot;
         private volatile Cell[] states = new Cell[128];
         private boolean initialized;
+        private float hiddenPhase;
+        private boolean hiddenTickDue;
         Context(int slot) { this.slot = slot; }
         <T extends State> T state(String key, Factory<T> factory) { return state(register(key), factory); }
         @SuppressWarnings("unchecked") <T extends State> T state(int key, Factory<T> factory) {
@@ -56,6 +58,9 @@ public final class MultiSession {
     private static final InheritableThreadLocal<Context> OWNER = new InheritableThreadLocal<Context>();
     private static volatile Context active = ROOT;
     private static volatile int tabCount = 1;
+    private static final long VISIBLE_PACKET_BUDGET_NANOS = 3_000_000L;
+    private static final long HIDDEN_FRAME_BUDGET_NANOS = 2_000_000L;
+    private static int nextHiddenSlot;
     static final java.util.concurrent.Semaphore PREFETCH_NETWORK = new java.util.concurrent.Semaphore(2, true);
     private static Stage bar;
     private static BitmapFont font;
@@ -119,29 +124,75 @@ public final class MultiSession {
 
     public static void select(int slot) {
         if (slot < 0 || slot >= TABS.size() || TABS.get(slot) == active) return;
-        run(active, () -> {
+        Context previous = active;
+        run(previous, () -> {
             DataCenter data = DataCenter.gI();
             if (data.currentScreen != null) for (Object item : data.currentScreen.cD) ((LangLa_cx)item).cO.a();
             Char.gI().cleanMove();
             if (LangLa_dp.$state_LangLa_dp().f != null) LangLa_dp.a().b();
         });
+        previous.hiddenPhase = hiddenInterval(tabCount) * (previous.slot + 1) / LIMIT;
+        previous.hiddenTickDue = false;
         active = TABS.get(slot); OWNER.set(active);
         AppListener.gI().canvas.cancelPointer();
         AppListener.gI().canvas.activateSession();
         Gdx.input.setOnscreenKeyboardVisible(false);
     }
 
-    /** Hidden accounts keep the original 30 Hz simulation; no paint, stage or effect upload. */
-    public static void updateHidden(Canvas canvas) {
+    static void applyVisiblePackets() {
+        Session.gI().applyIncoming(System.nanoTime() + VISIBLE_PACKET_BUDGET_NANOS, 128);
+    }
+
+    private static float hiddenInterval(int count) {
+        return count >= 4 ? 2f * RenderMotion.STEP : RenderMotion.STEP;
+    }
+
+    /** Shares the time after drawing among background accounts, continuing at the next tab. */
+    static void updateHidden(Canvas canvas, float elapsed, boolean applyPackets) {
+        int size = TABS.size();
+        if (size < 2 || !(elapsed > 0f)) return;
         Context selected = active;
-        for (Context context : TABS) if (context != selected && context.initialized) {
+        float step = hiddenInterval(size);
+        for (Context context : TABS) {
+            if (context != selected && context.initialized) {
+                context.hiddenPhase += elapsed;
+                if (context.hiddenPhase >= step) {
+                    // Keep a single pending tick and retain the phase after a slow frame.
+                    context.hiddenPhase %= step;
+                    context.hiddenTickDue = true;
+                }
+            }
+        }
+
+        long deadline = System.nanoTime() + HIDDEN_FRAME_BUDGET_NANOS;
+        int slot = nextHiddenSlot % size;
+        for (int checked = 0; checked < size; checked++) {
+            Context context = TABS.get(slot);
+            slot = (slot + 1) % size;
+            if (context == selected || !context.initialized) continue;
+            nextHiddenSlot = slot;
+            updateAccount(canvas, context, deadline, applyPackets);
+            if (System.nanoTime() >= deadline) return;
+        }
+    }
+
+    private static void updateAccount(Canvas canvas, Context context, long deadline, boolean applyPackets) {
+        try {
             run(context, () -> {
-                DataCenter data = DataCenter.gI();
-                if (data.currentScreen == null || data.aO == null) return;
-                data.i++; data.h++; data.aO.a = false;
-                if (AppListener.$state_AppListener().h > 0 && --AppListener.$state_AppListener().h == 0) data.g();
-                canvas.update();
+                if (context.hiddenTickDue && System.nanoTime() < deadline) {
+                    context.hiddenTickDue = false;
+                    DataCenter data = DataCenter.gI();
+                    if (data.currentScreen != null && data.aO != null) {
+                        data.i++; data.h++; data.aO.a = false;
+                        if (AppListener.$state_AppListener().h > 0 && --AppListener.$state_AppListener().h == 0) data.g();
+                        if (Session.$state_Session().r > 0) --Session.$state_Session().r;
+                        canvas.update();
+                    }
+                }
+                if (applyPackets) Session.gI().applyIncoming(deadline, 16);
             });
+        } catch (RuntimeException error) {
+            Utlis.println(error, "Background tab update");
         }
     }
 

@@ -37,9 +37,6 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
    public Skill[] z;
    private LangLa_dz X;
    private LangLa_dz Y;
-   private LangLa_dz Z;
-   private LangLa_dz aa;
-   private LangLa_dz ab;
    private LangLa_cg ac;
    public LangLa_cg A;
    public LangLa_ce B;
@@ -191,12 +188,6 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
          DataCenter.gI();
          this.c[0] = this.a(this.b.c() + 62 + 0, this.a_() + 38, 72, "", this, 2);
          var10.addElement(this.c[0]);
-         var8 = this.Z = this.a(this.b.c() + 145 - 5 + 0, this.a_() + 38 + 3, "", this, 2001, 58);
-         var10.addElement(var8);
-         var8 = this.aa = this.a(this.b.c() + 145 + 15 + 0, this.a_() + 38 + 3, "", this, 2002, 57);
-         var10.addElement(var8);
-         var8 = this.ab = this.a(this.b.c() + 145 + 35 + 0, this.a_() + 38 + 3, "", this, 2012, 244);
-         var10.addElement(var8);
          this.c[1] = this.a(this.b.c() + 62 + 0, this.a_() + 38 + 25, 72, "", this, 2);
          var10.addElement(this.c[1]);
          var8 = this.a(this.b.c() + 145 - 5 + 0, this.a_() + 38 + 25 + 3, "", this, 2003, 58);
@@ -259,6 +250,7 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
          this.b.a((LangLa_cs)this.U, 4);
          this.b.a(!this.v());
          this.P[0].a(!this.v());
+         this.c[0].a(true);
          this.b.a(0);
          this.b(0);
          if (var2.isMe()) {
@@ -316,7 +308,7 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
 
    public void writePotential(Message message) throws java.io.IOException {
       if (!d) throw new java.io.IOException("Chỉ số nhân vật chưa tải xong");
-      message.writeShort(c[0].e());
+      message.writeShort(e);
       message.writeShort(c[1].e() + chakraBonus);
       message.writeShort(c[2].e());
       message.writeShort(c[3].e());
@@ -560,24 +552,6 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
                                     var13 = false;
                                  }
                                  break;
-                              case 2001:
-                                 if (this.c[0].e() - 1 >= this.c[0].n) {
-                                    this.c[0].a(this.c[0].e() - 1);
-                                    ++this.i;
-                                    var13 = false;
-                                 } else {
-                                    var13 = false;
-                                 }
-                                 break;
-                              case 2002:
-                                 if (this.i > 0) {
-                                    this.c[0].a(this.c[0].e() + 1);
-                                    --this.i;
-                                    var13 = false;
-                                 } else {
-                                    var13 = false;
-                                 }
-                                 break;
                               case 2003:
                                  if (this.c[1].e() - 1 >= this.c[1].n) {
                                     this.c[1].a(this.c[1].e() - 1);
@@ -633,7 +607,7 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
                                  }
                                  break;
                               case 2009:
-                                 this.i += this.c[0].e() + this.c[1].e() + this.c[2].e() + this.c[3].e() - (this.e + this.f + this.h + this.g);
+                                 this.i += this.c[1].e() + this.c[2].e() + this.c[3].e() - (this.f + this.h + this.g);
                                  this.c[0].a("" + this.e);
                                  this.c[1].a("" + this.f);
                                  this.c[2].a("" + this.h);
@@ -657,19 +631,6 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
                                  if (var1.j.k >= 0) {
                                     this.P[1].a(var1.j.k);
                                     this.B();
-                                    var13 = false;
-                                 } else {
-                                    var13 = false;
-                                 }
-                                 break;
-                              case 2012:
-                                 if (this.i > 10) {
-                                    this.c[0].a(this.c[0].e() + 10);
-                                    this.i -= 10;
-                                    var13 = false;
-                                 } else if (this.i > 0) {
-                                    this.c[0].a(this.c[0].e() + this.i);
-                                    this.i = 0;
                                     var13 = false;
                                  } else {
                                     var13 = false;
@@ -1461,6 +1422,7 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
                   var10003 = var3 + 6;
                   var4 += 10;
                   mFont.a((mFont)mFont.d, (Graphics)var1, var10002, var10003, var4, 0, -1, 0);
+                  if (this.v()) mFont.a(mFont.d, var1, "Đã khóa", var3 + 143, var4, 0, -1, 0);
                   var10002 = (this.hasBasePotential ? Caption.rc[2] : "Chakra tổng:");
                   var10003 = var3 + 6;
                   var4 += 24;
@@ -1865,11 +1827,6 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
          this.B.v = var1;
       }
 
-      if (this.v() && !this.t()) {
-         this.Z.v = this.aa.v = this.ab.v = true;
-         this.c[0].u = true;
-      }
-
       int var3;
       if (this.k() == 0) {
          this.b.a();
@@ -2207,7 +2164,7 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
 
       this.Q.u = true;
       this.R.u = true;
-      if (this.d && (this.c[0].e() != this.e || this.c[1].e() != this.f || this.c[2].e() != this.h || this.c[3].e() != this.g)) {
+      if (this.d && (this.c[1].e() != this.f || this.c[2].e() != this.h || this.c[3].e() != this.g)) {
          this.Q.u = false;
          this.R.u = false;
       }
@@ -2400,9 +2357,7 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
       mTextBox var10000;
       int var2;
       if (var1.equals(this.c[0])) {
-         var10000 = this.c[0];
-         var2 = this.c[0].e() + this.i;
-         var10000.o = var2;
+         var1.o = this.e;
       } else if (var1.equals(this.c[1])) {
          var10000 = this.c[1];
          var2 = this.c[1].e() + this.i;
@@ -2456,6 +2411,10 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
    }
 
    public void b(mTextBox var1) {
+      if (var1 == this.c[0]) {
+         var1.a(this.e);
+         return;
+      }
       int var2;
       if ((var2 = var1.e()) > var1.o) {
          var1.a("" + var1.o);
@@ -2465,7 +2424,7 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
          var1.a("" + var1.n);
       }
 
-      this.i = this.u - (this.c[0].e() - this.e + (this.c[1].e() - this.f) + (this.c[2].e() - this.h) + (this.c[3].e() - this.g));
+      this.i = this.u - ((this.c[1].e() - this.f) + (this.c[2].e() - this.h) + (this.c[3].e() - this.g));
    }
 
    private static Skill b(int var0, int var1) {
