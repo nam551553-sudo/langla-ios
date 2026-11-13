@@ -3,10 +3,13 @@ package beatdz;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.tgame.model.Caption;
 import java.util.Collections;
-import java.util.Iterator;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 public class LangLa_cd extends LangLa_fn {
+    static final int SCHEDULE_CHANNEL = 104;
 
     
     
@@ -47,7 +50,6 @@ public class LangLa_cd extends LangLa_fn {
             this.a(348, 216);
             this.h = Utlis.getDay();
             this.i = (this.width - 10) / 7;
-            int var10 = (this.width - 10) / 6;
             this.j = this.G() - 30;
             this.o = 35;
             this.s = 6;
@@ -57,17 +59,12 @@ public class LangLa_cd extends LangLa_fn {
             this.f[0][0] = new LangLa_ii((byte) 0, this.s, this.t, this.i * 7, 18, this.i, 7);
 
             int var3;
-            String[] var6;
-            LangLa_ek var10000;
-            for (var3 = 0; var3 < 7; ++var3) {
-                for (Iterator var5 = b(var3).iterator(); var5.hasNext(); var10000.g = var6) {
-                    LangLa_ek var4;
-                    var10000 = var4 = (LangLa_ek) var5.next();
-                    var6 = mFont.c(mFont.b, var4.d, var10 - 12);
+            for (List<LangLa_ek> day : $state_LangLa_cd().week) {
+                for (LangLa_ek activity : day) {
+                    activity.g = mFont.c(mFont.b, activity.d, this.i - 6);
                 }
             }
 
-            Collections.sort(beatdz.LangLa_cd.$state_LangLa_cd().a, beatdz.LangLa_ek.$state_LangLa_ek().h);
             this.g();
 
             try {
@@ -110,8 +107,8 @@ public class LangLa_cd extends LangLa_fn {
     }
 
     private void f() {
-        int[][] var1;
-        (var1 = new int[this.y[0].length][])[3] = new int[]{164, 174, 5};
+        int[][] var1 = new int[Math.max(18, this.y[0].length)][];
+        var1[3] = new int[]{164, 174, 5};
         var1[4] = new int[]{164, 175, 4};
         var1[5] = new int[]{164, 248, 6};
         var1[6] = new int[]{564, 428, 218};
@@ -148,28 +145,64 @@ public class LangLa_cd extends LangLa_fn {
     }
 
     public static LangLa_ek e() {
-        Vector var1 = b(Utlis.getDay());
-
-        for (int var2 = 0; var2 < var1.size(); ++var2) {
-            LangLa_ek var0;
-            if ((var0 = (LangLa_ek) var1.get(var2)).a()) {
-                return var0;
+        long second = Utlis.activitySeconds();
+        SessionState state = $state_LangLa_cd();
+        if (state.checkedSecond != second) {
+            state.active = null;
+            int now = Utlis.activitySecondOfDay(second);
+            List<LangLa_ek> today = b(Utlis.activityDay(second));
+            for (int i = 0; i < today.size(); i++) {
+                LangLa_ek activity = today.get(i);
+                if (activity.b <= now && now < activity.c) {
+                    state.active = activity;
+                    break;
+                }
             }
+            state.checkedSecond = second;
         }
-
-        return null;
+        return state.active;
     }
 
-    private static Vector b(int var0) {
-        Vector var1 = new Vector();
+    private static List<LangLa_ek> b(int day) {
+        return $state_LangLa_cd().week.get(day);
+    }
 
-        for (int var2 = 0; var2 < beatdz.LangLa_cd.$state_LangLa_cd().a.size(); ++var2) {
-            if (((LangLa_ek) beatdz.LangLa_cd.$state_LangLa_cd().a.get(var2)).a == var0) {
-                var1.add(beatdz.LangLa_cd.$state_LangLa_cd().a.get(var2));
+    static void readSchedule(Message message) throws IOException {
+        long serverTime = message.readLong();
+        int count = message.reader.dis.readUnsignedByte();
+        List<List<LangLa_ek>> week = emptyWeek();
+        for (int i = 0; i < count; i++) {
+            int days = message.reader.dis.readUnsignedByte();
+            int start = message.readInt();
+            int end = message.readInt();
+            String name = message.readUTF();
+            int map = message.readShort();
+            int npc = message.readShort();
+            if (days == 0 || days >= 128 || start < 0 || start >= end || end > 86400) {
+                throw new IOException("Invalid weekly activity slot");
+            }
+            for (int day = 0; day < 7; day++) {
+                if ((days & (1 << day)) != 0) week.get(day).add(new LangLa_ek(day, name, start, end, map, npc));
             }
         }
+        SessionState state = $state_LangLa_cd();
+        state.setWeek(week);
+        Utlis.$state_Utlis().timeAdd = serverTime - System.currentTimeMillis();
+    }
 
-        return var1;
+    private static List<List<LangLa_ek>> emptyWeek() {
+        List<List<LangLa_ek>> week = new ArrayList<>(7);
+        for (int day = 0; day < 7; day++) week.add(new ArrayList<>());
+        return week;
+    }
+
+    private static boolean isOpen(int map, int npc) {
+        long second = Utlis.activitySeconds();
+        int now = Utlis.activitySecondOfDay(second);
+        for (LangLa_ek slot : b(Utlis.activityDay(second))) {
+            if (slot.e == map && slot.f == npc && slot.b <= now && now < slot.c) return true;
+        }
+        return false;
     }
 
     public Vector c() {
@@ -234,8 +267,11 @@ public class LangLa_cd extends LangLa_fn {
                 }
 
                 var13.b(var2);
-                Vector var15 = b(var13.h);
+                List<LangLa_ek> var15 = b(var13.h);
                 int var7 = 0;
+                long second = Utlis.activitySeconds();
+                int day = Utlis.activityDay(second);
+                int now = Utlis.activitySecondOfDay(second);
                 if (var15.size() > 0) {
                     var13.a(var2, var13.g);
 
@@ -246,7 +282,7 @@ public class LangLa_cd extends LangLa_fn {
                                 if (var13.g.b(var8)) {
                                     try {
                                         short var14 = -6488;
-                                        if (var6.a() && var6.a == var13.h) {
+                                        if (var6.a == day && var6.b <= now && now < var6.c) {
                                             var14 = -2560;
                                             var13.a(var2, 2 + var9 * var13.g.h, 7 + var8 * var13.g.h, var13.i - 6, var13.o + 5, -21, 84, 5, 1, 1);
                                         } else {
@@ -259,7 +295,7 @@ public class LangLa_cd extends LangLa_fn {
                                             mFont.a((BitmapFont) Graphics.b(75), (Graphics) var2, var6.g[var10], var9 * var13.g.h + var13.i / 2 - 1, 15 + var8 * var13.g.h + var10 * mFont.a(mFont.b), 2, var14, -10275328);
                                         }
 
-                                        mFont.a((BitmapFont) Graphics.b(75), (Graphics) var2, Utlis.m(var6.b) + " - " + Utlis.m(var6.c), var9 * var13.g.h + var13.i / 2 - 1, 15 + var8 * var13.g.h + var4 * mFont.a(mFont.b), 2, var14, -10275328);
+                                        mFont.a((BitmapFont) Graphics.b(75), (Graphics) var2, var6.timeLabel, var9 * var13.g.h + var13.i / 2 - 1, 15 + var8 * var13.g.h + var4 * mFont.a(mFont.b), 2, var14, -10275328);
                                         if (var7 == var13.g.k) {
                                             var2.f(-1);
                                             var2.b(2 + var9 * var13.g.h - 1, 7 + var8 * var13.g.h - 1, var13.i - 6 + 1, var13.o + 5 + 1);
@@ -445,7 +481,7 @@ public class LangLa_cd extends LangLa_fn {
             this.g();
         }
 
-        Vector var4 = b(this.h);
+        List<LangLa_ek> var4 = b(this.h);
         String[] var9;
         LangLa_ek var10;
         switch (var1.b) {
@@ -456,15 +492,14 @@ public class LangLa_cd extends LangLa_fn {
                         return;
                     }
 
-                    if ((var10 = (LangLa_ek) var4.get(this.g.k)).f == -2) {
+                    if ((var10 = var4.get(this.g.k)).f == -2) {
                         this.cL = a(Caption.qc, this, var2, var3, 180);
                     } else {
-                        if (var10.e != 57) {
+                        if (var10.e != 57 || var10.f >= 0) {
                             DataCenter.gI().currentScreen.a(Utlis.replaceAll(Caption.lY, var10.d), 2001, this);
                             return;
                         }
 
-                        boolean var12 = true;
                         Vector var13;
                         (var13 = new Vector()).addElement(new LangLa_lk(2001, Caption.sS[0]));
                         var13.addElement(new LangLa_lk(2002, Caption.sS[1]));
@@ -518,11 +553,6 @@ public class LangLa_cd extends LangLa_fn {
                         GameSrc.a(99);
                         break;
                     case 11:
-                        if (!beatdz.LangLa_cd.$state_LangLa_cd().b.a()) {
-                            GameSrc.gI().showMessage(Caption.ml, -1);
-                            return;
-                        }
-
                         if (GameSrc.gI().mapID == 86) {
                             GameSrc.gI().showMessage(Caption.mm, -2560);
                         } else {
@@ -533,15 +563,11 @@ public class LangLa_cd extends LangLa_fn {
                 this.J();
                 return;
             case 2001:
-                if ((var10 = (LangLa_ek) var4.get(this.g.k)).e >= 0) {
+                if (this.g.k < 0 || this.g.k >= var4.size()) return;
+                if ((var10 = var4.get(this.g.k)).e >= 0 && var10.f >= 0) {
                     GameSrc.gI().aR = new LangLa_eo(var10.f, -1, -1, var10.e, 0, 0);
                 } else if (var10.f >= 0) {
                     if (var10.f == 30) {
-                        if (!beatdz.LangLa_cd.$state_LangLa_cd().b.a()) {
-                            GameSrc.gI().showMessage(Caption.ml, -1);
-                            return;
-                        }
-
                         if (GameSrc.gI().mapID == 86) {
                             GameSrc.gI().showMessage(Caption.mm, -2560);
                         } else {
@@ -602,7 +628,8 @@ public class LangLa_cd extends LangLa_fn {
     }
 
     private void g() {
-        this.g = new LangLa_ij((byte) 1, 6, this.a_() + 25, this.i * 7, this.i * 3, this.i, Utlis.c(b(this.h).size(), 7), 7);
+        int rows = Utlis.c(b(this.h).size(), 7);
+        this.g = new LangLa_ij((byte) 1, 6, this.a_() + 25, this.i * 7, this.i * 3, this.i, rows, 7);
     }
 
     public void a(int var1, Object var2, LangLa_cy var3) {
@@ -634,7 +661,7 @@ public class LangLa_cd extends LangLa_fn {
     }
 
     private static void a(int var0, int var1, int var2) {
-        if (!beatdz.LangLa_cd.$state_LangLa_cd().c.a() && !beatdz.LangLa_cd.$state_LangLa_cd().d.a() && !beatdz.LangLa_cd.$state_LangLa_cd().e.a()) {
+        if (!isOpen(57, -1)) {
             GameSrc.gI().showMessage(Caption.mn, -1);
         } else if (GameSrc.gI().mapID == var0) {
             GameSrc.gI().showMessage(Caption.mo, -2560);
@@ -645,49 +672,45 @@ public class LangLa_cd extends LangLa_fn {
 
     
 
-// Mutable legacy globals belong to the current account, including background callbacks.
-public static final class SessionState implements beatdz.MultiSession.State {
-public Vector a;
-public LangLa_ek b;
-public LangLa_ek c;
-public LangLa_ek d;
-public LangLa_ek e;
-public void initialize() {
-this.a = new Vector();
-{
-        for (int var0 = 0; var0 < 7; ++var0) {
-            this.a.add(this.b = new LangLa_ek(var0, Caption.sT[0], 64800, 67500, -1, 30));
-            this.a.add(this.c = new LangLa_ek(var0, Caption.sT[1], 32400, 36000, 57, -1));
-            this.a.add(this.d = new LangLa_ek(var0, Caption.sT[1], 50400, 54000, 57, -1));
-            this.a.add(this.e = new LangLa_ek(var0, Caption.sT[1], 68400, 72000, 57, -1));
-            this.a.add(new LangLa_ek(var0, Caption.sT[2], 24600, 25200, -1, 99));
-            this.a.add(new LangLa_ek(var0, Caption.sT[2], 35400, 36000, -1, 99));
-            this.a.add(new LangLa_ek(var0, Caption.sT[2], 46200, 46800, -1, 99));
-            this.a.add(new LangLa_ek(var0, Caption.sT[2], 57000, 57600, -1, 99));
-            this.a.add(new LangLa_ek(var0, Caption.sT[2], 67800, 68400, -1, 99));
-            if (var0 < 6) {
-                if (var0 % 2 == 0) {
-                    this.a.add(new LangLa_ek(var0, Caption.sT[3], 73200, 73800, -1, 32));
-                    this.a.add(new LangLa_ek(var0, Caption.sT[7], 77400, 78000, -1, 105));
-                    if (var0 == 2) {
-                        this.a.add(new LangLa_ek(var0, Caption.sT[5], 61200, 63000, -1, -2));
-                    }
+    public static final class SessionState implements MultiSession.State {
+        List<List<LangLa_ek>> week;
+        long checkedSecond = Long.MIN_VALUE;
+        LangLa_ek active;
+
+        public void initialize() {
+            List<List<LangLa_ek>> defaults = emptyWeek();
+            for (int day = 0; day < 7; day++) {
+                List<LangLa_ek> slots = defaults.get(day);
+                for (int hour : new int[]{9, 10, 11, 14, 19, 21}) {
+                    slots.add(new LangLa_ek(day, Caption.sT[1], hour * 3600, (hour + 1) * 3600, 57, -1));
+                }
+                for (int hour : new int[]{6, 9, 12, 15, 18}) {
+                    slots.add(new LangLa_ek(day, Caption.sT[2], hour * 3600 + 3000, (hour + 1) * 3600, -1, 99));
+                }
+                slots.add(new LangLa_ek(day, "Hỏi đáp nhận thưởng", 66600, 70200, -1, 71));
+                slots.add(new LangLa_ek(day, "Chiếm map 58", 71400, 72300, -1, 99));
+                if (day == 0 || day == 2 || day == 4) {
+                    slots.add(new LangLa_ek(day, Caption.sT[3], 73200, 73800, -1, 32));
+                    slots.add(new LangLa_ek(day, Caption.sT[7], 77400, 78000, -1, 105));
+                    slots.add(new LangLa_ek(day, "Chiến trường", 72000, 72600, -1, 99));
+                } else if (day == 6) {
+                    slots.add(new LangLa_ek(day, "Chiến trường", 72000, 72600, -1, 99));
+                    slots.add(new LangLa_ek(day, "Gia tộc chiến", 72000, 75600, 85, 32));
                 } else {
-                    this.a.add(new LangLa_ek(var0, Caption.sT[4], 72000, 72600, -1, 32));
-                    this.a.add(new LangLa_ek(var0, Caption.sT[8], 75600, 76200, -1, 93));
+                    slots.add(new LangLa_ek(day, Caption.sT[4], 72000, 72600, -1, 32));
                 }
             }
-
-            if (var0 == 6) {
-                this.a.add(new LangLa_ek(var0, Caption.sT[6], 39600, 41400, 85, 57));
-                this.a.add(new LangLa_ek(var0, Caption.sT[5], 61200, 63000, -1, -2));
-            }
+            setWeek(defaults);
         }
 
-        Collections.sort(this.a, beatdz.LangLa_ek.$state_LangLa_ek().h);
+        private void setWeek(List<List<LangLa_ek>> schedule) {
+            for (List<LangLa_ek> slots : schedule) Collections.sort(slots, LangLa_ek.$state_LangLa_ek().h);
+            week = schedule;
+            checkedSecond = Long.MIN_VALUE;
+            active = null;
+        }
     }
-}
-}
-private static final int $SESSION_STATE_ID = beatdz.MultiSession.register("beatdz.LangLa_cd");
-public static SessionState $state_LangLa_cd() { return beatdz.MultiSession.state($SESSION_STATE_ID, SessionState::new); }
+
+    private static final int $SESSION_STATE_ID = MultiSession.register("beatdz.LangLa_cd");
+    public static SessionState $state_LangLa_cd() { return MultiSession.state($SESSION_STATE_ID, SessionState::new); }
 }

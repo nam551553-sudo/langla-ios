@@ -5747,6 +5747,9 @@ public class GameSrc extends MainScreen {
                 case EquipmentQuote.CHANNEL:
                     EquipmentQuote.receive(this, var1);
                     return;
+                case LangLa_cd.SCHEDULE_CHANNEL:
+                    LangLa_cd.readSchedule(var1);
+                    return;
             }
 
         } catch (Exception var24) {
