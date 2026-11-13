@@ -93,6 +93,14 @@ public class IOSStartupSmoke extends IOSLauncher {
                         }
                         MultiSession.select(0);
                         System.out.println("PASS IOS_NATIVE_X6 six independent tabs, profile paths and account switching");
+                        try {
+                            QuestTrackerTabScenario.verify();
+                            System.out.println("PASS IOS_NATIVE_QUEST_TRACKER rendered on tab 2 and restored across six tabs");
+                        } catch (Throwable error) {
+                            System.err.println("FAIL IOS_NATIVE_STARTUP quest tracker");
+                            error.printStackTrace();
+                            System.exit(13);
+                        }
                         System.out.println("PASS IOS_NATIVE_STARTUP downloaded data via NSURLSession and reached login");
                         System.out.flush(); System.exit(0);
                     }
