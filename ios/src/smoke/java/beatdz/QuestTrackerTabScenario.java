@@ -78,6 +78,7 @@ public final class QuestTrackerTabScenario {
         data.MapTemplate[MAP].name = "Test map";
         data.dataWayPoint = new short[0][];
         data.exps = new long[]{1000L};
+        data.af = new byte[7][1];
         data.NpcTemplate = new NpcTemplate[]{new NpcTemplate(0)};
         data.NpcTemplate[0].name = "Guide";
         data.Task = new Task[]{task("First mission"), task("Second mission")};
@@ -127,6 +128,9 @@ public final class QuestTrackerTabScenario {
         PointMove target = player.pointMove;
         check(target != null && target.cx == x + data.j && target.cy == y + data.k,
                 "tap creates the correct movement target in tab " + (slot + 1));
+        int startX = player.cx;
+        for (int tick = 0; tick < 4; tick++) player.t();
+        check(player.cx > startX, "character advances after a tap in tab " + (slot + 1));
     }
 
     private static void checkSwitchCancelsPress() {
