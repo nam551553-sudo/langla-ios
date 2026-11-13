@@ -304,7 +304,12 @@ public class mInputProcessor implements InputProcessor {
       return true;
    }
 
-   void cancelAndroidMovement() {
+   void cancelPointers() {
+      this.b = -1;
+      cancelAndroidMovement();
+   }
+
+   private void cancelAndroidMovement() {
       if (androidJoystick != null) androidJoystick.d();
       androidJoystick = null;
       androidMovePointer = -1;

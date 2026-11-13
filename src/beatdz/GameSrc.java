@@ -3548,6 +3548,9 @@ public class GameSrc extends MainScreen {
     private long lastHudErrorLog;
 
     private void rebuildHudBackground() {
+        // Character data can open this screen before the map packet creates its controls.
+        if (this.P == null || this.P.c == null || this.Z == null || this.X == null
+                || this.aj == null || this.du == null || this.af == null) return;
         DataCenter data = DataCenter.gI();
         int zoom = data.zoomLevel;
         SessionState state = $state_GameSrc();
@@ -3624,7 +3627,7 @@ public class GameSrc extends MainScreen {
     }
 
     private static void drawHudButton(Pixmap target, mImage icon, LangLa_cs button, int size, int zoom) {
-        if (!hasHudPixels(icon)) return;
+        if (button == null || !hasHudPixels(icon)) return;
         Binary2.a(target, icon.b, 0, 0, Math.min(icon.c, size * zoom), Math.min(icon.d, size * zoom),
                 button.cx * zoom, button.cy * zoom, button.width * zoom, button.height * zoom, Blending.None);
     }
@@ -3717,7 +3720,7 @@ public class GameSrc extends MainScreen {
     }
 
     public void a(LangLa_jz var1, int var2, int var3) {
-        if (this.i() && !this.bN) {
+        if (this.i() && !this.bN && this.Q != null) {
             this.Q.a(false);
             this.I.add(new LangLa_jw(146, var2 + DataCenter.gI().j, var3 + DataCenter.gI().k, 1));
             boolean var11;
@@ -3951,6 +3954,7 @@ public class GameSrc extends MainScreen {
                     }
                     break;
                 case 9000:
+                    if (this.X == null || this.h == null || this.ah == null) break;
                     if (Gdx.app.getType() == ApplicationType.Desktop && !this.ah.v && this.ah.cx != -200 && this.ah.cy != -200) {
                         this.ah.setXY(-200, -200);
                         this.ah.b(true);

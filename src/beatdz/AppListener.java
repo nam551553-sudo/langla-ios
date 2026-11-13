@@ -73,7 +73,6 @@ public class AppListener extends Game {
             gI();
             exit();
         } else {
-            MoveSmart.a();
             instance = this;
             this.canvas = new InputCanvas();
             if (Gdx.app.getType() == ApplicationType.Desktop) {

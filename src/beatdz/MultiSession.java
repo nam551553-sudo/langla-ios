@@ -127,6 +127,7 @@ public final class MultiSession {
         Context previous = active;
         run(previous, () -> {
             DataCenter data = DataCenter.gI();
+            AppListener.gI().canvas.cancelPointer();
             if (data.currentScreen != null) for (Object item : data.currentScreen.cD) ((LangLa_cx)item).cO.a();
             Char.gI().cleanMove();
             if (LangLa_dp.$state_LangLa_dp().f != null) LangLa_dp.a().b();
@@ -134,7 +135,6 @@ public final class MultiSession {
         previous.hiddenPhase = hiddenInterval(tabCount) * (previous.slot + 1) / LIMIT;
         previous.hiddenTickDue = false;
         active = TABS.get(slot); OWNER.set(active);
-        AppListener.gI().canvas.cancelPointer();
         AppListener.gI().canvas.activateSession();
         Gdx.input.setOnscreenKeyboardVisible(false);
     }

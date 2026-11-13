@@ -340,7 +340,7 @@ public abstract class Canvas implements Screen {
         logicAccumulator = RenderMotion.STEP;
     }
     private void cancelViewMotion() {
-        if (gameInput != null) gameInput.cancelAndroidMovement();
+        if (gameInput != null) gameInput.cancelPointers();
         cancelPointer();
         FrameRate.resetFrameDelta();
         logicAccumulator = 0f; renderAlpha = 1f;
@@ -376,7 +376,7 @@ public abstract class Canvas implements Screen {
     }
 
     public synchronized void pause() {
-        if (gameInput != null) gameInput.cancelAndroidMovement();
+        if (gameInput != null) gameInput.cancelPointers();
         LangLa_dp var1;
         (var1 = LangLa_dp.a()).a = true;
         var1.b();

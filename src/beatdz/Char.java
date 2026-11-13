@@ -981,7 +981,7 @@ public class Char extends Entity {
                 this.bs = 0;
             }
 
-            MoveSmart.d();
+            if (this.isMe()) MoveSmart.d();
             this.W();
             if (this.aw != null) {
                 this.aa = -1;
@@ -1952,11 +1952,8 @@ public class Char extends Entity {
             this.l();
             if (AutoPro.isAuto(12)) {
                 this.pointMove = new PointMove((short) var1, (short) var2, speedMove);
-            }
-            else
-            {
-                
-               MoveSmart.a(GameSrc.gI().mapID, var1, var2);
+            } else {
+                MoveSmart.requestPath(var1, var2);
             }
         }
     }

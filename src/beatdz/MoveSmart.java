@@ -1,44 +1,22 @@
-package beatdz;import java.util.Vector;
+package beatdz;
+
+import java.util.Vector;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MoveSmart {
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-
-   public static void a() {
-      beatdz.MoveSmart.$state_MoveSmart().i = true;
-      beatdz.MoveSmart.$state_MoveSmart().g.removeAllElements();
-
-      try {
-         (new Thread(new LangLa_hw())).start();
-      } catch (Exception var1) {
-         Utlis.println(var1);
-      }
-   }
+   private static final ExecutorService PATH_WORKERS = Executors.newFixedThreadPool(2, action -> {
+      Thread worker = new Thread(action, "map-pathfinder");
+      worker.setDaemon(true);
+      return worker;
+   });
 
    public static void b() {
-      beatdz.MoveSmart.$state_MoveSmart().i = false;
-      beatdz.MoveSmart.$state_MoveSmart().g.removeAllElements();
-      n();
-   }
-
-   private static void n() {
-      if (beatdz.MoveSmart.$state_MoveSmart().k == 1) {
-         synchronized(beatdz.MoveSmart.$state_MoveSmart().h) {
-            beatdz.MoveSmart.$state_MoveSmart().h.notify();
-         }
-      } else {
-         beatdz.MoveSmart.$state_MoveSmart().k = 2;
+      SessionState state = $state_MoveSmart();
+      synchronized (state) {
+         state.request = null;
+         state.path.clear();
       }
-
    }
 
    public static Vector a(XYEntity var0, XYEntity var1, boolean var2) {
@@ -94,136 +72,110 @@ public class MoveSmart {
       }
    }
 
-   public static void a(int var0, int var1, int var2) {
-      if (beatdz.MoveSmart.$state_MoveSmart().k == 1 || var0 != beatdz.MoveSmart.$state_MoveSmart().a || var1 != beatdz.MoveSmart.$state_MoveSmart().b || var2 != beatdz.MoveSmart.$state_MoveSmart().c || beatdz.MoveSmart.$state_MoveSmart().d != GameSrc.gI().mapID || beatdz.MoveSmart.$state_MoveSmart().e != Char.gI().cx || beatdz.MoveSmart.$state_MoveSmart().f != Char.gI().cy) {
-         beatdz.MoveSmart.$state_MoveSmart().a = var0;
-         beatdz.MoveSmart.$state_MoveSmart().b = var1;
-         beatdz.MoveSmart.$state_MoveSmart().c = var2;
-         beatdz.MoveSmart.$state_MoveSmart().g.removeAllElements();
-         beatdz.MoveSmart.$state_MoveSmart().d = GameSrc.gI().mapID;
-         beatdz.MoveSmart.$state_MoveSmart().e = Char.gI().cx;
-         beatdz.MoveSmart.$state_MoveSmart().f = Char.gI().cy;
-         beatdz.MoveSmart.$state_MoveSmart().i = true;
-         beatdz.MoveSmart.$state_MoveSmart().j = 0;
-         n();
+   static void requestPath(int x, int y) {
+      SessionState state = $state_MoveSmart();
+      PathRequest request = new PathRequest(GameSrc.gI(), Char.gI(), x, y);
+      synchronized (state) {
+         if (state.request != null && state.request.matches(request)) return;
+         state.request = request;
+         state.path.clear();
+         if (!state.workerScheduled) {
+            state.workerScheduled = true;
+            PATH_WORKERS.execute(MultiSession.bind(() -> findPendingPath(state)));
+         }
       }
    }
 
-   public static Vector c() {
-      return beatdz.MoveSmart.$state_MoveSmart().g;
+   private static void findPendingPath(SessionState state) {
+      while (true) {
+         PathRequest request;
+         synchronized (state) {
+            request = state.request;
+            if (request == null) {
+               state.workerScheduled = false;
+               return;
+            }
+         }
+         Vector<XYEntity> route = null;
+         try {
+            if (request.isOnCurrentMap()) route = LangLa_hw.findPath(request, () -> state.request == request);
+         } catch (RuntimeException error) {
+            if (state.request == request && request.isOnCurrentMap()) Utlis.println(error, "Map pathfinding");
+         }
+         synchronized (state) {
+            if (state.request == request) {
+               if (route != null && request.isOnCurrentMap()) state.path.addAll(route);
+               state.request = null;
+            }
+         }
+      }
+   }
+
+   public static Vector<XYEntity> c() {
+      return $state_MoveSmart().path;
    }
 
    public static void d() {
-      if (!beatdz.MoveSmart.$state_MoveSmart().i) {
-         beatdz.MoveSmart.$state_MoveSmart().g.clear();
-      } else {
-         if (beatdz.MoveSmart.$state_MoveSmart().g.size() > 0 && Char.gI().pointMove == null) {
-            beatdz.MoveSmart.$state_MoveSmart().g.removeElementAt(0);
-            if (beatdz.MoveSmart.$state_MoveSmart().g.size() > 0) {
-               XYEntity var0 = (XYEntity)beatdz.MoveSmart.$state_MoveSmart().g.firstElement();
-               Char.gI().pointMove = new PointMove(var0.cx, var0.cy, Char.gI().speedMove, Char.gI().speedMove);
-               Char.gI().a(Char.gI().pointMove);
-               DataCenter.gI();
-            }
-         }
-
+      SessionState state = $state_MoveSmart();
+      Char player = Char.gI();
+      synchronized (state) {
+         if (player.pointMove != null || state.path.isEmpty()) return;
+         state.path.remove(0);
+         if (state.path.isEmpty()) return;
+         XYEntity next = state.path.firstElement();
+         player.pointMove = new PointMove(next.cx, next.cy, player.speedMove, player.speedMove);
       }
+      player.a(player.pointMove);
    }
 
    public static boolean e() {
-      return beatdz.MoveSmart.$state_MoveSmart().g.size() > 0;
+      return !c().isEmpty();
    }
 
-   
-   static Object f() {
-      return beatdz.MoveSmart.$state_MoveSmart().h;
+   static final class PathRequest {
+      final GameSrc game;
+      final Char player;
+      final int map;
+      final XYBlockMap collision;
+      final Object[] walkableRoutes;
+      final int fromX;
+      final int fromY;
+      final int toX;
+      final int toY;
+
+      PathRequest(GameSrc game, Char player, int toX, int toY) {
+         this.game = game;
+         this.player = player;
+         this.map = game.mapID;
+         this.collision = game.h;
+         this.walkableRoutes = game.i.toArray();
+         this.fromX = player.cx;
+         this.fromY = player.cy;
+         this.toX = toX;
+         this.toY = toY;
+      }
+
+      boolean isOnCurrentMap() {
+         return collision != null && GameSrc.d() == game && Char.gI() == player
+                 && map == game.mapID && collision == game.h;
+      }
+
+      boolean matches(PathRequest other) {
+         return game == other.game && player == other.player && map == other.map && collision == other.collision
+                 && fromX == other.fromX && fromY == other.fromY && toX == other.toX && toY == other.toY;
+      }
    }
 
-   
-   static int a(int var0) {
-      beatdz.MoveSmart.$state_MoveSmart().k = var0;
-      return var0;
+   public static final class SessionState implements MultiSession.State {
+      final Vector<XYEntity> path = new Vector<>();
+      volatile PathRequest request;
+      boolean workerScheduled;
+
+      public void initialize() { }
    }
 
-   
-   static boolean g() {
-      return beatdz.MoveSmart.$state_MoveSmart().i;
+   private static final int $SESSION_STATE_ID = MultiSession.register("beatdz.MoveSmart");
+   public static SessionState $state_MoveSmart() {
+      return MultiSession.state($SESSION_STATE_ID, SessionState::new);
    }
-
-   
-   static int h() {
-      return beatdz.MoveSmart.$state_MoveSmart().e;
-   }
-
-   
-   static int i() {
-      return beatdz.MoveSmart.$state_MoveSmart().f;
-   }
-
-   
-   static int j() {
-      return beatdz.MoveSmart.$state_MoveSmart().b;
-   }
-
-   
-   static int k() {
-      return beatdz.MoveSmart.$state_MoveSmart().c;
-   }
-
-   
-   static int b(int var0) {
-      beatdz.MoveSmart.$state_MoveSmart().e = var0;
-      return var0;
-   }
-
-   
-   static int c(int var0) {
-      beatdz.MoveSmart.$state_MoveSmart().f = var0;
-      return var0;
-   }
-
-   
-   static int d(int var0) {
-      beatdz.MoveSmart.$state_MoveSmart().b = var0;
-      return var0;
-   }
-
-   
-   static int e(int var0) {
-      beatdz.MoveSmart.$state_MoveSmart().c = var0;
-      return var0;
-   }
-
-   
-   static int l() {
-      return beatdz.MoveSmart.$state_MoveSmart().k;
-   }
-
-   
-   static Vector m() {
-      return beatdz.MoveSmart.$state_MoveSmart().g;
-   }
-
-// Mutable legacy globals belong to the current account, including background callbacks.
-public static final class SessionState implements beatdz.MultiSession.State {
-public int a;
-public int b;
-public int c;
-public int d;
-public int e;
-public int f;
-public Vector g;
-public Object h;
-public boolean i;
-public int j;
-public int k;
-public void initialize() {
-this.g = new Vector();
-this.h = new Object();
-this.j = 0;
-this.k = 0;
-}
-}
-private static final int $SESSION_STATE_ID = beatdz.MultiSession.register("beatdz.MoveSmart");
-public static SessionState $state_MoveSmart() { return beatdz.MultiSession.state($SESSION_STATE_ID, SessionState::new); }
 }

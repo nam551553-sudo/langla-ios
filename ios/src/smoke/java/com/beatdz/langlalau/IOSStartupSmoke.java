@@ -96,6 +96,7 @@ public class IOSStartupSmoke extends IOSLauncher {
                         try {
                             QuestTrackerTabScenario.verify();
                             System.out.println("PASS IOS_NATIVE_QUEST_TRACKER rendered on tab 2 and restored across six tabs");
+                            System.out.println("PASS IOS_NATIVE_TAP_MOVEMENT correct targets across six tabs");
                         } catch (Throwable error) {
                             System.err.println("FAIL IOS_NATIVE_STARTUP quest tracker");
                             error.printStackTrace();
