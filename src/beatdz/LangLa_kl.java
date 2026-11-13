@@ -3,6 +3,8 @@ import com.tgame.model.Caption;
 import java.util.Vector;
 
 public class LangLa_kl extends LangLa_ge implements IKeyboard {
+   private static final int POTENTIAL_BASE_MARKER = 0x504F5431;
+
    private int I;
    private int J;
    public int a;
@@ -188,6 +190,9 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
          DataCenter.gI();
          this.c[0] = this.a(this.b.c() + 62 + 0, this.a_() + 38, 72, "", this, 2);
          var10.addElement(this.c[0]);
+         var10.addElement(this.a(this.b.c() + 140, this.a_() + 41, "", this, 2001, 58));
+         var10.addElement(this.a(this.b.c() + 160, this.a_() + 41, "", this, 2002, 57));
+         var10.addElement(this.a(this.b.c() + 180, this.a_() + 41, "", this, 2012, 244));
          this.c[1] = this.a(this.b.c() + 62 + 0, this.a_() + 38 + 25, 72, "", this, 2);
          var10.addElement(this.c[1]);
          var8 = this.a(this.b.c() + 145 - 5 + 0, this.a_() + 38 + 25 + 3, "", this, 2003, 58);
@@ -277,7 +282,7 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
       in.mark(in.available());
       try {
          int marker = in.readInt();
-         if (marker != 0x504F5431) {
+         if (marker != POTENTIAL_BASE_MARKER) {
             in.reset();
             byte rank = message.readByte(), path = message.readByte();
             // Game strings have an extra compact-string discriminator. Plain
@@ -290,7 +295,7 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
             if (in.available() < 20) return;
             marker = in.readInt();
          }
-         if (marker != 0x504F5431 || in.available() < 16) return;
+         if (marker != POTENTIAL_BASE_MARKER || in.available() < 16) return;
          int strength = in.readInt(), chakra = in.readInt(), mp = in.readInt(), hp = in.readInt();
          if (strength < 0 || chakra < 0 || hp < 0 || mp < 0) return;
          chakraBonus = f - chakra; e = strength; f = chakra; g = hp; h = mp; hasBasePotential = true;
@@ -308,10 +313,28 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
 
    public void writePotential(Message message) throws java.io.IOException {
       if (!d) throw new java.io.IOException("Chỉ số nhân vật chưa tải xong");
-      message.writeShort(e);
+      message.writeShort(c[0].e());
       message.writeShort(c[1].e() + chakraBonus);
       message.writeShort(c[2].e());
       message.writeShort(c[3].e());
+      if (hasBasePotential) {
+         message.writeInt(POTENTIAL_BASE_MARKER);
+         for (mTextBox field : this.c) message.writeInt(field.e());
+      }
+   }
+
+   private int potentialMaximum(mTextBox field) {
+      return (int) Math.min(Math.max(Short.MAX_VALUE, field.n), (long) field.e() + Math.max(0, this.i));
+   }
+
+   private void adjustPotential(int index, int change) {
+      mTextBox field = this.c[index];
+      int value = field.e();
+      int delta = Math.max(field.n - value, Math.min(change, potentialMaximum(field) - value));
+      if (delta != 0) {
+         field.a(value + delta);
+         this.i -= delta;
+      }
    }
 
    public static LangLa_kl l() {
@@ -552,66 +575,23 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
                                     var13 = false;
                                  }
                                  break;
+                              case 2001:
                               case 2003:
-                                 if (this.c[1].e() - 1 >= this.c[1].n) {
-                                    this.c[1].a(this.c[1].e() - 1);
-                                    ++this.i;
-                                    var13 = false;
-                                 } else {
-                                    var13 = false;
-                                 }
-                                 break;
-                              case 2004:
-                                 if (this.i > 0) {
-                                    this.c[1].a(this.c[1].e() + 1);
-                                    --this.i;
-                                    var13 = false;
-                                 } else {
-                                    var13 = false;
-                                 }
-                                 break;
                               case 2005:
-                                 if (this.c[2].e() - 1 >= this.c[2].n) {
-                                    this.c[2].a(this.c[2].e() - 1);
-                                    ++this.i;
-                                    var13 = false;
-                                 } else {
-                                    var13 = false;
-                                 }
-                                 break;
-                              case 2006:
-                                 if (this.i > 0) {
-                                    this.c[2].a(this.c[2].e() + 1);
-                                    --this.i;
-                                    var13 = false;
-                                 } else {
-                                    var13 = false;
-                                 }
-                                 break;
                               case 2007:
-                                 if (this.c[3].e() - 1 >= this.c[3].n) {
-                                    this.c[3].a(this.c[3].e() - 1);
-                                    ++this.i;
-                                    var13 = false;
-                                 } else {
-                                    var13 = false;
-                                 }
+                                 this.adjustPotential((var1.b - 2001) / 2, -1);
+                                 var13 = false;
                                  break;
+                              case 2002:
+                              case 2004:
+                              case 2006:
                               case 2008:
-                                 if (this.i > 0) {
-                                    this.c[3].a(this.c[3].e() + 1);
-                                    --this.i;
-                                    var13 = false;
-                                 } else {
-                                    var13 = false;
-                                 }
+                                 this.adjustPotential((var1.b - 2002) / 2, 1);
+                                 var13 = false;
                                  break;
                               case 2009:
-                                 this.i += this.c[1].e() + this.c[2].e() + this.c[3].e() - (this.f + this.h + this.g);
-                                 this.c[0].a("" + this.e);
-                                 this.c[1].a("" + this.f);
-                                 this.c[2].a("" + this.h);
-                                 this.c[3].a("" + this.g);
+                                 this.i = this.u;
+                                 for (mTextBox field : this.c) field.a(field.n);
                                  var13 = false;
                                  break;
                               case 2010:
@@ -636,44 +616,12 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
                                     var13 = false;
                                  }
                                  break;
+                              case 2012:
                               case 2014:
-                                 if (this.i > 10) {
-                                    this.c[1].a(this.c[1].e() + 10);
-                                    this.i -= 10;
-                                    var13 = false;
-                                 } else if (this.i > 0) {
-                                    this.c[1].a(this.c[1].e() + this.i);
-                                    this.i = 0;
-                                    var13 = false;
-                                 } else {
-                                    var13 = false;
-                                 }
-                                 break;
                               case 2016:
-                                 if (this.i > 10) {
-                                    this.c[2].a(this.c[2].e() + 10);
-                                    this.i -= 10;
-                                    var13 = false;
-                                 } else if (this.i > 0) {
-                                    this.c[2].a(this.c[2].e() + this.i);
-                                    this.i = 0;
-                                    var13 = false;
-                                 } else {
-                                    var13 = false;
-                                 }
-                                 break;
                               case 2018:
-                                 if (this.i > 10) {
-                                    this.c[3].a(this.c[3].e() + 10);
-                                    this.i -= 10;
-                                    var13 = false;
-                                 } else if (this.i > 0) {
-                                    this.c[3].a(this.c[3].e() + this.i);
-                                    this.i = 0;
-                                    var13 = false;
-                                 } else {
-                                    var13 = false;
-                                 }
+                                 this.adjustPotential((var1.b - 2012) / 2, 10);
+                                 var13 = false;
                                  break;
                               case 2050:
                                  var22 = Message.c((byte)-18);
@@ -1422,7 +1370,6 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
                   var10003 = var3 + 6;
                   var4 += 10;
                   mFont.a((mFont)mFont.d, (Graphics)var1, var10002, var10003, var4, 0, -1, 0);
-                  if (this.v()) mFont.a(mFont.d, var1, "Đã khóa", var3 + 143, var4, 0, -1, 0);
                   var10002 = (this.hasBasePotential ? Caption.rc[2] : "Chakra tổng:");
                   var10003 = var3 + 6;
                   var4 += 24;
@@ -2164,7 +2111,7 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
 
       this.Q.u = true;
       this.R.u = true;
-      if (this.d && (this.c[1].e() != this.f || this.c[2].e() != this.h || this.c[3].e() != this.g)) {
+      if (this.d && this.i != this.u) {
          this.Q.u = false;
          this.R.u = false;
       }
@@ -2353,27 +2300,8 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
       return var1;
    }
 
-   public void a(mTextBox var1) {
-      mTextBox var10000;
-      int var2;
-      if (var1.equals(this.c[0])) {
-         var1.o = this.e;
-      } else if (var1.equals(this.c[1])) {
-         var10000 = this.c[1];
-         var2 = this.c[1].e() + this.i;
-         var10000.o = var2;
-      } else if (var1.equals(this.c[2])) {
-         var10000 = this.c[2];
-         var2 = this.c[2].e() + this.i;
-         var10000.o = var2;
-      } else {
-         if (var1.equals(this.c[3])) {
-            var10000 = this.c[3];
-            var2 = this.c[3].e() + this.i;
-            var10000.o = var2;
-         }
-
-      }
+   public void a(mTextBox field) {
+      field.o = this.potentialMaximum(field);
    }
 
    public void a(int var1, Object var2, LangLa_cy var3) {
@@ -2410,21 +2338,12 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
       this.A.a(selection == 0 ? 0 : selection + 2);
    }
 
-   public void b(mTextBox var1) {
-      if (var1 == this.c[0]) {
-         var1.a(this.e);
-         return;
+   public void b(mTextBox field) {
+      field.a(Math.max(field.n, Math.min(field.e(), field.o)));
+      this.i = this.u;
+      for (mTextBox potential : this.c) {
+         this.i -= potential.e() - potential.n;
       }
-      int var2;
-      if ((var2 = var1.e()) > var1.o) {
-         var1.a("" + var1.o);
-      }
-
-      if (var2 < var1.n) {
-         var1.a("" + var1.n);
-      }
-
-      this.i = this.u - ((this.c[1].e() - this.f) + (this.c[2].e() - this.h) + (this.c[3].e() - this.g));
    }
 
    private static Skill b(int var0, int var1) {
