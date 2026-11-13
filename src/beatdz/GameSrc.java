@@ -3018,7 +3018,7 @@ public class GameSrc extends MainScreen {
 
     public void o() {
         try {
-            if (System.currentTimeMillis() - this.dA >= 100L && (!(gI().H() instanceof LangLa_ar) || ((LangLa_ar) gI().H()).isAutoCuongHoa) && !(gI().H() instanceof LangLa_au)) {
+            if (System.currentTimeMillis() - this.dA >= 100L && !(gI().H() instanceof LangLa_ar) && !(gI().H() instanceof LangLa_au)) {
                 int var1;
                 if ((var1 = SettingsTab.gI().k()) > 0) {
                     for (var1 = var1; var1 >= 0 && !this.t(var1); --var1) {
@@ -5744,6 +5744,9 @@ public class GameSrc extends MainScreen {
                 case 102:
                     Controller.readLatHinh(var1);
                     return;
+                case EquipmentQuote.CHANNEL:
+                    EquipmentQuote.receive(this, var1);
+                    return;
             }
 
         } catch (Exception var24) {
@@ -6416,7 +6419,7 @@ public class GameSrc extends MainScreen {
     public void C(Message var1) {
         try {
             boolean var2 = var1.reader.dis.readBoolean();
-            boolean var3 = var1.reader.dis.readBoolean();
+            var1.reader.dis.readBoolean();
             Char.gI().a(var1.reader.dis.readLong(), false, false);
             Char.gI().b(var1.reader.dis.readLong(), false, false);
             byte var4 = var1.reader.dis.readByte();
@@ -6440,16 +6443,8 @@ public class GameSrc extends MainScreen {
             Char.gI().h(var11.TYPE_TEMP)[var11.index] = var11;
             LangLa_cx var8;
             if ((var8 = this.H()) instanceof LangLa_ar) {
-                LangLa_ar var9;
-                (var9 = (LangLa_ar) var8).d = 100;
+                LangLa_ar var9 = (LangLa_ar) var8;
                 var9.f = new LangLa_jw(114, 0, 0);
-                if (var2) {
-                    var9.e = 1;
-                } else if (!var3) {
-                    var9.e = 2;
-                } else {
-                    var9.e = 3;
-                }
 
                 int var10;
                 for (var10 = 0; var10 < var9.b.length; ++var10) {
@@ -6462,6 +6457,7 @@ public class GameSrc extends MainScreen {
 
                 var9.a[0] = var11;
                 Char.gI().h(var11.TYPE_TEMP)[var11.index] = null;
+                var9.upgradeResult(var2);
             }
 
         } catch (Exception var7) {
@@ -10786,8 +10782,7 @@ public class GameSrc extends MainScreen {
 
             LangLa_cx var8;
             if ((var8 = this.H()) instanceof LangLa_am) {
-                LangLa_am var9;
-                (var9 = (LangLa_am) var8).f = true;
+                LangLa_am var9 = (LangLa_am) var8;
                 var9.d = new LangLa_jw(114, 0, 0);
 
                 int var7;

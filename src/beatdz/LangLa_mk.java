@@ -1685,8 +1685,9 @@ public class LangLa_mk extends LangLa_fm {
 
    private void j() {
       try {
-         LangLa_am var1;
-         Item[] var2 = (var1 = (LangLa_am)this.s).b(this.b);
+         LangLa_am var1 = (LangLa_am)this.s;
+         if (var1.awaitingResult()) return;
+         Item[] var2 = var1.b(this.b);
          int var3 = 0;
 
          for(int var4 = 0; var4 < var1.b.length; ++var4) {
@@ -1728,8 +1729,9 @@ public class LangLa_mk extends LangLa_fm {
    }
 
    private void k() {
-      LangLa_am var1;
-      Item[] var2 = (var1 = (LangLa_am)this.s).b;
+      LangLa_am var1 = (LangLa_am)this.s;
+      if (var1.awaitingResult()) return;
+      Item[] var2 = var1.b;
 
       for(int var3 = 0; var3 < var2.length; ++var3) {
          if (var2[var3] != null && var2[var3].equals(this.b)) {
@@ -1757,8 +1759,9 @@ public class LangLa_mk extends LangLa_fm {
 
    private void m() {
       try {
-         LangLa_ar var1;
-         Item[] var2 = (var1 = (LangLa_ar)this.s).b(this.b);
+         LangLa_ar var1 = (LangLa_ar)this.s;
+         if (var1.awaitingResult()) return;
+         Item[] var2 = var1.b(this.b);
          boolean var3 = false;
          if (this.b.id == 162) {
             if (var1.a[2] != null) {
@@ -1794,8 +1797,9 @@ public class LangLa_mk extends LangLa_fm {
    }
 
    private void n() {
-      LangLa_ar var1;
-      Item[] var2 = (var1 = (LangLa_ar)this.s).a;
+      LangLa_ar var1 = (LangLa_ar)this.s;
+      if (var1.awaitingResult()) return;
+      Item[] var2 = var1.a;
 
       int var3;
       for(var3 = 0; var3 < var2.length; ++var3) {

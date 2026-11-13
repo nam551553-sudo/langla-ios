@@ -1,7 +1,14 @@
-package beatdz;import com.tgame.model.Caption;
+package beatdz;
+
+import com.tgame.model.Caption;
+import java.io.IOException;
 import java.util.Vector;
 
 public class LangLa_am extends LangLa_kj {
+   final EquipmentQuote.Query quote = new EquipmentQuote.Query();
+   private final Item[] selection = new Item[21];
+   private EquipmentQuote confirmedQuote;
+   private long submittedAt;
    public Item[] a = new Item[1];
    public Item[] b = new Item[20];
    private LangLa_ij[] g = new LangLa_ij[3];
@@ -9,7 +16,6 @@ public class LangLa_am extends LangLa_kj {
    public int c;
    public LangLa_jw d;
    public Item e;
-   public boolean f;
 
    public LangLa_am(MainScreen var1) {
       super(var1, new String[]{Caption.rx[7], Caption.H});
@@ -33,52 +39,15 @@ public class LangLa_am extends LangLa_kj {
 
    }
 
-   public void a(int var1) {
-      super.a(var1);
-      this.f = false;
-   }
-
    public void b() {
       super.b();
       if (this.k() == 0) {
-         int var3;
-         if (!this.f) {
-            if (this.a[0] == null) {
-               for(var3 = 0; var3 < this.b.length; ++var3) {
-                  if (this.b[var3] != null) {
-                     this.a(this.b[var3]);
-                     break;
-                  }
-               }
-            } else {
-               boolean var1 = false;
-
-               for(int var2 = 0; var2 < this.b.length; ++var2) {
-                  if (this.b[var2] != null && this.b[var2].equals(this.a[0])) {
-                     var1 = true;
-                     break;
-                  }
-               }
-
-               if (!var1) {
-                  this.a((Item)null);
-               } else {
-                  boolean var4 = false;
-
-                  for(var3 = 0; var3 < this.b.length; ++var3) {
-                     if (this.b[var3] != null) {
-                        var4 = true;
-                     }
-                  }
-
-                  if (!var4) {
-                     this.a((Item)null);
-                  }
-               }
-            }
+         try {
+            refreshQuote();
+         } catch (IOException error) {
+            Utlis.println(error);
          }
-
-         for(var3 = 0; var3 < this.g.length; ++var3) {
+         for (int var3 = 0; var3 < this.g.length; ++var3) {
             this.g[var3].a();
          }
       } else {
@@ -103,16 +72,7 @@ public class LangLa_am extends LangLa_kj {
 
       if (this.k() == 0) {
          mFont.b(mFont.d, var1, Caption.nE, 14, this.a_() + 9, 0, -10831436, -16777216);
-         if (this.f) {
-            if (DataCenter.gI().i % 20 > 12) {
-               mFont.b(mFont.d, var1, Caption.nI, 149, this.a_() + 108, 0, -2560, -16777216);
-            }
-         } else if (this.e != null) {
-            mFont.b(mFont.d, var1, "Nguyên liệu: " + (this.e.level + 1) + " cải trang", 149, this.a_() + 108, 0, -30976, -16777216);
-            mFont.b(mFont.d, var1, "Chạm ô kết quả để xem", 149, this.a_() + 124, 0, -10831436, -16777216);
-            mFont.b(mFont.d, var1, "chỉ số và nguyên liệu", 149, this.a_() + 140, 0, -10831436, -16777216);
-         }
-
+         drawQuote(var1);
          a(var1, this.g[0].cx, this.g[0].cy, this.e, this.g[0].k >= 0, Caption.I);
          this.a(var1, this.g[2]);
 
@@ -189,6 +149,8 @@ public class LangLa_am extends LangLa_kj {
 
    public void d() {
       super.d();
+      quote.clear();
+      confirmedQuote = null;
 
       for(int var1 = 0; var1 < this.b.length; ++var1) {
          if (this.b[var1] != null) {
@@ -199,109 +161,130 @@ public class LangLa_am extends LangLa_kj {
 
    }
 
-   private void a(boolean var1) {
-      try {
-         if (this.e != null && this.e.level > 0) {
-            if (var1) {
-               DataCenter.gI().currentScreen.a(Caption.nH, 2001, this);
-            } else {
-               Message var5 = new Message((byte)-50);
-               Vector var2 = new Vector();
+   boolean awaitingResult() {
+      return System.currentTimeMillis() - submittedAt < 1500;
+   }
 
-               int var3;
-               for(var3 = 0; var3 < this.b.length; ++var3) {
-                  if (this.b[var3] != null) {
-                     if (this.b[var3] == this.a[0]) {
-                        var2.insertElementAt(this.b[var3], 0);
-                     } else {
-                        var2.add(this.b[var3]);
-                     }
-                  }
-               }
+   private int selectedCount() {
+      int count = 0;
+      for (Item item : b) if (item != null) count++;
+      return count;
+   }
 
-               var5.writeByte(var2.size());
-
-               for(var3 = 0; var3 < var2.size(); ++var3) {
-                  var5.writeByte(((Item)var2.get(var3)).TYPE_TEMP);
-                  var5.writeShort(((Item)var2.get(var3)).index);
-               }
-
-               var5.send();
-            }
-         } else {
-            DataCenter.gI().currentScreen.showMessage(Caption.nE, -65536);
+   void refreshQuote() throws IOException {
+      if (awaitingResult()) return;
+      boolean primarySelected = false;
+      for (Item item : b) {
+         if (item != null && item == a[0]) {
+            primarySelected = true;
+            break;
          }
-      } catch (Exception var4) {
-         Utlis.println(var4);
+      }
+      if (!primarySelected) {
+         a[0] = null;
+         for (Item item : b) {
+            if (item != null) {
+               a[0] = item;
+               break;
+            }
+         }
+      }
+      selection[0] = a[0];
+      System.arraycopy(b, 0, selection, 1, b.length);
+      int count = selectedCount();
+      if (!quote.refresh(selection, count >= 2, false)) return;
+      e = null;
+      if (count >= 2) {
+         Message request = EquipmentQuote.request(EquipmentQuote.COSTUME_FUSION, quote.requestId);
+         writeSelection(request, count);
+         request.send();
       }
    }
 
-   public void a(Item var1) {
-      this.a[0] = var1;
-      if (this.a[0] == null) {
-         this.e = null;
-      } else {
-         this.e = this.a[0].a();
-         this.e.level = -1;
+   void acceptQuote(EquipmentQuote received) {
+      quote.accept(received);
+      e = received.result;
+   }
 
-         for(int var9 = 0; var9 < this.b.length; ++var9) {
-            if (this.b[var9] != null) {
-               ++this.e.level;
-            }
+   private void writeSelection(Message message, int count) throws IOException {
+      message.writeByte(count);
+      message.writeByte(a[0].TYPE_TEMP);
+      message.writeShort(a[0].index);
+      for (Item item : b) {
+         if (item != null && item != a[0]) {
+            message.writeByte(item.TYPE_TEMP);
+            message.writeShort(item.index);
          }
-
-         if (this.e.level < 0) {
-            this.e.level = 0;
-         }
-
-         Vector var10 = new Vector();
-
-         for(int var3 = 0; var3 < this.b.length; ++var3) {
-            ItemOption[] var4;
-            if (this.b[var3] != null && (var4 = this.b[var3].L()) != null) {
-               int var5;
-
-               for(var5 = 0; var5 < var4.length; ++var5) {
-                  boolean var6 = true;
-
-                  for(int var7 = 0; var7 < var10.size(); ++var7) {
-                     if (((ItemOption)var10.get(var7)).a[0] == var4[var5].a[0]) {
-                        ((ItemOption)var10.get(var7)).c(((ItemOption)var10.get(var7)).a[1] + var4[var5].a[1]);
-                        var6 = false;
-                        break;
-                     }
-                  }
-
-                  if (var6) var10.add(new ItemOption(var4[var5].a[0] + "," + var4[var5].a[1]));
-               }
-            }
-         }
-
-         this.e.strOptions = Item.a(var10);
-         this.e.isLock = true;
       }
+   }
+
+   private void drawQuote(Graphics graphics) {
+      EquipmentQuote cost = quote.value;
+      int firstLine = a_() + 88;
+      if (cost == null || !cost.valid) {
+         if (selectedCount() >= 2) {
+            Vector lines = mFont.a(mFont.d, quote.status(), width - 158);
+            for (int i = 0; i < lines.size(); i++) {
+               mFont.b(mFont.d, graphics, (String) lines.get(i), 149, firstLine + i * 12, 0, -2560, -16777216);
+            }
+         }
+         return;
+      }
+      mFont.b(mFont.d, graphics, "Bạc: " + Utlis.numberFormat(cost.silver), 149, firstLine, 0, -30976, -16777216);
+      mFont.b(mFont.d, graphics, "Bạc khóa: " + Utlis.numberFormat(cost.lockedSilver), 149, firstLine + 11, 0, -30976, -16777216);
+      mFont.b(mFont.d, graphics, "Vàng: " + Utlis.numberFormat(cost.gold), 149, firstLine + 22, 0, -30976, -16777216);
+      mFont.b(mFont.d, graphics, cost.materials.length + " món sẽ dùng", 149, firstLine + 33, 0, -30976, -16777216);
+      mFont.b(mFont.d, graphics, cost.originalCount + " cải trang gốc", 149, firstLine + 44, 0, -30976, -16777216);
+      mFont.b(mFont.d, graphics, "Chạm kết quả để xem", 149, firstLine + 55, 0, -10831436, -16777216);
+   }
+
+   private void a(boolean confirm) {
+      try {
+         if (awaitingResult()) return;
+         int count = selectedCount();
+         if (count < 2) {
+            p.showMessage(Caption.nE, -65536);
+            return;
+         }
+         refreshQuote();
+         EquipmentQuote cost = quote.value;
+         if (cost == null || !cost.valid || !cost.problem.isEmpty()) {
+            p.showMessage(quote.status(), -65536);
+            return;
+         }
+         if (confirm) {
+            confirmedQuote = cost;
+            p.a(cost.fees() + "\n" + Caption.nH, 2001, this);
+            return;
+         }
+         if (confirmedQuote != cost) {
+            p.showMessage("Danh sách cải trang đã thay đổi. Hãy chọn Ghép lại.", -65536);
+            return;
+         }
+         Message request = new Message((byte) -50);
+         writeSelection(request, count);
+         request.writeInt(quote.requestId);
+         request.send();
+         confirmedQuote = null;
+         quote.clear();
+         submittedAt = System.currentTimeMillis();
+      } catch (IOException error) {
+         Utlis.println(error);
+      }
+   }
+
+   public void a(Item item) {
+      a[0] = item;
+      e = null;
+      quote.clear();
    }
 
    private void showPreview() {
-      if (this.e == null) return;
-      StringBuilder text = new StringBuilder(this.e.getItemTemplate().name)
-              .append(" +").append(this.e.level).append("\n\nNguyên liệu đã chọn\n");
-      for (Item material : this.b) {
-         if (material != null) {
-            text.append("1 × ").append(material.getItemTemplate().name);
-            if (material == this.a[0]) text.append(" (giữ ngoại hình)");
-            text.append('\n');
-         }
+      if (e == null || quote.value == null || !quote.value.valid) {
+         p.showMessage(quote.status(), -65536);
+         return;
       }
-      text.append("\nChỉ số sau khi ghép\n");
-      ItemOption[] options = this.e.L();
-      if (options != null) {
-         for (ItemOption option : options) {
-            String label = option.a(Char.gI().idChar);
-            text.append(label != null ? label : option.getItemOptionTemplate().name + " " + option.a[1]).append('\n');
-         }
-      }
-      text.append("\nCải trang sau khi ghép sẽ bị khóa.");
-      this.p.a((LangLa_cx) new ReleaseNotesDialog(this.p, "Xem trước cải trang", text.toString()));
+      String details = quote.value.details(e) + "\nCải trang sau khi ghép sẽ bị khóa.";
+      p.a((LangLa_cx) new ReleaseNotesDialog(p, "Xem trước cải trang", details));
    }
 }
