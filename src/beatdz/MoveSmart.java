@@ -98,7 +98,7 @@ public class MoveSmart {
          }
          Vector<XYEntity> route = null;
          try {
-            if (request.isOnCurrentMap()) route = LangLa_hw.findPath(request, () -> state.request == request);
+            if (request.isOnCurrentMap()) route = LangLa_hw.findPath(state, request);
          } catch (RuntimeException error) {
             if (state.request == request && request.isOnCurrentMap()) Utlis.println(error, "Map pathfinding");
          }

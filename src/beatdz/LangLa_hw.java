@@ -1,22 +1,21 @@
 package beatdz;
 
 import java.util.Vector;
-import java.util.function.BooleanSupplier;
 
 final class LangLa_hw {
-   static Vector<XYEntity> findPath(MoveSmart.PathRequest request, BooleanSupplier current) {
+   static Vector<XYEntity> findPath(MoveSmart.SessionState state, MoveSmart.PathRequest request) {
       XYEntity start = nearestWalkable(request.player, request.fromX, request.fromY);
       XYEntity end = nearestWalkable(request.player, request.toX, request.toY);
-      if (!current.getAsBoolean()) return null;
+      if (state.request != request) return null;
 
       Vector<XYEntity> direct = MoveSmart.a(start, end, false);
       if (direct != null) return direct;
       for (Object value : request.walkableRoutes) {
          XYEntity[] points = ((BlockMap) value).arrayXY;
-         if (!current.getAsBoolean()) return null;
-         Connection from = closestConnection(request.game, start, points, current);
-         Connection to = closestConnection(request.game, end, points, current);
-         if (from == null || to == null || !current.getAsBoolean()) continue;
+         if (state.request != request) return null;
+         Connection from = closestConnection(state, request, start, points);
+         Connection to = closestConnection(state, request, end, points);
+         if (from == null || to == null || state.request != request) continue;
 
          Vector<XYEntity> route = new Vector<>();
          route.add(start);
@@ -42,15 +41,15 @@ final class LangLa_hw {
       return point;
    }
 
-   private static Connection closestConnection(GameSrc game, XYEntity origin, XYEntity[] points,
-                                                BooleanSupplier current) {
+   private static Connection closestConnection(MoveSmart.SessionState state, MoveSmart.PathRequest request,
+                                                XYEntity origin, XYEntity[] points) {
       Connection closest = null;
-      for (int index = 0; index < points.length - 1 && current.getAsBoolean(); index++) {
+      for (int index = 0; index < points.length - 1 && state.request == request; index++) {
          XYEntity start = points[index];
          XYEntity end = points[index + 1];
-         closest = closer(game, origin, Utlis.a(origin, start, end), index, closest);
-         closest = closer(game, origin, start, index, closest);
-         closest = closer(game, origin, end, index, closest);
+         closest = closer(request.game, origin, Utlis.a(origin, start, end), index, closest);
+         closest = closer(request.game, origin, start, index, closest);
+         closest = closer(request.game, origin, end, index, closest);
       }
       return closest;
    }
