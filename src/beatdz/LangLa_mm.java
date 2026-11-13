@@ -25,8 +25,7 @@ public class LangLa_mm extends LangLa_cs {
             this.c = true;
             Binary.cleanImage(beatdz.LangLa_mm.$state_LangLa_mm().a);
             Pixmap var2 = (beatdz.LangLa_mm.$state_LangLa_mm().a = mImage.a(this.width * DataCenter.gI().zoomLevel, this.height * DataCenter.gI().zoomLevel)).b;
-            GameSrc.gI();
-            GameSrc.a(var2, this, 0, 0, 0, -1278446549);
+            GameSrc.drawHudPanel(var2, 0, 0, this.width, this.height);
 
             try {
                if (GameSrc.gI().aI != null && GameSrc.gI().aI.a.size() != 0) {

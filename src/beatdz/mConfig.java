@@ -5,7 +5,21 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Application.ApplicationType;
 
 public class mConfig {
-   void copySettingsFrom(mConfig source) { this.config = source.config.clone(); }
+   private static final int QUEST_TRACKER_EXPANDED = 14;
+
+   void copySettingsFrom(mConfig source) {
+      byte questTracker = this.config[QUEST_TRACKER_EXPANDED];
+      this.config = source.config.clone();
+      this.config[QUEST_TRACKER_EXPANDED] = questTracker;
+   }
+
+   boolean isQuestTrackerExpanded() {
+      return readBoolean(QUEST_TRACKER_EXPANDED);
+   }
+
+   void setQuestTrackerExpanded(boolean expanded) {
+      writeBoolean(QUEST_TRACKER_EXPANDED, expanded);
+   }
    
    private byte[] config = Binary.read("arr_config");
    private int length = 27;
@@ -38,7 +52,7 @@ public class mConfig {
       cfg[11] = 0;
       cfg[12] = 0;
       cfg[13] = 0;
-      cfg[14] = 1;
+      cfg[QUEST_TRACKER_EXPANDED] = 1;
       cfg[15] = 0;
       cfg[16] = 0;
       cfg[17] = 0;

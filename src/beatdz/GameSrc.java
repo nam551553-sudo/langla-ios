@@ -1246,7 +1246,7 @@ public class GameSrc extends MainScreen {
                 }
 
                 var28.c((LangLa_cs) var28.S.a());
-                var28.j(mConfig.gI().readBoolean(14));
+                var28.restoreQuestTrackerLayout();
                 var28.ag = var28.a(AppListener.gI().o, var28.ak.cy + 46, "", var28, 1012, -11);
                 LangLa_dz var53 = var28.ag;
                 DataCenter.gI();
@@ -1589,7 +1589,7 @@ public class GameSrc extends MainScreen {
         if (dF != null) dF.setXY(dF.cx, dF.cy + dy / 2);
         if (dD != null) dD.setXY(dD.cx, dD.cy + dy / 2);
         if (ag != null) ag.setXY(ag.cx, ag.cy + dy / 2);
-        if (S != null) S.relayout(!mConfig.gI().readBoolean(14));
+        restoreQuestTrackerLayout();
         o(0); g();
         X.setXY(X.cx, height - X.height - (mConfig.gI().readBoolean(15) ? 25 : 20)); X.d();
         if (aj != null) {
@@ -3417,117 +3417,7 @@ public class GameSrc extends MainScreen {
                 int var8;
                 int var26;
                 if (!this.bb && !DataCenter.gI().aH && this.cD.lastElement().equals(this) && beatdz.LangLa_cz.$state_LangLa_cz().cV.size() == 0) {
-                    Binary.cleanImage(beatdz.GameSrc.$state_GameSrc().dB);
-                    Pixmap var28;
-                    (var28 = (beatdz.GameSrc.$state_GameSrc().dB = Binary.createImage(this.width * DataCenter.gI().zoomLevel, this.height * DataCenter.gI().zoomLevel)).b).setColor(new Color(0.0F, 0.0F, 0.0F, 0.0F));
-                    var28.fill();
-                    DataCenter.gI();
-                    mImage var23 = LangLa_fq.a((int) 17);
-                    Binary2.a(var28, var23.b, 0, 0, 44 * DataCenter.gI().zoomLevel, 44 * DataCenter.gI().zoomLevel, this.Z.cx * DataCenter.gI().zoomLevel, this.Z.cy * DataCenter.gI().zoomLevel, this.Z.width * DataCenter.gI().zoomLevel, this.Z.height * DataCenter.gI().zoomLevel, Blending.None);
-                    var25 = this.aj.cx;
-                    var30 = this.aj.cy - 3;
-                    var28.setColor(Utlis.createColor(-1278446549L));
-                    var28.setBlending(Blending.SourceOver);
-                    var28.fillRectangle((var25 + 1) * DataCenter.gI().zoomLevel, (var30 + 1) * DataCenter.gI().zoomLevel, (this.aj.width - 2) * DataCenter.gI().zoomLevel, (this.aj.height + 6 - 2) * DataCenter.gI().zoomLevel);
-                    var23 = LangLa_fq.a((int) 84);
-                    Binary2.a(var28, var23.b, var25 * DataCenter.gI().zoomLevel, var30 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    mImage var24 = mImage.b(var23, 0, 0, var23.c, var23.d, -360);
-                    Binary2.a(var28, var24.b, (var25 + this.aj.width - 6) * DataCenter.gI().zoomLevel, var30 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    var24.a();
-                    var24 = mImage.b(var23, 0, 0, var23.c, var23.d, -180);
-                    Binary2.a(var28, var24.b, var25 * DataCenter.gI().zoomLevel, (var30 + this.aj.height + 6 - 6) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    var24.a();
-                    var24 = mImage.b(var23, 0, 0, var23.c, var23.d, -270);
-                    Binary2.a(var28, var24.b, (var25 + this.aj.width - 6) * DataCenter.gI().zoomLevel, (var30 + this.aj.height + 6 - 6) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    var24.a();
-                    var23 = LangLa_fq.a((int) 5);
-                    Binary2.a(var28, var23.b, (var25 + 6) * DataCenter.gI().zoomLevel, var30 * DataCenter.gI().zoomLevel, (this.aj.width - 12) * DataCenter.gI().zoomLevel, 0, Blending.SourceOver);
-                    var24 = mImage.b(var23, 0, 0, var23.c, var23.d, 180);
-                    Binary2.a(var28, var24.b, (var25 + 6) * DataCenter.gI().zoomLevel, (var30 + this.aj.height + 6 - 20) * DataCenter.gI().zoomLevel, (this.aj.width - 12) * DataCenter.gI().zoomLevel, 0, Blending.SourceOver);
-                    var24.a();
-                    var24 = mImage.b(var23, 0, 0, var23.c, var23.d, 270);
-                    Binary2.a(var28, var24.b, var25 * DataCenter.gI().zoomLevel, (var30 + 6) * DataCenter.gI().zoomLevel, 0, (this.aj.height + 6 - 12) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    var24.a();
-                    var24 = mImage.b(var23, 0, 0, var23.c, var23.d, 90);
-                    Binary2.a(var28, var24.b, (var25 + this.aj.width - 20) * DataCenter.gI().zoomLevel, (var30 + 6) * DataCenter.gI().zoomLevel, 0, (this.aj.height + 6 - 12) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    var24.a();
-                    var23 = LangLa_fq.a((int) 73);
-                    Binary2.a(var28, var23.b, this.du.cx * DataCenter.gI().zoomLevel, this.du.cy * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    var26 = AppListener.gI().o;
-                    DataCenter.gI();
-                    var23 = LangLa_fq.a((int) 59);
-                    Binary2.a(var28, var23.b, var26 * DataCenter.gI().zoomLevel, (this.ak.cy + 46) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    if (!mConfig.gI().readBoolean(12)) {
-                        var23 = LangLa_fq.a((int) 20);
-                        Binary2.a(var28, var23.b, 0, 0, 60 * DataCenter.gI().zoomLevel, 60 * DataCenter.gI().zoomLevel, this.X.cx * DataCenter.gI().zoomLevel, this.X.cy * DataCenter.gI().zoomLevel, this.X.width * DataCenter.gI().zoomLevel, this.X.height * DataCenter.gI().zoomLevel, Blending.None);
-                    }
-
-                    var23 = LangLa_fq.a((int) 554);
-                    Binary2.a(var28, var23.b, 0, 0, 25 * DataCenter.gI().zoomLevel, 25 * DataCenter.gI().zoomLevel, this.ab.cx * DataCenter.gI().zoomLevel, this.ab.cy * DataCenter.gI().zoomLevel, this.ab.width * DataCenter.gI().zoomLevel, this.ab.height * DataCenter.gI().zoomLevel, Blending.None);
-                    var23 = LangLa_fq.a((int) 554);
-                    Binary2.a(var28, var23.b, 0, 0, 25 * DataCenter.gI().zoomLevel, 25 * DataCenter.gI().zoomLevel, this.ac.cx * DataCenter.gI().zoomLevel, this.ac.cy * DataCenter.gI().zoomLevel, this.ac.width * DataCenter.gI().zoomLevel, this.ac.height * DataCenter.gI().zoomLevel, Blending.None);
-                    var23 = LangLa_fq.a((int) 554);
-                    Binary2.a(var28, var23.b, 0, 0, 25 * DataCenter.gI().zoomLevel, 25 * DataCenter.gI().zoomLevel, this.ad.cx * DataCenter.gI().zoomLevel, this.ad.cy * DataCenter.gI().zoomLevel, this.ad.width * DataCenter.gI().zoomLevel, this.ad.height * DataCenter.gI().zoomLevel, Blending.None);
-                    var23 = LangLa_fq.a((int) 554);
-                    Binary2.a(var28, var23.b, 0, 0, 25 * DataCenter.gI().zoomLevel, 25 * DataCenter.gI().zoomLevel, this.ae.cx * DataCenter.gI().zoomLevel, this.ae.cy * DataCenter.gI().zoomLevel, this.ae.width * DataCenter.gI().zoomLevel, this.ae.height * DataCenter.gI().zoomLevel, Blending.None);
-                    var23 = LangLa_fq.a((int) 554);
-                    Binary2.a(var28, var23.b, 0, 0, 25 * DataCenter.gI().zoomLevel, 25 * DataCenter.gI().zoomLevel, this.af.cx * DataCenter.gI().zoomLevel, this.af.cy * DataCenter.gI().zoomLevel, this.af.width * DataCenter.gI().zoomLevel, this.af.height * DataCenter.gI().zoomLevel, Blending.None);
-                    var23 = LangLa_fq.a((int) 553);
-                    Binary2.a(var28, var23.b, (this.ae.cx + this.ae.width / 2 - 5) * DataCenter.gI().zoomLevel, (this.ae.cy + this.ae.height / 2 - 8) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    var23 = LangLa_fq.a((int) 751);
-                    Binary2.a(var28, var23.b, (this.af.cx + this.af.width / 2 - 8) * DataCenter.gI().zoomLevel, (this.af.cy + this.af.height / 2 - 8) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    DataCenter.gI();
-                    if (DataCenter.gI().widthScreen > 400) {
-                        DataCenter.gI();
-                    }
-
-                    int var9;
-                    for (var8 = 0; var8 < this.P.c.size(); ++var8) {
-                        if (this.P.c.get(var8) instanceof LangLa_dz) {
-                            LangLa_dz var29 = (LangLa_dz) this.P.c.get(var8);
-
-                            for (var9 = 0; var9 < this.aE.size(); ++var9) {
-                                if (((Skill) this.aE.get(var9)).getSkillTemplate().idIcon == var29.d) {
-                                    var23 = LangLa_fq.b(var29.d);
-                                    Binary2.a(var28, var23.b, var29.cx * DataCenter.gI().zoomLevel, var29.cy * DataCenter.gI().zoomLevel, Blending.None);
-                                    var23.a();
-                                }
-                            }
-                        }
-                    }
-
-                    var23 = LangLa_fq.a((int) 34);
-                    Binary2.a(var28, var23.b, 0 * DataCenter.gI().zoomLevel, 0 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    var23 = LangLa_fq.a((int) DataCenter.gI().DataIconChar[Char.gI().idChar].idIcon);
-                    Binary2.a(var28, var23.b, 3 * DataCenter.gI().zoomLevel, 7 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-
-                    for (var9 = 0; var9 < 10; ++var9) {
-                        var26 = var9 * (this.width / 10);
-                        if (var9 == 9) {
-                            var7 = this.width - var26;
-                        } else {
-                            var7 = this.width / 10;
-                        }
-
-                        var30 = this.height - 4;
-                        var28.setColor(Utlis.createColor(-16777216L));
-                        var28.setBlending(Blending.SourceOver);
-                        var28.fillRectangle((var26 + 1) * DataCenter.gI().zoomLevel, (var30 + 1) * DataCenter.gI().zoomLevel, (var7 - 2) * DataCenter.gI().zoomLevel, 2 * DataCenter.gI().zoomLevel);
-                        var23 = LangLa_fq.a((int) 705);
-                        Binary2.a(var28, var23.b, var26 * DataCenter.gI().zoomLevel, var30 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                        var24 = mImage.b(var23, 0, 0, var23.c, var23.d, -360);
-                        Binary2.a(var28, var24.b, (var26 + var7 - 2) * DataCenter.gI().zoomLevel, var30 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                        var24.a();
-                        var23 = LangLa_fq.a((int) 706);
-
-                        for (var4 = 2; var4 < var7 - 2; ++var4) {
-                            Binary2.a(var28, var23.b, (var26 + var4) * DataCenter.gI().zoomLevel, var30 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                        }
-                    }
-
-                    // The former minimap frame is not part of the cached HUD anymore.
-                    Binary.disposeImage(beatdz.GameSrc.$state_GameSrc().dB);
-                    DataCenter.gI().aH = true;
+                    rebuildHudBackground();
                 }
 
                 if (this.cD.size() > 0 && this.cD.lastElement().equals(this) || this.cD.size() == 2 && this.cD.lastElement() instanceof LangLa_dl) {
@@ -3540,6 +3430,7 @@ public class GameSrc extends MainScreen {
                     var1.m = 1.0F;
                     if (!this.bb) {
                         var1.a(beatdz.GameSrc.$state_GameSrc().dB, 0, 0);
+                        if (this.ag != null) var1.a(LangLa_fq.a(59), this.ag.cx, this.ag.cy);
                         if (beatdz.LangLa_cz.$state_LangLa_cz().cZ) {
                             mFont.a(mFont.d, var1, Caption.qG, DataCenter.gI().widthScreen / 2, DataCenter.gI().heightScreen - 74, 2, -2560, 2, 1);
                         } else if (this.ca) {
@@ -3655,6 +3546,88 @@ public class GameSrc extends MainScreen {
     }
 
     private long lastHudErrorLog;
+
+    private void rebuildHudBackground() {
+        DataCenter data = DataCenter.gI();
+        int zoom = data.zoomLevel;
+        SessionState state = $state_GameSrc();
+        Binary.cleanImage(state.dB);
+        state.dB = Binary.createImage(this.width * zoom, this.height * zoom);
+        data.aH = true;
+        if (state.dB == null) return;
+        Pixmap background = state.dB.b;
+        background.setColor(Color.CLEAR);
+        background.fill();
+        drawHudButton(background, LangLa_fq.a(17), this.Z, 44, zoom);
+        drawHudPanel(background, this.aj.cx, this.aj.cy - 3, this.aj.width, this.aj.height + 6);
+        drawHudIcon(background, LangLa_fq.a(73), this.du.cx * zoom, this.du.cy * zoom, Blending.SourceOver);
+        if (!mConfig.gI().readBoolean(12)) {
+            drawHudButton(background, LangLa_fq.a(20), this.X, 60, zoom);
+        }
+
+        mImage slot = LangLa_fq.a(554);
+        drawHudButton(background, slot, this.ab, 25, zoom);
+        drawHudButton(background, slot, this.ac, 25, zoom);
+        drawHudButton(background, slot, this.ad, 25, zoom);
+        drawHudButton(background, slot, this.ae, 25, zoom);
+        drawHudButton(background, slot, this.af, 25, zoom);
+        drawHudIcon(background, LangLa_fq.a(553), (this.ae.cx + this.ae.width / 2 - 5) * zoom,
+                (this.ae.cy + this.ae.height / 2 - 8) * zoom, Blending.SourceOver);
+        drawHudIcon(background, LangLa_fq.a(751), (this.af.cx + this.af.width / 2 - 8) * zoom,
+                (this.af.cy + this.af.height / 2 - 8) * zoom, Blending.SourceOver);
+
+        for (Object control : this.P.c) {
+            if (!(control instanceof LangLa_dz)) continue;
+            LangLa_dz button = (LangLa_dz) control;
+            for (Object skill : this.aE) {
+                if (((Skill) skill).getSkillTemplate().idIcon != button.d) continue;
+                mImage icon = LangLa_fq.b(button.d);
+                drawHudIcon(background, icon, button.cx * zoom, button.cy * zoom, Blending.None);
+                Binary.cleanImage(icon);
+                break;
+            }
+        }
+
+        drawHudIcon(background, LangLa_fq.a(34), 0, 0, Blending.SourceOver);
+        int character = Char.gI().idChar;
+        if (data.DataIconChar != null && character >= 0 && character < data.DataIconChar.length
+                && data.DataIconChar[character] != null) {
+            drawHudIcon(background, LangLa_fq.a((int) data.DataIconChar[character].idIcon), 3 * zoom, 7 * zoom, Blending.SourceOver);
+        }
+
+        mImage cap = LangLa_fq.a(705);
+        mImage reflectedCap = hasHudPixels(cap) ? mImage.b(cap, 0, 0, cap.c, cap.d, -360) : null;
+        mImage edge = LangLa_fq.a(706);
+        int y = (this.height - 4) * zoom;
+        for (int segment = 0; segment < 10; ++segment) {
+            int x = segment * (this.width / 10);
+            int width = segment == 9 ? this.width - x : this.width / 10;
+            background.setColor(Color.BLACK);
+            background.setBlending(Blending.SourceOver);
+            background.fillRectangle((x + 1) * zoom, y + zoom, (width - 2) * zoom, 2 * zoom);
+            drawHudIcon(background, cap, x * zoom, y, Blending.SourceOver);
+            drawHudIcon(background, reflectedCap, (x + width - 2) * zoom, y, Blending.SourceOver);
+            for (int offset = 2; offset < width - 2; ++offset) {
+                drawHudIcon(background, edge, (x + offset) * zoom, y, Blending.SourceOver);
+            }
+        }
+        Binary.cleanImage(reflectedCap);
+        Binary.disposeImage(state.dB);
+    }
+
+    private static boolean hasHudPixels(mImage icon) {
+        return icon != null && icon.b != null && icon != LangLa_fq.$state_LangLa_fq().a;
+    }
+
+    private static void drawHudIcon(Pixmap target, mImage icon, int x, int y, Blending blending) {
+        if (hasHudPixels(icon)) Binary2.a(target, icon.b, x, y, blending);
+    }
+
+    private static void drawHudButton(Pixmap target, mImage icon, LangLa_cs button, int size, int zoom) {
+        if (!hasHudPixels(icon)) return;
+        Binary2.a(target, icon.b, 0, 0, Math.min(icon.c, size * zoom), Math.min(icon.d, size * zoom),
+                button.cx * zoom, button.cy * zoom, button.width * zoom, button.height * zoom, Blending.None);
+    }
 
     private void paintHudGroup(Graphics graphics, LangLa_cj group) {
         // T contains the minimap, position markers, coordinates and its collapse control.
@@ -4334,9 +4307,7 @@ public class GameSrc extends MainScreen {
                         this.k(!this.U.c());
                         break;
                     case 1101:
-                        this.dD.b(false);
-                        this.j(!this.S.c());
-                        DataCenter.gI().aH = false;
+                        this.setQuestTrackerExpanded(!this.S.c());
                         break;
                     case 1102:
                         Vector var10 = new Vector();
@@ -9638,13 +9609,16 @@ public class GameSrc extends MainScreen {
 
     public void bg(Message var1) {
         try {
-            this.ak.c(false);
-            int var2 = this.idStep;
-            this.Task = var1.reader.dis.readShort();
-            this.idStep = var1.reader.dis.readByte();
-            this.idRequire = var1.reader.dis.readUnsignedShort();
+            int previousStep = this.idStep;
+            int taskId = var1.reader.dis.readShort();
+            int step = var1.reader.dis.readByte();
+            int progress = var1.reader.dis.readUnsignedShort();
+            this.Task = taskId;
+            this.idStep = step;
+            this.idRequire = progress;
             this.loadAfterNextMap();
-            if (var2 != this.idStep) {
+            if (this.ak != null) this.ak.c(false);
+            if (previousStep != this.idStep) {
                 Task var5;
                 if ((var5 = this.A()) != null && this.idStep >= var5.vStep.size()) {
                     Char.gI().aF.addElement(new LangLa_jw(85, 0, 0));
@@ -9661,7 +9635,6 @@ public class GameSrc extends MainScreen {
                 var8.f();
             }
 
-            this.ak.d();
             if (AppListener.gI().listener != null && this.Task == 15 && this.idStep == -1) {
                 SDKListener var10000 = AppListener.gI().listener;
             }
@@ -9675,15 +9648,8 @@ public class GameSrc extends MainScreen {
     }
 
     public Task A() {
-        try {
-            if (this.Task < DataCenter.gI().Task.length) {
-                return DataCenter.gI().Task[gI().Task];
-            }
-        } catch (Exception var2) {
-            Utlis.println(var2);
-        }
-
-        return null;
+        Task[] tasks = DataCenter.gI().Task;
+        return tasks != null && this.Task >= 0 && this.Task < tasks.length ? tasks[this.Task] : null;
     }
 
     public Step B() {
@@ -10991,50 +10957,63 @@ public class GameSrc extends MainScreen {
         }
     }
 
-    public static void a(Pixmap var0, LangLa_cz var1, int var2, int var3, int var4, int var5) {
-        var0.setColor(Utlis.createColor(-1278446549L));
-        var0.setBlending(Blending.SourceOver);
-        var0.fillRectangle(1 * DataCenter.gI().zoomLevel, 1 * DataCenter.gI().zoomLevel, (var1.width - 2) * DataCenter.gI().zoomLevel, (var1.height - 2) * DataCenter.gI().zoomLevel);
-        mImage var6;
-        var3 = (var6 = LangLa_fq.a((int) 84)).c / DataCenter.gI().zoomLevel;
-        Binary2.a(var0, var6.b, 0 * DataCenter.gI().zoomLevel, 0 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-        mImage var7 = mImage.b(var6, 0, 0, var6.c, var6.d, -360);
-        Binary2.a(var0, var7.b, (0 + var1.width - var3) * DataCenter.gI().zoomLevel, 0 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-        var7.a();
-        var7 = mImage.b(var6, 0, 0, var6.c, var6.d, -180);
-        Binary2.a(var0, var7.b, 0 * DataCenter.gI().zoomLevel, (0 + var1.height + 0 - var3) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-        var7.a();
-        var7 = mImage.b(var6, 0, 0, var6.c, var6.d, -270);
-        Binary2.a(var0, var7.b, (0 + var1.width - var3) * DataCenter.gI().zoomLevel, (0 + var1.height + 0 - var3) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-        var7.a();
-        var6 = LangLa_fq.a((int) 5);
-        Binary2.a(var0, var6.b, (0 + var3) * DataCenter.gI().zoomLevel, 0 * DataCenter.gI().zoomLevel, (var1.width - var3 * 2) * DataCenter.gI().zoomLevel, 0, Blending.SourceOver);
-        var7 = mImage.b(var6, 0, 0, var6.c, var6.d, 180);
-        Binary2.a(var0, var7.b, (0 + var3) * DataCenter.gI().zoomLevel, (0 + var1.height + 0 - var6.c / DataCenter.gI().zoomLevel) * DataCenter.gI().zoomLevel, (var1.width - var3 * 2) * DataCenter.gI().zoomLevel, 0, Blending.SourceOver);
-        var7.a();
-        var7 = mImage.b(var6, 0, 0, var6.c, var6.d, 270);
-        Binary2.a(var0, var7.b, 0 * DataCenter.gI().zoomLevel, (0 + var3) * DataCenter.gI().zoomLevel, 0, (var1.height + 0 - var3 * 2) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-        var7.a();
-        var7 = mImage.b(var6, 0, 0, var6.c, var6.d, 90);
-        Binary2.a(var0, var7.b, (0 + var1.width - var6.c / DataCenter.gI().zoomLevel) * DataCenter.gI().zoomLevel, (0 + var3) * DataCenter.gI().zoomLevel, 0, (var1.height + 0 - var3 * 2) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-        var7.a();
+    static void drawHudPanel(Pixmap target, int x, int y, int width, int height) {
+        int zoom = DataCenter.gI().zoomLevel;
+        x *= zoom;
+        y *= zoom;
+        width *= zoom;
+        height *= zoom;
+        target.setColor(Utlis.createColor(-1278446549L));
+        target.setBlending(Blending.SourceOver);
+        target.fillRectangle(x + zoom, y + zoom, width - 2 * zoom, height - 2 * zoom);
+        mImage corner = LangLa_fq.a(84);
+        mImage edge = LangLa_fq.a(5);
+        if (!hasHudPixels(corner) || !hasHudPixels(edge)) return;
+        int inset = corner.c;
+        if (width <= 2 * inset || height <= 2 * inset) return;
+        Binary2.a(target, corner.b, x, y, Blending.SourceOver);
+        mImage rotated = mImage.b(corner, 0, 0, corner.c, corner.d, -360);
+        Binary2.a(target, rotated.b, x + width - inset, y, Blending.SourceOver);
+        rotated.a();
+        rotated = mImage.b(corner, 0, 0, corner.c, corner.d, -180);
+        Binary2.a(target, rotated.b, x, y + height - inset, Blending.SourceOver);
+        rotated.a();
+        rotated = mImage.b(corner, 0, 0, corner.c, corner.d, -270);
+        Binary2.a(target, rotated.b, x + width - inset, y + height - inset, Blending.SourceOver);
+        rotated.a();
+        Binary2.a(target, edge.b, x + inset, y, width - 2 * inset, 0, Blending.SourceOver);
+        rotated = mImage.b(edge, 0, 0, edge.c, edge.d, 180);
+        Binary2.a(target, rotated.b, x + inset, y + height - edge.c, width - 2 * inset, 0, Blending.SourceOver);
+        rotated.a();
+        rotated = mImage.b(edge, 0, 0, edge.c, edge.d, 270);
+        Binary2.a(target, rotated.b, x, y + inset, 0, height - 2 * inset, Blending.SourceOver);
+        rotated.a();
+        rotated = mImage.b(edge, 0, 0, edge.c, edge.d, 90);
+        Binary2.a(target, rotated.b, x + width - edge.c, y + inset, 0, height - 2 * inset, Blending.SourceOver);
+        rotated.a();
     }
 
-    private void j(boolean var1) {
-        mConfig.gI().writeBoolean(14, var1);
-        this.S.a(!mConfig.gI().readBoolean(14));
-        LangLa_dz var10000;
-        if (var1) {
+    private void restoreQuestTrackerLayout() {
+        if (this.S == null || this.dF == null || this.dD == null) return;
+        boolean expanded = mConfig.gI().isQuestTrackerExpanded();
+        this.S.relayout(expanded);
+        updateQuestTrackerControls(expanded);
+    }
+
+    private void setQuestTrackerExpanded(boolean expanded) {
+        mConfig.gI().setQuestTrackerExpanded(expanded);
+        this.S.a(!expanded);
+        if (expanded) {
             this.S.f();
-            var10000 = (LangLa_dz) this.S.a();
-            byte var3 = 0;
-            var10000.e = var3;
         } else {
             this.S.e();
-            var10000 = (LangLa_dz) this.S.a();
-            short var2 = 180;
-            var10000.e = var2;
         }
+        updateQuestTrackerControls(expanded);
+    }
+
+    private void updateQuestTrackerControls(boolean expanded) {
+        this.dF.e = expanded ? 0 : 180;
+        this.dD.b(!expanded);
     }
 
     private void k(boolean var1) {
