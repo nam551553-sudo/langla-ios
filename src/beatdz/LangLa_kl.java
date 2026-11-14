@@ -302,8 +302,11 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
          if(in.available()>=144 && in.readInt()==0x434D4231){
             int[] full=new int[35];for(int index=0;index<full.length;index++)full[index]=in.readInt();
             System.arraycopy(full,0,w,0,17);System.arraycopy(full,17,x,0,18);
-            y.speedMove=Char.movementSpeed(x[6]);
+            y.setMovementSpeed(x[6]);
             DataCenter.gI().equipmentBalanceRevision=Math.max(1,DataCenter.gI().equipmentBalanceRevision);
+            if (in.available() >= 8 && in.readInt() == 0x43484B31) {
+               chakraBonus = in.readInt() - chakra;
+            }
          }
       } catch (java.io.IOException | IndexOutOfBoundsException optionalTailError) {
          // A malformed optional extension must not discard valid core stats.

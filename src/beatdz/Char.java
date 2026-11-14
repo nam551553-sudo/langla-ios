@@ -124,8 +124,26 @@ public class Char extends Entity {
     public byte q;
     public byte statusGD;
     public short speedMove;
+    private int movementSpeedRemainder;
+    private int groundSpeedCarry;
+
     public static short movementSpeed(int serverUnits) {
         return (short)Math.max(0, Math.min(127, serverUnits / 100));
+    }
+
+    void setMovementSpeed(int serverUnits) {
+        int units = Math.max(0, Math.min(12_700, serverUnits));
+        speedMove = movementSpeed(units);
+        int remainder = units % 100;
+        if (movementSpeedRemainder != remainder) groundSpeedCarry = 0;
+        movementSpeedRemainder = remainder;
+    }
+
+    private int groundStep(int base) {
+        groundSpeedCarry += movementSpeedRemainder * 130;
+        int extra = groundSpeedCarry / 10_000;
+        groundSpeedCarry %= 10_000;
+        return horizontalSpeed(base) + extra;
     }
 
     public static int horizontalSpeed(int base) {
@@ -363,7 +381,7 @@ public class Char extends Entity {
         this.idClass = var1.readByte();
         this.typePK = var1.readByte();
         this.lvPk = var1.readByte();
-        this.speedMove = Char.movementSpeed(var1.readShort());
+        this.setMovementSpeed(var1.readShort());
         this.hp = var1.readInt();
         this.hpFull = var1.readInt();
         this.mp = var1.readInt();
@@ -406,7 +424,7 @@ public class Char extends Entity {
         this.typePK = var1.readByte();
         this.lvPk = var1.readByte();
         this.taiPhu = var1.readInt();
-        this.speedMove = Char.movementSpeed(var1.readShort());
+        this.setMovementSpeed(var1.readShort());
         this.sachChienDau = (byte) Math.max(0, Math.min(18, var1.readByte()));
         this.hp = var1.readInt();
         this.hpFull = var1.readInt();
@@ -1443,9 +1461,10 @@ public class Char extends Entity {
                     var4 = this.pointMove.b;
                 }
 
-                // Accelerate ground travel only; keep jump/fall and server stats unchanged.
-                if (this.pointMove.h <= 0 && this.cy == this.pointMove.cy && this.aw == null)
-                    var3 = horizontalSpeed(var3);
+                if (this.pointMove.h <= 0 && this.cy == this.pointMove.cy && this.aw == null
+                        && this.cx != this.pointMove.cx) {
+                    var3 = this.isMe() ? groundStep(var3) : horizontalSpeed(var3);
+                }
 
                 if (this.aw != null) {
                     var3 = 11;
@@ -1962,6 +1981,12 @@ public class Char extends Entity {
         return this.av != null && this.ay.idTemplate == 11;
     }
 
+    private boolean walkGround(int direction) {
+        // Let the movement tick consume the fractional part once as it approaches this target.
+        int distance = horizontalSpeed(speedMove) + (movementSpeedRemainder > 0 ? 2 : 0);
+        return this.a(this.cx + (direction == 3 ? -distance : distance), this.cy, (byte) direction);
+    }
+
     public boolean A() {
         MoveSmart.b();
         if (this.r()) {
@@ -1969,7 +1994,7 @@ public class Char extends Entity {
             var10000.cx = (short) (var10000.cx - 5);
             return false;
         } else {
-            return this.a(this.cx - horizontalSpeed(this.speedMove), this.cy, (byte) 3);
+            return walkGround(3);
         }
     }
 
@@ -1980,7 +2005,7 @@ public class Char extends Entity {
             var10000.cx = (short) (var10000.cx + 5);
             return false;
         } else {
-            return this.a(this.cx + horizontalSpeed(this.speedMove), this.cy, (byte) 2);
+            return walkGround(2);
         }
     }
 

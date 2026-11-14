@@ -7484,7 +7484,7 @@ public class GameSrc extends MainScreen {
                     var6.x[4] = var8.reader.dis.readShort();
                     var6.x[5] = var8.reader.dis.readShort();
                     var6.x[6] = var8.reader.dis.readShort();
-                    var6.y.speedMove = Char.movementSpeed(var6.x[6]);
+                    var6.y.setMovementSpeed(var6.x[6]);
                     var6.x[7] = var8.reader.dis.readShort();
                     var6.x[8] = var8.reader.dis.readShort();
                     var6.x[9] = var8.reader.dis.readShort();
@@ -9081,7 +9081,7 @@ public class GameSrc extends MainScreen {
             Char var2;
             (var2 = this.f(var1.reader.dis.readInt())).lvPk = var1.reader.dis.readByte();
             var2.taiPhu = var1.reader.dis.readInt();
-            var2.speedMove = Char.movementSpeed(var1.reader.dis.readShort());
+            var2.setMovementSpeed(var1.reader.dis.readShort());
             var2.statusGD = var1.reader.dis.readByte();
         } catch (Exception var4) {
             Utlis.println(var4);
