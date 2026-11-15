@@ -42,6 +42,7 @@ public final class QuestTrackerTabScenario {
             selectOrOpenTab(slot);
             GameSrc game = openMap(0, slot + 2);
             checkTracker(game, true);
+            checkShortcutDock(game);
         }
         for (int slot = 0; slot < MultiSession.LIMIT; slot++) {
             MultiSession.select(slot);
@@ -52,6 +53,34 @@ public final class QuestTrackerTabScenario {
             checkTapMovement(slot);
         }
         checkSwitchCancelsPress();
+    }
+
+    private static void checkShortcutDock(GameSrc game) {
+        int icons = 0;
+        LangLa_dz toggle = null;
+        for (Object value : game.U.a) {
+            LangLa_dz button = (LangLa_dz)value;
+            if (button.b == 1100) toggle = button;
+            else {
+                check(button.cy >= 20 && button.cy + button.height <= 70,
+                        "shortcuts stay below the map title in tab " + (MultiSession.selected() + 1));
+                check(button.cx >= 0 && button.cx + button.width <= DataCenter.gI().widthScreen,
+                        "shortcut is inside the viewport");
+                icons++;
+            }
+        }
+        check(icons == 10 && toggle != null, "ten shortcuts and one toggle");
+        game.a(1100, null, toggle);
+        boolean expanded = game.U.c();
+        check(toggle.cy == (expanded ? 72 : 20), "toggle follows its dock");
+        game.a(1100, null, toggle);
+        check(game.U.c() != expanded, "shortcut dock closes and opens in each account");
+        for (int count = 1; count <= MultiSession.LIMIT; count++) {
+            float left = MultiSession.tabStartX(840, count, 1f);
+            int buttons = Math.min(MultiSession.LIMIT, count + 1);
+            check(Math.abs(left + (buttons * 38f - 4f) / 2f - 420f) < .01f,
+                    "account tabs and the add button are centered");
+        }
     }
 
     private static void selectOrOpenTab(int slot) {

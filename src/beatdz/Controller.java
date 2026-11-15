@@ -17,6 +17,7 @@ public class Controller implements IMessageHandler {
     
 
     public void b() {
+        if (AccountReconnect.gI().disconnected()) return;
         if (beatdz.Controller.$state_Controller().c) {
             AppListener.gI();
             AppListener.exit();
@@ -102,6 +103,7 @@ public class Controller implements IMessageHandler {
     }
 
     public void c() {
+        if (AccountReconnect.gI().disconnected()) return;
         if (beatdz.Controller.$state_Controller().c) {
             AppListener.gI();
             AppListener.exit();

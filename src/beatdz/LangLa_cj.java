@@ -7,8 +7,8 @@ import java.math.BigDecimal;
 import java.util.Vector;
 
 public class LangLa_cj extends LangLa_cz {
-   static final int MOB_TARGET_WIDTH = 174;
-   static final int MOB_TARGET_HEIGHT = 58;
+   static final int MOB_TARGET_WIDTH = 122;
+   static final int MOB_TARGET_HEIGHT = 41;
    static final int MOB_TARGET_LOWER_Y = 76;
    private static final int EFFECT_ROW_X = 5;
    private static final int EFFECT_SLOT_WIDTH = 18;
@@ -229,12 +229,12 @@ public class LangLa_cj extends LangLa_cz {
             if (beatdz.LangLa_cj.$state_LangLa_cj().l == null) {
                DataCenter.gI();
                Pixmap var2;
-               (var2 = (beatdz.LangLa_cj.$state_LangLa_cj().l = mImage.a(115 * DataCenter.gI().zoomLevel, 45 * DataCenter.gI().zoomLevel)).b).setColor(new Color(0.0F, 0.0F, 0.0F, 0.0F));
+               (var2 = (beatdz.LangLa_cj.$state_LangLa_cj().l = mImage.a(125 * DataCenter.gI().zoomLevel, 50 * DataCenter.gI().zoomLevel)).b).setColor(new Color(0.0F, 0.0F, 0.0F, 0.0F));
                var2.fill();
                mImage var6 = LangLa_fq.a((int)687);
-               Binary2.a(var2, var6.b, 95 * DataCenter.gI().zoomLevel, 0 * DataCenter.gI().zoomLevel, Blending.None);
+               Binary2.a(var2, var6.b, 100 * DataCenter.gI().zoomLevel, 0 * DataCenter.gI().zoomLevel, Blending.None);
                var6 = LangLa_fq.a((int)82);
-               Binary2.a(var2, var6.b, 95 * DataCenter.gI().zoomLevel, 25 * DataCenter.gI().zoomLevel, Blending.None);
+               Binary2.a(var2, var6.b, 100 * DataCenter.gI().zoomLevel, 25 * DataCenter.gI().zoomLevel, Blending.None);
                var6 = LangLa_fq.a((int)36);
                Binary2.a(var2, var6.b, 75 * DataCenter.gI().zoomLevel, 0 * DataCenter.gI().zoomLevel, Blending.None);
                var6 = LangLa_fq.a((int)648);
@@ -345,9 +345,9 @@ public class LangLa_cj extends LangLa_cz {
          this.a(var1, 0, 0);
          // Keep only the location title in the top-right corner.
          var1.f(0x4b2c20);
-         var1.c(DataCenter.gI().widthScreen - 86, 0, 86, 16);
+         var1.c(DataCenter.gI().widthScreen - 128, 0, 128, 16);
          DataCenter.gI();
-         mFont.a((BitmapFont)Graphics.b(80), (Graphics)var1, GameSrc.gI().getMapTemplate().name, DataCenter.gI().widthScreen - 43, 7, 2, -6488, -10275328);
+         mFont.a((BitmapFont)Graphics.b(80), (Graphics)var1, GameSrc.gI().getMapTemplate().name, DataCenter.gI().widthScreen - 64, 7, 2, -6488, -10275328);
          Binary2.a(var1, -9, 0, 35, 12, 73, (int)7);
          Binary2.a(var1, 30, 0, 35, 12, Char.gI().a(73), (int)7);
          Binary2.a(var1, -9, 0, 39, 23, 66, (int)7);
@@ -371,12 +371,7 @@ public class LangLa_cj extends LangLa_cz {
             if (target instanceof Char || target instanceof Npc) {
                drawLivingTarget(var12, target);
             } else if (hasMobTarget(target)) {
-               int x = mobTargetTopX(game);
-               int y = x < 0 ? MOB_TARGET_LOWER_Y : 0;
-               if (x < 0) {
-                  x = mobTargetLowerX(DataCenter.gI().widthScreen);
-               }
-               drawMobTarget(var12, (Mob)target, x, y);
+               drawMobTarget(var12, (Mob)target, mobTargetTopX(game), 0);
             }
          } catch (Exception var9) {
          }
@@ -452,9 +447,7 @@ public class LangLa_cj extends LangLa_cz {
    }
 
    static int mobTargetTopX(int rightDockX, int effectCount, int effectOffset) {
-      int afterEffects = EFFECT_ROW_X + effectOffset + effectCount * EFFECT_SLOT_WIDTH;
-      int x = Math.max(140, afterEffects);
-      return x + MOB_TARGET_WIDTH + 3 <= rightDockX ? x : -1;
+      return Math.max(0, Math.min(120, DataCenter.gI().widthScreen - MOB_TARGET_WIDTH));
    }
 
    static int mobTargetLowerX(int screenWidth) {
@@ -462,29 +455,29 @@ public class LangLa_cj extends LangLa_cz {
    }
 
    static int noticeYForMobTarget(int noticeY, int topTargetX) {
-      return topTargetX < 0 ? noticeY : Math.max(noticeY, MOB_TARGET_HEIGHT + 6);
+      return Math.max(noticeY, MOB_TARGET_HEIGHT + 6);
    }
 
    private static void drawMobTarget(Graphics graphics, Mob mob, int x, int y) {
       ensureTargetFrame();
-      int hpWidth = barWidth(mob.hp, mob.hpFull);
-      int barX = x + 58;
-      graphics.f(0x3f1016); graphics.c(barX, y + 23, 96, 9);
-      graphics.f(0xdb1830); graphics.c(barX, y + 23, hpWidth, 9);
-      graphics.f(0xff7777); graphics.c(barX, y + 23, hpWidth, 2);
+      int hpWidth = Math.round(barWidth(mob.hp, mob.hpFull) * .7f);
+      int barX = x + 41;
+      graphics.f(0x3f1016); graphics.c(barX, y + 16, 67, 6);
+      graphics.f(0xdb1830); graphics.c(barX, y + 16, hpWidth, 6);
+      graphics.f(0xff7777); graphics.c(barX, y + 16, hpWidth, 1);
       // EXP is the kill reward sent by the server, not a monster experience-progress ratio.
-      graphics.f(mob.exp > 0 ? 0x8239b9 : 0x22163d); graphics.c(barX, y + 37, 96, 8);
-      if (mob.exp > 0) { graphics.f(0xd676f5); graphics.c(barX, y + 37, 96, 2); }
-      drawMobPortrait(graphics, mob, x + 35, y + 43);
+      graphics.f(mob.exp > 0 ? 0x8239b9 : 0x22163d); graphics.c(barX, y + 26, 67, 6);
+      if (mob.exp > 0) { graphics.f(0xd676f5); graphics.c(barX, y + 26, 67, 1); }
+      drawMobPortrait(graphics, mob, x + 25, y + 30);
       mImage frame = $state_LangLa_cj().targetPortraitFrame;
       int zoom = DataCenter.gI().zoomLevel;
       graphics.a(frame, 0, 0, frame.c, frame.d, 0, x, y, MOB_TARGET_WIDTH * zoom, MOB_TARGET_HEIGHT * zoom, 0);
       String name = mob.f();
       while (name.length() > 1 && mFont.a(mFont.d, name) > 101) name = name.substring(0, name.length() - 1);
-      mFont.a(mFont.d, graphics, name, x + 107, y + 11, 2, -16646423, -11184811);
-      mFont.a(mFont.d, graphics, "Lv." + mob.level, x + 35, y + 49, 2, -1, -10275328);
-      mFont.a((BitmapFont)Graphics.b(78), graphics, targetNumber(mob.hp) + "/" + targetNumber(mob.hpFull), x + 106, y + 28, 2, -1, -10275328);
-      mFont.a((BitmapFont)Graphics.b(78), graphics, "EXP +" + targetNumber(mob.exp), x + 106, y + 41, 2, -1, -10275328);
+      mFont.a(Graphics.b(60f), graphics, name, x + 75, y + 7, 2, -16646423, -11184811);
+      mFont.a(Graphics.b(54f), graphics, "Lv." + mob.level, x + 25, y + 33, 2, -1, -10275328);
+      mFont.a(Graphics.b(54f), graphics, targetNumber(mob.hp) + "/" + targetNumber(mob.hpFull), x + 74, y + 19, 2, -1, -10275328);
+      mFont.a(Graphics.b(54f), graphics, "EXP +" + targetNumber(mob.exp), x + 74, y + 29, 2, -1, -10275328);
    }
    private static void drawMobPortrait(Graphics graphics, Mob mob, int x, int baseline) {
       MobTemplate template = mob.getMobTemplate();
@@ -495,10 +488,14 @@ public class LangLa_cj extends LangLa_cz {
          frameIndex = template.a[1][0] & 255;
       if (frameIndex >= template.b.length) frameIndex = 0;
       LangLa_hz frame = template.b[frameIndex];
-      drawPortraitFrame(graphics, frame, x, baseline);
+      drawPortraitFrame(graphics, frame, x, baseline, .7f);
    }
 
    private static void drawPortraitFrame(Graphics graphics, LangLa_hz frame, int x, int baseline) {
+      drawPortraitFrame(graphics, frame, x, baseline, 1f);
+   }
+
+   private static void drawPortraitFrame(Graphics graphics, LangLa_hz frame, int x, int baseline, float sizeFactor) {
       if (frame == null || frame.a == null) return;
       int left = Integer.MAX_VALUE, right = Integer.MIN_VALUE;
       int top = Integer.MAX_VALUE, bottom = Integer.MIN_VALUE;
@@ -514,7 +511,8 @@ public class LangLa_cj extends LangLa_cz {
          bottom = Math.max(bottom, part.c);
       }
       if (left == Integer.MAX_VALUE) return;
-      float scale = Math.min(1f, Math.min(25f / Math.max(1, right - left), 25f / Math.max(1, bottom - top)));
+      float portraitSize = 25f * sizeFactor;
+      float scale = Math.min(1f, Math.min(portraitSize / Math.max(1, right - left), portraitSize / Math.max(1, bottom - top)));
       float centerX = (left + right) / 2f;
       float centerY = (top + bottom) / 2f;
       for (int index = 0; index < frame.a.length; index++) {
@@ -527,7 +525,7 @@ public class LangLa_cj extends LangLa_cz {
             LangLa_fq.b(null, part.a, 0, 0, 0, 33);
          } else if (size != null) {
             graphics.a(image, 0, 0, image.c, image.d, Utlis.a(part.d),
-               x + Math.round((part.b - centerX) * scale), baseline - 15 + Math.round((part.c - centerY) * scale),
+               x + Math.round((part.b - centerX) * scale), baseline - Math.round(15 * sizeFactor) + Math.round((part.c - centerY) * scale),
                Math.max(1, Math.round(size.d * scale * DataCenter.gI().zoomLevel)),
                Math.max(1, Math.round(size.e * scale * DataCenter.gI().zoomLevel)), 33);
          }

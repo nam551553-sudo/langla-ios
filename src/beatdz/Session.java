@@ -34,6 +34,8 @@ public class Session {
     public Thread threadRecvMessage;
     private final ArrayBlockingQueue<Runnable> incoming = new ArrayBlockingQueue<>(512);
     private volatile int connectionVersion;
+    private final Object connectionLock = new Object();
+    private final ThreadLocal<Integer> workerVersion = new ThreadLocal<>();
     
 
     public static Session gI() {
@@ -45,44 +47,72 @@ public class Session {
     }
 
     public void connect(String var1, int var2) {
-        try {
+        synchronized (connectionLock) {
+            if (isConnected || isConnecting) return;
+            connectionVersion++;
             this.waitThreadSend = this.waitThreadRecv = true;
             ++beatdz.DataCenter.$state_DataCenter().aQ;
             this.s = Utlis.time();
             this.isConnecting = this.isConnected = true;
             this.vMessage.removeAllElements();
-            this.createThreadSendMessage();
-            this.createThreadRecvMessage();
             this.createThreadSendTypeClient(var1, var2);
             this.createThreadWaitTimeOut();
+        }
+    }
 
-            for (int var4 = 0; var4 < 50 && this.waitThreadSend && this.waitThreadRecv; ++var4) {
-                Utlis.sleep(100L);
+    private Thread networkThread(String name, Runnable action) {
+        int generation = connectionVersion;
+        Thread thread = new Thread(() -> {
+            workerVersion.set(generation);
+            try { action.run(); } finally { workerVersion.remove(); }
+        }, name + "-" + MultiSession.current().slot);
+        thread.setDaemon(true);
+        thread.start();
+        return thread;
+    }
+
+    boolean currentConnection() {
+        Integer generation = workerVersion.get();
+        return generation == null || generation == connectionVersion;
+    }
+
+    boolean installTransport(mSocket transport) throws IOException {
+        synchronized (connectionLock) {
+            if (!currentConnection() || !isConnected) {
+                transport.c();
+                return false;
             }
+            socket = transport;
+            writer = new Writer(transport.a());
+            reader = new Reader(transport.b());
+            createThreadSendMessage();
+            createThreadRecvMessage();
+            return true;
+        }
+    }
 
-        } catch (Exception var3) {
-            Utlis.println(var3);
+    void handshakeComplete() {
+        synchronized (connectionLock) {
+            if (!currentConnection() || !isConnected) return;
+            isConnecting = false;
+            synchronized (lockTimeOut) { lockTimeOut.notifyAll(); }
         }
     }
 
     private void createThreadSendTypeClient(String var1, int var2) {
-        this.threadSendTypeClient = new Thread(new RSendTypeClient(this, var1, var2));
-        this.threadSendTypeClient.start();
+        this.threadSendTypeClient = networkThread("Connect", new RSendTypeClient(this, var1, var2));
     }
 
     private void createThreadWaitTimeOut() {
-        this.threadWaitTimeOut = new Thread(new RWaitTimeOut(this));
-        this.threadWaitTimeOut.start();
+        this.threadWaitTimeOut = networkThread("ConnectTimeout", new RWaitTimeOut(this));
     }
 
     private void createThreadSendMessage() {
-        this.threadSendMessage = new Thread(new RSendMessage(this));
-        this.threadSendMessage.start();
+        this.threadSendMessage = networkThread("Send", new RSendMessage(this));
     }
 
     private void createThreadRecvMessage() {
-        this.threadRecvMessage = new TRecvMessage(this);
-        this.threadRecvMessage.start();
+        this.threadRecvMessage = networkThread("Receive", new TRecvMessage(this));
     }
 
     private void read(Reader var1, boolean var2) throws IOException {
@@ -151,6 +181,7 @@ public class Session {
     }
 
     private void dispatch(Runnable action) throws InterruptedIOException {
+        if (!currentConnection()) return;
         if (com.badlogic.gdx.Gdx.app == null) {
             action.run();
             return;
@@ -201,7 +232,7 @@ public class Session {
     }
 
     public void sendMessage(Message var1) {
-        if (this.isConnected) {
+        if (this.isConnected && currentConnection()) {
             //    System.out.println("send: "+var1.cmd);
             this.vMessage.addElement(var1.getData(this.keyApp));
             synchronized (this.lockSendMessage) {
@@ -211,15 +242,14 @@ public class Session {
     }
 
     public void close() {
+        synchronized (connectionLock) {
+            if (!currentConnection() || (!isConnected && !isConnecting)) return;
+            boolean failedToConnect = isConnecting;
+            boolean lostConnection = isConnected && !isConnecting;
+            boolean fromNetwork = workerVersion.get() != null;
         try {
             connectionVersion++;
             incoming.clear();
-            if (this.isConnecting) {
-                this.handler.b();
-            } else if (this.isConnected) {
-                this.handler.c();
-            }
-
             this.isConnected = false;
             this.isConnecting = false;
             this.vMessage.removeAllElements();
@@ -272,12 +302,24 @@ public class Session {
                     this.threadRecvMessage = null;
                 }
             } catch (Exception var3) {
-                return;
             }
         } catch (Exception var8) {
             Utlis.println(var8);
         }
-
+            Runnable notify = () -> {
+                if (handler == null) return;
+                if (failedToConnect) handler.b();
+                else if (lostConnection) handler.c();
+            };
+            if (fromNetwork && com.badlogic.gdx.Gdx.app != null) {
+                int generation = connectionVersion;
+                incoming.offer(() -> {
+                    if (generation == connectionVersion) notify.run();
+                });
+            } else {
+                notify.run();
+            }
+        }
     }
 
     private void read2(Message var1) throws IOException {

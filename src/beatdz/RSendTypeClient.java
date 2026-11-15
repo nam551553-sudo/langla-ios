@@ -19,30 +19,8 @@ public class RSendTypeClient implements Runnable {
 
     public void run() {
         try {
-            Session var10000 = this.c;
             mSocket var2 = new mSocket(this.a, this.b);
-            var10000.socket = var2;
-            var10000 = this.c;
-            Writer var6 = new Writer(this.c.socket.a());
-            var10000.writer = var6;
-            var10000 = this.c;
-            Reader var7 = new Reader(this.c.socket.b());
-            var10000.reader = var7;
-            if (!this.c.isConnected) {
-                this.c.close();
-                return;
-            }
-
-            while (this.c.threadSendMessage == null || !this.c.threadSendMessage.isAlive() || this.c.threadRecvMessage == null || !this.c.threadRecvMessage.isAlive()) {
-                Utlis.sleep(100L);
-            }
-
-            Utlis.sleep(100L);
-            boolean var8 = false;
-            this.c.isConnecting = false;
-            synchronized (this.c.lockTimeOut) {
-                this.c.lockTimeOut.notify();
-            }
+            if (!this.c.installTransport(var2)) return;
 
             if (Gdx.files.isExternalStorageAvailable()) {
                 if (Gdx.app.getType() != ApplicationType.Desktop) {
@@ -60,7 +38,6 @@ public class RSendTypeClient implements Runnable {
                 Session.a(this.c, Gdx.files.getLocalStoragePath());
             }
 
-            var10000 = this.c;
             DataCenter var5 = DataCenter.gI();
             Message var9;
             (var9 = new Message((byte) -113)).writeByte(var5.n);
@@ -82,8 +59,9 @@ public class RSendTypeClient implements Runnable {
             var9.writeInt(var5.D);
             var9.writeInt(var5.C);
             var9.writeShort(2);
-            var10000.sendMessage(var9);
-            this.c.handler.a();
+            this.c.sendMessage(var9);
+            this.c.handshakeComplete();
+            if (this.c.currentConnection()) this.c.handler.a();
         } catch (Exception var4) {
             this.c.close();
             Thread.currentThread().interrupt();

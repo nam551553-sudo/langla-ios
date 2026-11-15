@@ -649,6 +649,18 @@ public class SelectCharScreen extends MainScreen {
         
         var2.close();
     }
+
+    boolean reselectCharacter(int characterId) {
+        LangLa_me[] characters = $state_SelectCharScreen().v;
+        if (characters == null) return false;
+        for (int index = 0; index < characters.length; index++) {
+            if (characters[index] != null && characters[index].a.idEntity == characterId) {
+                b(index);
+                return true;
+            }
+        }
+        return false;
+    }
     
     public void G() {
         if (!this.c) {

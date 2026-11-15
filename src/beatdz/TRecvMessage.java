@@ -8,14 +8,14 @@ package beatdz;
    }
 
    public void run() {
-      while(this.a.isConnected) {
+      while(this.a.isConnected && this.a.currentConnection()) {
          try {
             if (this.a.reader != null) {
                boolean var1 = false;
                this.a.waitThreadRecv = false;
                Session.a(this.a, this.a.reader, false);
             } else {
-               Utlis.sleep(500L);
+               Utlis.sleep(10L);
             }
          } catch (Exception var2) {//var2.printStackTrace();
             this.a.close();

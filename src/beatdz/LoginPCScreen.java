@@ -55,6 +55,7 @@ public class LoginPCScreen extends ScreenLogin {
     }
 
     public static ScreenLogin getScreenLogin() {
+        AccountReconnect.gI().cancel();
         if (Session.gI().isConnected()) {
             Session.gI().close();
         }
@@ -273,6 +274,7 @@ public class LoginPCScreen extends ScreenLogin {
 
         switch (var1) {
             case 1001:
+                AccountReconnect.gI().cancel();
                 this.t = false;
                 g();
                 this.k();

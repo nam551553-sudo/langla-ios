@@ -301,13 +301,7 @@ public abstract class Canvas implements Screen {
     }
 
     private float simulationSpeed() {
-        if (isMobile()
-                && DataCenter.gI().currentScreen instanceof GameSrc) {
-            int map = ((GameSrc)DataCenter.gI().currentScreen).mapID;
-            // These instances update many monsters at once. Keep their simulation at 30 Hz.
-            if (map == 13 || map == 46 || map == 47) return 1f;
-        }
-        return FrameRate.target() / 60f;
+        return 1f;
     }
 
     public int getWidth() {
@@ -321,7 +315,7 @@ public abstract class Canvas implements Screen {
     public static boolean isMobile() {
         return Gdx.app.getType() == ApplicationType.Android || Gdx.app.getType() == ApplicationType.iOS;
     }
-    static boolean smoothMotion() { return isMobile() || FrameRate.target() > 60 || MultiSession.count() > 1; }
+    static boolean smoothMotion() { return true; }
     public void applyZoomScreen() { display.apply(); }
     public void preparePointerInput() { display.prepareInput(); }
     public void cancelPointer() { }

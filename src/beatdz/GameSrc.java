@@ -534,6 +534,9 @@ public class GameSrc extends MainScreen {
     private boolean drawOrderDirty;
     private boolean refreshItemUseInventory;
     final BulkItemUse bulkItemUse = new BulkItemUse();
+    private long nextHpUseAt;
+    private long nextMpUseAt;
+    private long nextFoodUseAt;
 
     public GameSrc() {
         this.vItemMap = new Vector();
@@ -1582,8 +1585,7 @@ public class GameSrc extends MainScreen {
         setSize(DataCenter.gI().widthScreen, DataCenter.gI().heightScreen);
         if (U == null || O == null || X == null) return;
         // Finish panel animations once. Old animation targets must not drag icons back.
-        for (Object value : U.a) { LangLa_cs control = (LangLa_cs)value; control.setXY(control.cx + dx, control.cy); }
-        U.relayout(mConfig.gI().readBoolean(23));
+        layoutShortcutDock(mConfig.gI().readBoolean(23));
         if (ak != null) ak.setXY(ak.cx, ak.cy + dy / 2);
         if (dE != null) dE.setXY(dE.cx, dE.cy + dy / 2);
         if (dF != null) dF.setXY(dF.cx, dF.cy + dy / 2);
@@ -7992,79 +7994,12 @@ public class GameSrc extends MainScreen {
         return true;
     }
 
-    private Item h(boolean var1) {
-        Item var2 = null;
-
-        try {
-            Vector var3 = new Vector();
-
-            for (int var4 = 0; var4 < Char.gI().arrItemBag.length; ++var4) {
-                if (Char.gI().arrItemBag[var4] != null) {
-                    if (this.mapID == 45) {
-                        if (Char.gI().arrItemBag[var4].id == 659) {
-                            var3.add(Char.gI().arrItemBag[var4]);
-                        }
-                    } else if (Char.gI().arrItemBag[var4].getItemTemplate().type == 22) {
-                        var3.add(Char.gI().arrItemBag[var4]);
-                    }
-                }
-            }
-
-            Collections.sort(var3, beatdz.Item.$state_Item().a);
-            Item var5;
-            int var7;
-            if (!var1) {
-                byte var8 = 60;
-                if (SettingsTab.gI().o() >= 0) {
-                    switch (SettingsTab.gI().o()) {
-                        case 0:
-                            var8 = 60;
-                            break;
-                        case 1:
-                            var8 = 55;
-                            break;
-                        case 2:
-                            var8 = 50;
-                            break;
-                        case 3:
-                            var8 = 40;
-                            break;
-                        case 4:
-                            var8 = 30;
-                            break;
-                        case 5:
-                            var8 = 20;
-                            break;
-                        case 6:
-                            var8 = 10;
-                    }
-                }
-
-                for (var7 = var3.size() - 1; var7 >= 0; --var7) {
-                    if ((var5 = (Item) var3.elementAt(var7)).getItemTemplate().levelNeed <= Char.gI().level() && var5.getItemTemplate().levelNeed <= var8) {
-                        var2 = var5;
-                    }
-                }
-            } else {
-                boolean var9 = true;
-
-                for (var7 = var3.size() - 1; var7 >= 0; --var7) {
-                    if ((var5 = (Item) var3.elementAt(var7)).getItemTemplate().levelNeed <= Char.gI().level()) {
-                        var2 = var5;
-                        var9 = false;
-                    }
-                }
-
-                if (var3.size() > 0 && var9) {
-                    this.showMessage(Caption.gX, -1);
-                }
-            }
-        } catch (Exception var6) {
-        }
-
-        return var2;
+    private Item h(boolean manual) {
+        Item item = ConsumableUse.choose(Char.gI().arrItemBag, 22, Char.gI().level(),
+                manual ? Integer.MAX_VALUE : ConsumableUse.levelLimit(SettingsTab.gI().o()), mapID);
+        if (manual && item == null && bu > 0) showMessage(Caption.gX, -1);
+        return item;
     }
-
     public static int v() {
         long var0 = 0;
         int var1 = 0;
@@ -8124,73 +8059,12 @@ public class GameSrc extends MainScreen {
         return var0;
     }
 
-    private Item i(boolean var1) {
-        Item var2 = null;
-
-        try {
-            Vector var3 = new Vector();
-
-            for (int var4 = 0; var4 < Char.gI().arrItemBag.length; ++var4) {
-                if (Char.gI().arrItemBag[var4] != null && Char.gI().arrItemBag[var4].getItemTemplate().type == 23) {
-                    var3.add(Char.gI().arrItemBag[var4]);
-                }
-            }
-
-            Collections.sort(var3, beatdz.Item.$state_Item().a);
-            Item var5;
-            int var7;
-            if (!var1) {
-                byte var8 = 60;
-                if (SettingsTab.gI().q() >= 0) {
-                    switch (SettingsTab.gI().q()) {
-                        case 0:
-                            var8 = 60;
-                            break;
-                        case 1:
-                            var8 = 55;
-                            break;
-                        case 2:
-                            var8 = 50;
-                            break;
-                        case 3:
-                            var8 = 40;
-                            break;
-                        case 4:
-                            var8 = 30;
-                            break;
-                        case 5:
-                            var8 = 20;
-                            break;
-                        case 6:
-                            var8 = 10;
-                    }
-                }
-
-                for (var7 = var3.size() - 1; var7 >= 0; --var7) {
-                    if ((var5 = (Item) var3.elementAt(var7)).getItemTemplate().levelNeed <= Char.gI().level() && var5.getItemTemplate().levelNeed <= var8) {
-                        var2 = var5;
-                    }
-                }
-            } else {
-                boolean var9 = true;
-
-                for (var7 = var3.size() - 1; var7 >= 0; --var7) {
-                    if ((var5 = (Item) var3.elementAt(var7)).getItemTemplate().levelNeed <= Char.gI().level()) {
-                        var2 = var5;
-                        var9 = false;
-                    }
-                }
-
-                if (var3.size() > 0 && var9) {
-                    this.showMessage(Caption.gX, -1);
-                }
-            }
-        } catch (Exception var6) {
-        }
-
-        return var2;
+    private Item i(boolean manual) {
+        Item item = ConsumableUse.choose(Char.gI().arrItemBag, 23, Char.gI().level(),
+                manual ? Integer.MAX_VALUE : ConsumableUse.levelLimit(SettingsTab.gI().q()), mapID);
+        if (manual && item == null && bw > 0) showMessage(Caption.gX, -1);
+        return item;
     }
-
     public static int x() {
         short var0 = -1;
 
@@ -8222,16 +8096,19 @@ public class GameSrc extends MainScreen {
     }
 
     public void c(boolean var1) {
+        if (!Session.gI().isConnected()) return;
         if (Char.gI().j()) {
             if (var1) {
                 Char.gI();
                 Char.x();
             }
 
-        } else if (this.bf <= 0 && !Char.gI().j() && (!Char.gI().g(6) || AutoPro.isAuto(10))) {
+        } else if (Utlis.time() >= nextHpUseAt && !Char.gI().j()
+                && (!Char.gI().g(6) || AutoPro.isAuto(10))) {
             Item var2;
             if ((var2 = this.h(var1)) != null) {
-                this.bf = AutoPro.isAuto(10) ? 0 : 50;
+                nextHpUseAt = Utlis.time() + 3000;
+                this.bf = 90;
                 a(var2);
                 if (Char.gI().hp < Char.gI().hpFull) {
                     LangLa_dp.a().j();
@@ -8241,32 +8118,16 @@ public class GameSrc extends MainScreen {
         }
     }
 
-    public void d(boolean var1) {
-        if (this.bh <= 0 && !Char.gI().j() && !Char.gI().g(0)) {
-            Vector var4 = new Vector();
-
-            int var2;
-            for (var2 = 0; var2 < Char.gI().arrItemBag.length; ++var2) {
-                if (Char.gI().arrItemBag[var2] != null && Char.gI().arrItemBag[var2].getItemTemplate().type == 24) {
-                    var4.add(Char.gI().arrItemBag[var2]);
-                }
-            }
-
-            Collections.sort(var4, beatdz.Item.$state_Item().a);
-
-            for (var2 = 0; var2 < var4.size(); ++var2) {
-                Item var3;
-                if ((var3 = (Item) var4.elementAt(var2)).getItemTemplate().levelNeed <= Char.gI().level()) {
-                    this.bh = 50;
-                    a(var3);
-                    return;
-                }
-            }
-
-            var4.size();
+    public void d(boolean manual) {
+        long now = Utlis.time();
+        if (!Session.gI().isConnected() || Char.gI().j() || Char.gI().g(0) || now < nextFoodUseAt) return;
+        Item food = ConsumableUse.choose(Char.gI().arrItemBag, 24, Char.gI().level(), Integer.MAX_VALUE, mapID);
+        if (food != null) {
+            nextFoodUseAt = now + 3000;
+            bh = 90;
+            a(food);
         }
     }
-
     public void e(boolean var1) {
         if (this.bi <= 0 && !Char.gI().j()) {
             Char var10000 = Char.gI();
@@ -8317,16 +8178,18 @@ public class GameSrc extends MainScreen {
     }
 
     public void f(boolean var1) {
+        if (!Session.gI().isConnected()) return;
         if (Char.gI().j()) {
             if (var1) {
                 Char.gI();
                 Char.x();
             }
 
-        } else if (this.bg <= 0 && !Char.gI().j() && !Char.gI().g(7)) {
+        } else if (Utlis.time() >= nextMpUseAt && !Char.gI().j() && !Char.gI().g(7)) {
             Item var2;
             if ((var2 = this.i(var1)) != null) {
-                this.bg = 50;
+                nextMpUseAt = Utlis.time() + 3000;
+                this.bg = 90;
                 a(var2);
                 if (Char.gI().mp < Char.gI().mpFull) {
                     LangLa_dp.a().j();
@@ -11026,20 +10889,37 @@ public class GameSrc extends MainScreen {
 
     private void k(boolean var1) {
         mConfig.gI().writeBoolean(23, var1);
-        this.U.a(!mConfig.gI().readBoolean(23));
-        LangLa_dz var10000;
-        if (!var1) {
-            this.U.a(this.U.a().cx, 0, false);
-            this.U.e();
-            var10000 = (LangLa_dz) this.U.a();
-            byte var3 = 0;
-            var10000.e = var3;
-        } else {
-            this.U.a(this.U.a().cx, 52, true);
-            var10000 = (LangLa_dz) this.U.a();
-            short var2 = 180;
-            var10000.e = var2;
+        layoutShortcutDock(var1);
+    }
+
+    private void layoutShortcutDock(boolean expanded) {
+        if (U == null) return;
+        int left = Math.max(0, width - 128);
+        for (Object value : U.a) {
+            LangLa_dz button = (LangLa_dz)value;
+            int action = button.b;
+            int column = -1;
+            int row = 0;
+            switch (action) {
+                case 9997: column = 0; break;
+                case 1067: column = 1; break;
+                case 1033: column = 2; break;
+                case 1032: column = 3; break;
+                case 1063: column = 4; break;
+                case 9998: column = 0; row = 1; break;
+                case 1037: column = 1; row = 1; break;
+                case 1036: column = 2; row = 1; break;
+                case 1035: column = 3; row = 1; break;
+                case 1034: column = 4; row = 1; break;
+                case 1100:
+                    button.setXY(width - button.width - 4, expanded ? 72 : 20);
+                    button.e = (short)(expanded ? 0 : 180);
+                    break;
+                default: break;
+            }
+            if (column >= 0) button.setXY(left + column * 25, 20 + row * 25);
         }
+        U.relayout(expanded);
     }
 
     public static void bR(Message var0) {

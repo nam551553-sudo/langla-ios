@@ -1110,6 +1110,7 @@ public class DataCenter {
 
     public void g() {
         try {
+            AccountReconnect.gI().cancel();
             this.aI = true;
             Message.c((byte) (-126)).send();
             this.currentScreen.L();

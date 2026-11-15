@@ -12,16 +12,22 @@ public class mSocket {
 
    public mSocket(String var1, int var2) throws IOException {
       InetSocketAddress var3 = new InetSocketAddress(var1, var2);
-      this.b.connect(var3, beatdz.Utlis.$state_Utlis().timeOut);
-      this.b.setTcpNoDelay(true);
+      try {
+         this.b.connect(var3, beatdz.Utlis.$state_Utlis().timeOut);
+         this.b.setTcpNoDelay(true);
+         this.b.setKeepAlive(true);
+      } catch (IOException failed) {
+         this.b.close();
+         throw failed;
+      }
    }
 
    public DataOutputStream a() throws IOException {
-      return new DataOutputStream(this.b.getOutputStream());
+      return new DataOutputStream(new java.io.BufferedOutputStream(this.b.getOutputStream(), 8192));
    }
 
    public DataInputStream b() throws IOException {
-      this.a = this.b.getInputStream();
+      this.a = new java.io.BufferedInputStream(this.b.getInputStream(), 8192);
       return new DataInputStream(this.a);
    }
 

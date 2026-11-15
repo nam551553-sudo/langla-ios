@@ -141,6 +141,7 @@ public final class MultiSession {
 
     static void applyVisiblePackets() {
         Session.gI().applyIncoming(System.nanoTime() + VISIBLE_PACKET_BUDGET_NANOS, 128);
+        AccountReconnect.gI().observe();
     }
 
     private static float hiddenInterval(int count) {
@@ -179,6 +180,7 @@ public final class MultiSession {
     private static void updateAccount(Canvas canvas, Context context, long deadline, boolean applyPackets) {
         try {
             run(context, () -> {
+                AccountReconnect.gI().observe();
                 if (context.hiddenTickDue && System.nanoTime() < deadline) {
                     context.hiddenTickDue = false;
                     DataCenter data = DataCenter.gI();
@@ -215,7 +217,8 @@ public final class MultiSession {
                 TextButton.TextButtonStyle style = new TextButton.TextButtonStyle(); style.font = font;
                 style.fontColor = Color.WHITE;
                 TextButton button = new TextButton(i == TABS.size() ? "+" : String.valueOf(i + 1), style);
-                button.setBounds(6 * scale + i * 38 * scale, Gdx.graphics.getHeight() - barHeight() + 3 * scale, 34 * scale, 22 * scale);
+                button.setBounds(tabStartX(width, TABS.size(), scale) + i * 38 * scale,
+                        Gdx.graphics.getHeight() - barHeight() + 3 * scale, 34 * scale, 22 * scale);
                 button.addListener(new ClickListener() { @Override public void clicked(InputEvent event, float x, float y) { if (slot == TABS.size()) add(); else select(slot); } });
                 bar.addActor(button);
             }
@@ -235,5 +238,10 @@ public final class MultiSession {
         skin = nextSkin;
         bar.getViewport().apply();
         bar.act(Math.min(Gdx.graphics.getDeltaTime(), .033f)); bar.draw();
+    }
+
+    static float tabStartX(float width, int accounts, float scale) {
+        int buttons = Math.min(LIMIT, accounts + 1);
+        return Math.max(0f, (width - (buttons * 38f - 4f) * scale) / 2f);
     }
 }

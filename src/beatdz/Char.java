@@ -687,7 +687,7 @@ public class Char extends Entity {
         }
 
         try {
-            if (this.bF.size() > 0 && System.currentTimeMillis() - this.bG > 1000L) {
+            if (this.bF.size() > 0 && System.currentTimeMillis() - this.bG > 100L) {
                 this.ai();
             }
 
@@ -2238,13 +2238,10 @@ public class Char extends Entity {
 
     public void a(short var1, short var2, boolean var3) {
         try {
-            if (!this.isMe()) {
-                DataCenter.gI();
-            }
-
+            boolean firstPoint = this.bF.isEmpty();
             this.bF.addElement(new PointMove(var1, var2, this.speedMove));
-            this.bG = System.currentTimeMillis();
-            if (this.bF.size() > 5 || var3) {
+            if (firstPoint) this.bG = System.currentTimeMillis();
+            if (this.bF.size() >= 2 || var3) {
                 this.ai();
             }
 
