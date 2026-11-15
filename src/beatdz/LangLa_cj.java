@@ -474,10 +474,10 @@ public class LangLa_cj extends LangLa_cz {
       graphics.a(frame, 0, 0, frame.c, frame.d, 0, x, y, MOB_TARGET_WIDTH * zoom, MOB_TARGET_HEIGHT * zoom, 0);
       String name = mob.f();
       while (name.length() > 1 && mFont.a(mFont.d, name) > 101) name = name.substring(0, name.length() - 1);
-      mFont.a(Graphics.b(60f), graphics, name, x + 75, y + 7, 2, -16646423, -11184811);
-      mFont.a(Graphics.b(54f), graphics, "Lv." + mob.level, x + 25, y + 33, 2, -1, -10275328);
-      mFont.a(Graphics.b(54f), graphics, targetNumber(mob.hp) + "/" + targetNumber(mob.hpFull), x + 74, y + 19, 2, -1, -10275328);
-      mFont.a(Graphics.b(54f), graphics, "EXP +" + targetNumber(mob.exp), x + 74, y + 29, 2, -1, -10275328);
+      mFont.a(Graphics.hudFont(60f), graphics, name, x + 75, y + 7, 2, -16646423, -11184811);
+      mFont.a(Graphics.hudFont(54f), graphics, "Lv." + mob.level, x + 25, y + 33, 2, -1, -10275328);
+      mFont.a(Graphics.hudFont(54f), graphics, targetNumber(mob.hp) + "/" + targetNumber(mob.hpFull), x + 74, y + 19, 2, -1, -10275328);
+      mFont.a(Graphics.hudFont(54f), graphics, "EXP +" + targetNumber(mob.exp), x + 74, y + 29, 2, -1, -10275328);
    }
    private static void drawMobPortrait(Graphics graphics, Mob mob, int x, int baseline) {
       MobTemplate template = mob.getMobTemplate();

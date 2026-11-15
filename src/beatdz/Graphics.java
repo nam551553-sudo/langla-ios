@@ -244,6 +244,11 @@ public class Graphics {
         return G;
     }
 
+    static BitmapFont hudFont(float percent) {
+        E.getData().setScale(percent / 100f);
+        return E;
+    }
+
     private static BitmapFont p() {
         switch (DataCenter.gI().zoomLevel) {
             case 1:
@@ -341,7 +346,7 @@ public class Graphics {
         if (var2.length() == 0) {
             return A;
         } else {
-            while (true) {
+            for (int attempt = 0; attempt < 2; attempt++) {
                 GlyphLayout var4 = null;
 
                 try {
@@ -352,22 +357,8 @@ public class Graphics {
                     }
 
                     var4.setText(var1, var2);
-                    String var5;
-                    if ((var5 = ((GlyphRun) var4.runs.get(0)).toString()).length() > var2.length()) {
-                        if (var5.substring(0, var2.length()).equals(var2)) {
-                            var3.add(var4);
-
-                            for (int var8 = var3.size(); var8 < 5; ++var8) {
-                                var3.add(new GlyphLayout());
-                            }
-
-                            return var4;
-                        }
-
-                        if (var7 == null && (var2 = a(var2)).length() == 0) {
-                            return A;
-                        }
-                    }
+                    var3.add(var4);
+                    return var4;
                 } catch (Exception var6) {
                     if (var7 == null && (var2 = a(var2)).length() == 0) {
                         return A;
@@ -378,6 +369,7 @@ public class Graphics {
                     var4.reset();
                 }
             }
+            return A;
         }
     }
 
