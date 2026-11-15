@@ -116,7 +116,9 @@ jobs:
         if: always()
         with:
           name: iOS-native-startup-log-${{ needs.hd-assets.outputs.build_number }}
-          path: ios-native-smoke.log
+          path: |
+            ios-native-smoke.log
+            ios-native-diagnostics/
           if-no-files-found: warn
   ipa:
     needs: [hd-assets, native-smoke]

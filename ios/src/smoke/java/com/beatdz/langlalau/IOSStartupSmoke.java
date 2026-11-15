@@ -10,6 +10,7 @@ import org.robovm.apple.uikit.UIApplication;
 public class IOSStartupSmoke extends IOSLauncher {
     private long loginObserved;
     private long optionalIconRequested;
+    private long baseIconRequested;
     @Override protected IOSApplication createApplication() {
         IOSApplication application = super.createApplication();
         final long started = System.nanoTime();
@@ -32,15 +33,18 @@ public class IOSStartupSmoke extends IOSLauncher {
                         if (System.nanoTime() - loginObserved < 2000000000L) return;
                         if (!HttpDownloads.isNative() || !data.ba || !data.bb || data.MapTemplate == null
                                 || data.aP == null || data.arrayServers == null || data.arrayServers.length == 0) {
-                            System.err.println("FAIL IOS_NATIVE_STARTUP incomplete login data"); System.exit(3);
+                            System.out.println("FAIL IOS_NATIVE_STARTUP incomplete login data"); System.out.flush(); System.exit(3);
                         }
                         if (LangLa_fq.a(643).c <= 1) {
-                            System.err.println("FAIL IOS_NATIVE_STARTUP missing base UI icon"); System.exit(11);
+                            if (baseIconRequested == 0) baseIconRequested = System.nanoTime();
+                            if (System.nanoTime() - baseIconRequested < 45_000_000_000L) return;
+                            System.out.println("FAIL IOS_NATIVE_STARTUP missing base UI icon after wait");
+                            System.out.flush(); System.exit(11);
                         }
                         if (data.zoomLevel >= 3 && LangLa_fq.a(21137).c <= 1) {
                             if (optionalIconRequested == 0) optionalIconRequested = System.nanoTime();
                             if (System.nanoTime() - optionalIconRequested < 45_000_000_000L) return;
-                            System.err.println("FAIL IOS_NATIVE_STARTUP deferred icon did not load"); System.exit(12);
+                            System.out.println("FAIL IOS_NATIVE_STARTUP deferred icon did not load"); System.out.flush(); System.exit(12);
                         }
                         Gdx.audio.newMusic(Gdx.files.internal("music/0.mp3")).dispose();
                         Gdx.audio.newSound(Gdx.files.internal("sound/0.mp3")).dispose();
@@ -58,37 +62,37 @@ public class IOSStartupSmoke extends IOSLauncher {
                             }
                         }
                         if (selectors != 2 || !selectedNameVisible) {
-                            System.err.println("FAIL IOS_NATIVE_STARTUP server selector hidden or unnamed"); System.exit(5);
+                            System.out.println("FAIL IOS_NATIVE_STARTUP server selector hidden or unnamed"); System.out.flush(); System.exit(5);
                         }
                         login.a(1004, null, null);
                         boolean opened = false;
                         for (Object dialog : login.cD) opened |= dialog instanceof LangLa_bp;
                         if (!opened) {
-                            System.err.println("FAIL IOS_NATIVE_STARTUP server picker did not open"); System.exit(6);
+                            System.out.println("FAIL IOS_NATIVE_STARTUP server picker did not open"); System.out.flush(); System.exit(6);
                         }
                         System.out.println("PASS IOS_NATIVE_SERVER_PICKER visible selected server=" + data.aP.getName()
                                 + "; picker opened with newer-client flag enabled");
                         if (MultiSession.barHeight() <= 0) {
-                            System.err.println("FAIL IOS_NATIVE_STARTUP x6 tab bar disabled"); System.exit(7);
+                            System.out.println("FAIL IOS_NATIVE_STARTUP x6 tab bar disabled"); System.out.flush(); System.exit(7);
                         }
                         java.util.Set<Session> sessions = new java.util.HashSet<>();
                         java.util.Set<DataCenter> centers = new java.util.HashSet<>();
                         java.util.Set<String> profiles = new java.util.HashSet<>();
                         for (int slot = 0; slot < MultiSession.LIMIT; slot++) {
                             if (slot > 0 && !MultiSession.add()) {
-                                System.err.println("FAIL IOS_NATIVE_STARTUP cannot add x6 tab " + slot); System.exit(8);
+                                System.out.println("FAIL IOS_NATIVE_STARTUP cannot add x6 tab " + slot); System.out.flush(); System.exit(8);
                             }
                             sessions.add(Session.gI()); centers.add(DataCenter.gI());
                             profiles.add(MultiSession.storageName("arr_acc"));
                             beatdz.Char.gI().hp = 100 + slot;
                         }
                         if (MultiSession.add() || sessions.size() != 6 || centers.size() != 6 || profiles.size() != 6) {
-                            System.err.println("FAIL IOS_NATIVE_STARTUP x6 account isolation or limit"); System.exit(9);
+                            System.out.println("FAIL IOS_NATIVE_STARTUP x6 account isolation or limit"); System.out.flush(); System.exit(9);
                         }
                         for (int slot = 0; slot < MultiSession.LIMIT; slot++) {
                             MultiSession.select(slot);
                             if (beatdz.Char.gI().hp != 100 + slot) {
-                                System.err.println("FAIL IOS_NATIVE_STARTUP x6 switch lost account state"); System.exit(10);
+                                System.out.println("FAIL IOS_NATIVE_STARTUP x6 switch lost account state"); System.out.flush(); System.exit(10);
                             }
                         }
                         MultiSession.select(0);
@@ -98,15 +102,15 @@ public class IOSStartupSmoke extends IOSLauncher {
                             System.out.println("PASS IOS_NATIVE_QUEST_TRACKER rendered on tab 2 and restored across six tabs");
                             System.out.println("PASS IOS_NATIVE_TAP_MOVEMENT correct targets across six tabs");
                         } catch (Throwable error) {
-                            System.err.println("FAIL IOS_NATIVE_STARTUP quest tracker");
+                            System.out.println("FAIL IOS_NATIVE_STARTUP quest tracker");
                             error.printStackTrace();
-                            System.exit(13);
+                            System.out.flush(); System.exit(13);
                         }
                         System.out.println("PASS IOS_NATIVE_STARTUP downloaded data via NSURLSession and reached login");
                         System.out.flush(); System.exit(0);
                     }
                     if (System.nanoTime() - started > 300000000000L) {
-                        System.err.println("FAIL IOS_NATIVE_STARTUP timeout: " + data.startupFailure); System.exit(4);
+                        System.out.println("FAIL IOS_NATIVE_STARTUP timeout: " + data.startupFailure); System.out.flush(); System.exit(4);
                     }
                 });
             }

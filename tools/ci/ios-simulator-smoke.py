@@ -99,6 +99,17 @@ try:
                 except subprocess.TimeoutExpired:
                     process.kill()
     text = Path('ios-native-smoke.log').read_text(errors='replace')
+    print('Simulator process exit code:', process.returncode, flush=True)
+    diagnostics = Path('ios-native-diagnostics')
+    diagnostics.mkdir(exist_ok=True)
+    roots = [Path.home() / 'Library/Logs/DiagnosticReports',
+             Path.home() / 'Library/Developer/CoreSimulator/Devices' / udid / 'data/Library/Logs/CrashReporter']
+    for root in roots:
+        if root.exists():
+            for report in root.rglob('*'):
+                if report.is_file() and 'LangLa' in report.name and report.suffix in ('.ips', '.crash'):
+                    shutil.copy2(report, diagnostics / report.name)
+                    print('Copied native crash report:', report.name, flush=True)
     print(text[-20000:])
     if 'PASS IOS_NATIVE_STARTUP' not in text:
         raise SystemExit('Native iOS startup did not reach login; inspect ios-native-smoke.log')
