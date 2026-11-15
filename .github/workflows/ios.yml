@@ -122,7 +122,9 @@ jobs:
             ios-native-diagnostics/
           if-no-files-found: warn
   ipa:
-    needs: [hd-assets, native-smoke]
+    # Compile independently. Delivery still requires success of this whole workflow,
+    # including native-smoke, so an unverified candidate is never selected for release.
+    needs: [hd-assets]
     if: ${{ !inputs.native_test_only && !contains(github.event.head_commit.message, '[smoke-only]') }}
     runs-on: macos-15
     timeout-minutes: 90
