@@ -4,6 +4,7 @@ import java.util.Vector;
 
 public abstract class Entity extends LangLa_cz {
    final RenderMotion.Sample renderMotion = new RenderMotion.Sample();
+   private LangLa_ir shadow;
    public int a = 10;
    public int idEntity;
    public byte dir;
@@ -12,7 +13,12 @@ public abstract class Entity extends LangLa_cz {
    public byte f;
    public boolean g;
    public Vector h = new Vector();
-   
+
+   final LangLa_ir shadow(boolean facingRight, int x, int y) {
+      if (shadow == null) shadow = new LangLa_ir(facingRight, x, y, this);
+      else shadow.position(facingRight, x, y);
+      return shadow;
+   }
 
    public abstract int a();
 

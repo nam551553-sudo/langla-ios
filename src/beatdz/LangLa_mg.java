@@ -1,4 +1,4 @@
-package beatdz;import com.badlogic.gdx.graphics.Pixmap;
+package beatdz;
 import com.tgame.model.Caption;
 import java.util.Vector;
 
@@ -39,8 +39,8 @@ public class LangLa_mg extends LangLa_cs {
       Vector var1 = new Vector();
       if (!mConfig.gI().readBoolean(13)) {
          this.i = Caption.iI;
-         if (GameSrc.gI().Task < DataCenter.gI().Task.length) {
-            Task var2 = DataCenter.gI().Task[GameSrc.gI().Task];
+         Task var2 = GameSrc.gI().A();
+         if (var2 != null) {
             var1.addElement("c#cyan" + this.i + "c#white" + var2.name);
             NpcTemplate var3 = DataCenter.gI().NpcTemplate[var2.idNpc];
             if (GameSrc.gI().idStep < 0) {
@@ -282,12 +282,15 @@ public class LangLa_mg extends LangLa_cs {
    public void a(Graphics var1) {
       try {
          if (!this.h) {
-            this.h = true;
             Binary.cleanImage(beatdz.LangLa_mg.$state_LangLa_mg().g);
-            Pixmap var2 = (beatdz.LangLa_mg.$state_LangLa_mg().g = mImage.a(this.width * DataCenter.gI().zoomLevel, this.height * DataCenter.gI().zoomLevel)).b;
-            GameSrc.gI();
-            GameSrc.a(var2, this, 0, 0, 0, -1278446549);
-            Binary.disposeImage(beatdz.LangLa_mg.$state_LangLa_mg().g);
+            int zoom = DataCenter.gI().zoomLevel;
+            mImage background = mImage.a(this.width * zoom, this.height * zoom);
+            beatdz.LangLa_mg.$state_LangLa_mg().g = background;
+            if (background != null) {
+               GameSrc.drawHudPanel(background.b, 0, 0, this.width, this.height);
+               Binary.disposeImage(background);
+               this.h = true;
+            }
          }
 
          var1.a(beatdz.LangLa_mg.$state_LangLa_mg().g, 0, 0);

@@ -412,7 +412,7 @@ public class mFont {
    }
 
    private static boolean c() {
-      if (mConfig.gI().readByte(18) > 1) {
+      if (!Graphics.fontsReady() || mConfig.gI().readByte(18) > 1) {
          return true;
       } else {
          try {

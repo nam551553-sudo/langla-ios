@@ -9,6 +9,8 @@ import java.util.Vector;
 public class Item implements Cloneable {
 
     
+    public int shopCurrencyId;
+    public int shopIcon = -1;
     public int idBuy;
     public int id;
     private int amount;
@@ -71,7 +73,7 @@ public class Item implements Cloneable {
     public void a(Graphics var1) {
         short var2 = 0;
         if (this.getItemTemplate() != null) {
-            var2 = this.getItemTemplate().idIcon;
+            var2 = shopIcon >= 0 ? (short)shopIcon : this.getItemTemplate().idIcon;
             if (this.getItemTemplate().type == 12) {
                 switch (this.id) {
                     case 124:
@@ -123,7 +125,7 @@ public class Item implements Cloneable {
                     }
                 }
 
-                this.level = (byte) (var4 / 200);
+                this.level = (byte) Math.min(19, var4 / 200);
             } else if (this.getItemTemplate().id == 570) {
                 this.level = 4;
             } else if (this.getItemTemplate().id == 237) {
@@ -319,6 +321,7 @@ public class Item implements Cloneable {
     }
 
     public int e() {
+        if (shopCurrencyId == LucDaoShopUI.CARD) return LucDaoShopUI.BUTTON;
         if (this.vangBuy > 0) {
             return -3;
         } else if (this.vangKhoaBuy > 0) {
@@ -333,6 +336,7 @@ public class Item implements Cloneable {
     }
 
     public String f() {
+        if (shopCurrencyId == LucDaoShopUI.CARD) return Utlis.numberFormat(d()) + " " + LucDaoShopUI.NAME;
         //rs = new String[]{"vàng", "vàng khóa", "bạc", "bạc khóa", "tinh thạch"};
         if (this.vangBuy > 0) {
             return Utlis.numberFormat(this.vangBuy) + " " + Caption.rs[0];
@@ -570,6 +574,7 @@ public class Item implements Cloneable {
     }
 
     public void a(int var1) {
+        var1 = Math.max(0, Math.min(19, var1));
         ItemOption[] var2;
         if ((var2 = this.L()) != null) {
             int var3;
@@ -695,7 +700,7 @@ public class Item implements Cloneable {
             this.expiry = var1.readLong();
             if (this.isTypeTrangBi()) {
                 this.he = var1.readByte();
-                this.level = var1.readByte();
+                this.level = (byte) Math.max(0, Math.min(19, var1.readByte()));
                 this.strOptions = var1.reader.readUTF();
             } else {
                 this.setAmount(var1.readInt());

@@ -92,6 +92,58 @@ public class LangLa_fq {
       return a(var0, var1, var2, var3, var4, 0, 0, var5, "char", beatdz.LangLa_fq.$state_LangLa_fq().g, (byte)2, beatdz.LangLa_fq.$state_LangLa_fq().d, DataCenter.gI().ak);
    }
 
+   static void drawCapeRows(Graphics graphics, short icon, int transform, int x, int bottom,
+                            int width, int height, int firstRow, int endRow) {
+      mImage sprite = getCharacterSprite(icon);
+      if (sprite != null) {
+         drawCharacterRows(graphics, sprite, transform, x, bottom, width, height,
+                 firstRow, endRow, endRow - firstRow);
+      }
+   }
+
+   static void drawStandingCostume(Graphics graphics, short icon, int transform, int x, int bottom, int dip) {
+      LangLa_et size = CostumeCape.spriteSize(DataCenter.gI(), icon);
+      if (size == null || size.e < 8 || transform % 360 != 0) {
+         b(graphics, icon, transform, x, bottom, 33);
+         return;
+      }
+      mImage sprite = getCharacterSprite(icon);
+      if (sprite == null) return;
+
+      // Keep the feet fixed and absorb the upper-body dip in a few rows of the lower legs.
+      int height = size.e;
+      int footRows = Math.max(2, height / 12);
+      int legRows = Math.max(2, height / 12);
+      int feetStart = height - footRows;
+      int upperEnd = feetStart - legRows;
+      drawCharacterRows(graphics, sprite, transform, x, bottom - footRows - legRows + dip,
+              size.d, height, 0, upperEnd, upperEnd);
+      drawCharacterRows(graphics, sprite, transform, x, bottom - footRows,
+              size.d, height, upperEnd, feetStart, legRows - dip);
+      drawCharacterRows(graphics, sprite, transform, x, bottom,
+              size.d, height, feetStart, height, footRows);
+   }
+
+   private static mImage getCharacterSprite(short icon) {
+      Hashtable images = $state_LangLa_fq().g;
+      mImage sprite = (mImage) images.get(icon);
+      if (sprite == null) {
+         a(icon, "char", images);
+      }
+      return sprite != null && (sprite.c > 1 || sprite.d > 1) ? sprite : null;
+   }
+
+   private static void drawCharacterRows(Graphics graphics, mImage sprite, int transform, int x, int bottom,
+                                         int width, int height, int firstRow, int endRow, int renderedHeight) {
+      int sourceTop = Math.round(firstRow * sprite.d / (float) height);
+      int sourceBottom = Math.round(endRow * sprite.d / (float) height);
+      if (sourceTop >= sourceBottom) return;
+
+      int zoom = DataCenter.gI().zoomLevel;
+      graphics.drawImagePixelRows(sprite, sourceTop, sourceBottom - sourceTop,
+              transform, x, bottom, width * zoom, renderedHeight * zoom);
+   }
+
    public static short[] b(Graphics var0, int var1, int var2, int var3, int var4, int var5, int var6, int var7) {
       return a(var0, var1, var2, var3, var4, 51, var6, 33, "char", beatdz.LangLa_fq.$state_LangLa_fq().g, (byte)2, beatdz.LangLa_fq.$state_LangLa_fq().d, DataCenter.gI().ak);
    }
@@ -410,10 +462,33 @@ public class LangLa_fq {
       Binary2.a(beatdz.LangLa_fq.$state_LangLa_fq().f);
    }
 
+   static void prefetchMapActors(java.util.Set<Short> ids) {
+      if (ids.isEmpty() || LangLa_ep.a()
+            || (mConfig.gI().readBoolean(18) && DataCenter.gI().currentScreen instanceof GameSrc)) return;
+      Hashtable images = $state_LangLa_fq().g;
+      Vector<LangLa_fb> requests = new Vector<LangLa_fb>();
+      synchronized (images) {
+         for (short id : ids) {
+            if (images.containsKey(id)) continue;
+            LangLa_fb request = new LangLa_fb();
+            request.a = id;
+            request.d = "iconChar/" + id + ".png";
+            request.e = "char_icon_" + id;
+            request.g = images;
+            images.put(id, $state_LangLa_fq().a);
+            requests.add(request);
+         }
+      }
+      if (!requests.isEmpty()) {
+         LangLa_cz.$state_LangLa_cz().cW.addAll(0, requests);
+         LangLa_cz.S();
+      }
+   }
+
    private static void a(int var0, String var1, Hashtable var2) {
       if ("tree".equals(var1)) {
          mImage ready = MapAssetPrefetch.take((short)var0);
-         if (ready != null) { var2.put((short)var0, ready); return; }
+         if (ready != null) { var2.put((short)var0, ready); GameSrc.gI().cb.add(ready); return; }
       }
       mImage var3 = beatdz.LangLa_fq.$state_LangLa_fq().a;
       var2.put(new Short((short)var0), var3);

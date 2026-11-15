@@ -48,6 +48,7 @@ public class Char extends Entity {
         public int size = 60;//100%
         public TextureRegion[] array = new TextureRegion[0];
         public int[] array_Id = new int[0];
+        private TextureRegion lastFrame;
 
         public DanhHieuByBeatdz(String url) throws Exception {
             //DanhHieu\0
@@ -68,7 +69,7 @@ public class Char extends Entity {
             array = listTextureRegion.toArray(new TextureRegion[listTextureRegion.size()]);
         }
 
-        public DanhHieuByBeatdz(int... array) throws Exception {
+        public DanhHieuByBeatdz(int... array) {
             array_Id = array;
             this.array = new TextureRegion[array.length];
 //            //DanhHieu\0
@@ -123,8 +124,26 @@ public class Char extends Entity {
     public byte q;
     public byte statusGD;
     public short speedMove;
+    private int movementSpeedRemainder;
+    private int groundSpeedCarry;
+
     public static short movementSpeed(int serverUnits) {
         return (short)Math.max(0, Math.min(127, serverUnits / 100));
+    }
+
+    void setMovementSpeed(int serverUnits) {
+        int units = Math.max(0, Math.min(12_700, serverUnits));
+        speedMove = movementSpeed(units);
+        int remainder = units % 100;
+        if (movementSpeedRemainder != remainder) groundSpeedCarry = 0;
+        movementSpeedRemainder = remainder;
+    }
+
+    private int groundStep(int base) {
+        groundSpeedCarry += movementSpeedRemainder * 130;
+        int extra = groundSpeedCarry / 10_000;
+        groundSpeedCarry %= 10_000;
+        return horizontalSpeed(base) + extra;
     }
 
     public static int horizontalSpeed(int base) {
@@ -233,6 +252,11 @@ public class Char extends Entity {
     public boolean aT;
     public int aU;
     public int selectCaiTrang;
+    private static final int HIDE_TANTO = 4;
+    private static final int HIDE_CAPE = 5;
+    private static final int CUU_VI_TITLE_FIRST_FRAME = 32228;
+    private static final int CUU_VI_TITLE_FRAME_COUNT = 24;
+    private DanhHieuByBeatdz cuuViCapeTitle;
     public int aW;
     public int aX;
     public int aY;
@@ -357,7 +381,7 @@ public class Char extends Entity {
         this.idClass = var1.readByte();
         this.typePK = var1.readByte();
         this.lvPk = var1.readByte();
-        this.speedMove = Char.movementSpeed(var1.readShort());
+        this.setMovementSpeed(var1.readShort());
         this.hp = var1.readInt();
         this.hpFull = var1.readInt();
         this.mp = var1.readInt();
@@ -400,8 +424,8 @@ public class Char extends Entity {
         this.typePK = var1.readByte();
         this.lvPk = var1.readByte();
         this.taiPhu = var1.readInt();
-        this.speedMove = Char.movementSpeed(var1.readShort());
-        this.sachChienDau = var1.readByte();
+        this.setMovementSpeed(var1.readShort());
+        this.sachChienDau = (byte) Math.max(0, Math.min(18, var1.readByte()));
         this.hp = var1.readInt();
         this.hpFull = var1.readInt();
         this.mp = var1.readInt();
@@ -975,7 +999,7 @@ public class Char extends Entity {
                 this.bs = 0;
             }
 
-            MoveSmart.d();
+            if (this.isMe()) MoveSmart.d();
             this.W();
             if (this.aw != null) {
                 this.aa = -1;
@@ -1288,11 +1312,14 @@ public class Char extends Entity {
         a(var4, var5);
         int var10 = Integer.MIN_VALUE;
         boolean var9 = false;
+        LangLa_jr customCostume = null;
+        boolean hasCape = false;
 
-        LangLa_jr var8;
-        int var11;
-        for (var11 = 0; var11 < var4.size(); ++var11) {
-            if ((var8 = (LangLa_jr) var4.elementAt(var11)).b()) {
+        for (int var11 = 0; var11 < var4.size(); ++var11) {
+            LangLa_jr var8 = (LangLa_jr) var4.elementAt(var11);
+            if (CostumeCape.isNewBody(var8)) customCostume = var8;
+            hasCape |= var8.equippedCape;
+            if (var8.b()) {
                 if (this.idClass == 3 && this.gioiTinh == 1) {
                     var10 = 34;
                 } else {
@@ -1317,8 +1344,24 @@ public class Char extends Entity {
             var10 = Integer.MIN_VALUE;
         }
 
-        for (var11 = 0; var11 < var4.size(); ++var11) {
-            var8 = (LangLa_jr) var4.elementAt(var11);
+        int idleDip = 0;
+        if (customCostume != null && isStandingPose(var5) && isStandingPose(var6)) {
+            // Use the stock standing cycle. Its upper layers dip one pixel on poses 1 and 32.
+            // Draw the same full-body cel so the eyes and grip stay aligned.
+            idleDip = var5 == 1 || var5 == 32 ? 1 : 0;
+            if (var5 != 0) {
+                var5 = 0;
+                a(var4, var5);
+            }
+            var6 = 0;
+        }
+
+        boolean fitCape = hasCape && CostumeCape.canFit(customCostume, var5);
+        if (fitCape) CostumeCape.draw(var1, var4, customCostume, var5, var2, var3, var7, true, idleDip);
+
+        for (int var11 = 0; var11 < var4.size(); ++var11) {
+            LangLa_jr var8 = (LangLa_jr) var4.elementAt(var11);
+            if (fitCape && var8.equippedCape) continue;
             int var15 = var5;
             if (var8.e()) {
                 var15 = var6;
@@ -1334,10 +1377,15 @@ public class Char extends Entity {
                 var1.d((float) var8.c);
             }
 
-            if (var7) {
-                LangLa_fq.b(var1, var8.d[var15].a, Utlis.b(var8.d[var15].b), var2 - var8.d[var15].d, var3 + var8.d[var15].e, 33);
-            } else {
-                LangLa_fq.b(var1, var8.d[var15].a, Utlis.a(var8.d[var15].b), var2 + var8.d[var15].d, var3 + var8.d[var15].e, 33);
+            LangLa_ju frame = var8.d[var15];
+            int transform = var7 ? Utlis.b(frame.b) : Utlis.a(frame.b);
+            int layerX = var2 + (var7 ? -frame.d : frame.d);
+            int layerY = var3 + frame.e;
+            if (idleDip != 0 && var8 == customCostume) {
+                LangLa_fq.drawStandingCostume(var1, frame.a, transform, layerX, layerY, idleDip);
+            } else if (!CostumeTanto.draw(var1, customCostume, var5, var8, frame, var2, var3 + idleDip, var7)) {
+                int attachmentDip = var8.heldWeapon || var8.equippedCape ? idleDip : 0;
+                LangLa_fq.b(var1, frame.a, transform, layerX, layerY + attachmentDip, 33);
             }
 
             if (var8.c != 0) {
@@ -1350,8 +1398,15 @@ public class Char extends Entity {
                 var1.setClip(0, 0, DataCenter.gI().widthScreen, DataCenter.gI().heightScreen);
                 var1.a(var12, var13);
             }
+            if (fitCape && var8 == customCostume) {
+                CostumeCape.draw(var1, var4, customCostume, var5, var2, var3, var7, false, idleDip);
+            }
         }
 
+    }
+
+    private static boolean isStandingPose(int pose) {
+        return pose == 0 || pose == 1 || pose == 31 || pose == 32;
     }
 
     private void X() {
@@ -1406,9 +1461,10 @@ public class Char extends Entity {
                     var4 = this.pointMove.b;
                 }
 
-                // Accelerate ground travel only; keep jump/fall and server stats unchanged.
-                if (this.pointMove.h <= 0 && this.cy == this.pointMove.cy && this.aw == null)
-                    var3 = horizontalSpeed(var3);
+                if (this.pointMove.h <= 0 && this.cy == this.pointMove.cy && this.aw == null
+                        && this.cx != this.pointMove.cx) {
+                    var3 = this.isMe() ? groundStep(var3) : horizontalSpeed(var3);
+                }
 
                 if (this.aw != null) {
                     var3 = 11;
@@ -1915,17 +1971,20 @@ public class Char extends Entity {
             this.l();
             if (AutoPro.isAuto(12)) {
                 this.pointMove = new PointMove((short) var1, (short) var2, speedMove);
-            }
-            else
-            {
-                
-               MoveSmart.a(GameSrc.gI().mapID, var1, var2);
+            } else {
+                MoveSmart.requestPath(var1, var2);
             }
         }
     }
 
     public boolean z() {
         return this.av != null && this.ay.idTemplate == 11;
+    }
+
+    private boolean walkGround(int direction) {
+        // Let the movement tick consume the fractional part once as it approaches this target.
+        int distance = horizontalSpeed(speedMove) + (movementSpeedRemainder > 0 ? 2 : 0);
+        return this.a(this.cx + (direction == 3 ? -distance : distance), this.cy, (byte) direction);
     }
 
     public boolean A() {
@@ -1935,7 +1994,7 @@ public class Char extends Entity {
             var10000.cx = (short) (var10000.cx - 5);
             return false;
         } else {
-            return this.a(this.cx - horizontalSpeed(this.speedMove), this.cy, (byte) 3);
+            return walkGround(3);
         }
     }
 
@@ -1946,7 +2005,7 @@ public class Char extends Entity {
             var10000.cx = (short) (var10000.cx + 5);
             return false;
         } else {
-            return this.a(this.cx + horizontalSpeed(this.speedMove), this.cy, (byte) 2);
+            return walkGround(2);
         }
     }
 
@@ -2413,7 +2472,7 @@ public class Char extends Entity {
             var3.isLock = var0.readBoolean();
             var3.expiry = var0.readLong();
             var3.he = var0.readByte();
-            var3.level = var0.readByte();
+            var3.level = (byte) Math.max(0, Math.min(19, var0.readByte()));
             var3.index = var3.getItemTemplate().type;
             var3.strOptions = var0.reader.readUTF();
             if (var3.index < 0) {
@@ -2827,22 +2886,23 @@ public class Char extends Entity {
                 this.a(var3, var1[10].getItemTemplate().idChar, 0);
             }
 
+            int firstWeaponPart = var3.size();
+            Item tanto = this.selectCaiTrang == HIDE_TANTO ? null : var1[15];
+            Item reserveTanto = this.selectCaiTrang == HIDE_TANTO ? null : this.arrItemBody2[15];
             if (this.aP >= 0 && DataCenter.gI().ItemTemplate[this.aP].idChar > 0) {
                 this.a(var3, DataCenter.gI().ItemTemplate[this.aP].idChar, 0);
-            } else if (var1[15] != null && var1[15].id >= 908 && var1[15].id <= 911) {
-                this.a(var3, var1[15].getItemTemplate().idMob, 0);
-            } else if (this.arrItemBody2[15] != null && this.arrItemBody2[15].id >= 908 && this.arrItemBody2[15].id <= 911) {
-                this.a(var3, this.arrItemBody2[15].getItemTemplate().idMob, 0);
-            } else if (var1[15] != null && var1[15].getItemTemplate().idMob > 0) {
+            } else if (tanto != null && tanto.id >= 908 && tanto.id <= 911) {
+                this.a(var3, tanto.getItemTemplate().idMob, 0);
+            } else if (reserveTanto != null && reserveTanto.id >= 908 && reserveTanto.id <= 911) {
+                this.a(var3, reserveTanto.getItemTemplate().idMob, 0);
+            } else if (tanto != null && tanto.getItemTemplate().idMob > 0) {
                 if (var1[16] != null && var1[16].getItemTemplate().idChar > 0) {
-                    this.a(var3, var1[15].getItemTemplate().idMob, 9);
+                    this.a(var3, tanto.getItemTemplate().idMob, 9);
                 } else if (!this.aQ && var1[14] != null && var1[14].getItemTemplate().idChar > 0) {
-                    this.a(var3, var1[15].getItemTemplate().idMob, 9);
+                    this.a(var3, tanto.getItemTemplate().idMob, 9);
                 } else {
-                    this.a(var3, var1[15].getItemTemplate().idMob, 0);
+                    this.a(var3, tanto.getItemTemplate().idMob, 0);
                 }
-            } else if (var1[15] != null && var1[15].id >= 908 && var1[15].id <= 911) {
-                this.a(var3, var1[15].getItemTemplate().idMob, 0);
             } else if (var1[1] != null) {
                 if (var1[16] != null && var1[16].getItemTemplate().idChar > 0) {
                     this.a(var3, var1[1].getItemTemplate().idChar, var1[1].level, 9, var1[1].getItemTemplate().levelNeed);
@@ -2853,13 +2913,29 @@ public class Char extends Entity {
                 }
             }
 
-            if (this.arrItemBody2[12] != null && this.arrItemBody2[12].id == 127) {
-                this.a(var3, this.arrItemBody2[12].getItemTemplate().idChar, 0);
-            } else if (var1[12] != null && (this.aS || var1[16] == null || var1[16].id != 861)) {
-                this.a(var3, var1[12].getItemTemplate().idChar, 0);
+            if (this.aP < 0 || DataCenter.gI().ItemTemplate[this.aP].idChar <= 0) {
+                for (int i = firstWeaponPart; i < var3.size(); i++) {
+                    ((LangLa_jr) var3.elementAt(i)).heldWeapon = true;
+                }
+            }
+
+            if (this.selectCaiTrang != HIDE_CAPE) {
+                if (this.arrItemBody2[12] != null && this.arrItemBody2[12].id == 127) {
+                    this.addEquippedCape(var3, this.arrItemBody2[12]);
+                } else if (var1[12] != null && (this.aS || var1[16] == null || var1[16].id != 861)) {
+                    this.addEquippedCape(var3, var1[12]);
+                }
             }
 
             return var3;
+        }
+    }
+
+    private void addEquippedCape(Vector parts, Item cape) {
+        int first = parts.size();
+        this.a(parts, cape.getItemTemplate().idChar, 0);
+        for (int i = first; i < parts.size(); i++) {
+            ((LangLa_jr) parts.elementAt(i)).equippedCape = true;
         }
     }
 
@@ -3072,6 +3148,9 @@ public class Char extends Entity {
         }
         if (this.selectDanhHieu == 0) {
             if (this.arrItemBody[12] != null) {
+                if (this.arrItemBody[12].id == CostumeCape.CUU_VI_ITEM_ID) {
+                    return this.drawAnimatedTitle(var1, var2, var3, this.getCuuViCapeTitle());
+                }
                 String var4 = this.arrItemBody[12].getItemTemplate().name.replaceAll(Caption.kU, "").trim().replaceAll(Caption.oc, "").trim();
                 switch (this.V()) {
                     case 1:
@@ -3119,25 +3198,9 @@ public class Char extends Entity {
                 }
             }
         } else if (this.selectDanhHieu >= 0 && this.selectDanhHieu < this.aG.length) {
-            if(this.aG[this.selectDanhHieu].isNew){
-                if (this.aG[this.selectDanhHieu].data != null) {
-                    var2 += this.aG[this.selectDanhHieu].data.x;
-                    var3 += this.aG[this.selectDanhHieu].data.y;
-                    int index = ((int) ((System.currentTimeMillis() / this.aG[this.selectDanhHieu].data.timeMS) % this.aG[this.selectDanhHieu].data.array.length));
-                    TextureRegion data = this.aG[this.selectDanhHieu].data.array[index];
-                    if (data != null) {
-                        var1.a2(var1, data, 0, var2, var3, getZ(data.getRegionWidth(), this.aG[this.selectDanhHieu].data.size), getZ(data.getRegionHeight(), this.aG[this.selectDanhHieu].data.size));
-                    } else {
-                        mImage var23 = LangLa_fq.a((int) this.aG[this.selectDanhHieu].data.array_Id[index]); // => iconClient
-                        //mImage var23 = LangLa_fq.a2((int) this.data.array_Id[index]); => iconChar
-                        if (var23 != beatdz.LangLa_fq.$state_LangLa_fq().a) {
-                            this.aG[this.selectDanhHieu].data.array[index] = (new TextureRegion(var23.b()));
-                            Canvas.vImage.remove(var23);
-                        }
-                    }
-                    return var3;
-                }
-            }else {
+            if (this.aG[this.selectDanhHieu].isNew) {
+                return this.drawAnimatedTitle(var1, var2, var3, this.aG[this.selectDanhHieu].data);
+            } else {
                 if (this.aG[this.selectDanhHieu].c > 0) {
                     mFont.a(mFont.h, var1, this.aG[this.selectDanhHieu].a.trim(), var2, var3 - 10, 2, -this.aG[this.selectDanhHieu].c, 3, 1, 1, 3);
                     return var3 - 12;
@@ -3149,6 +3212,42 @@ public class Char extends Entity {
         }
 
         return var3 + 2;
+    }
+
+    private DanhHieuByBeatdz getCuuViCapeTitle() {
+        if (this.cuuViCapeTitle == null) {
+            int[] frames = new int[CUU_VI_TITLE_FRAME_COUNT];
+            for (int index = 0; index < frames.length; index++) {
+                frames[index] = CUU_VI_TITLE_FIRST_FRAME + index;
+            }
+            this.cuuViCapeTitle = new DanhHieuByBeatdz(frames);
+            this.cuuViCapeTitle.y = -10;
+            this.cuuViCapeTitle.timeMS = 40;
+            this.cuuViCapeTitle.size = 100;
+        }
+        return this.cuuViCapeTitle;
+    }
+
+    private int drawAnimatedTitle(Graphics graphics, int x, int y, DanhHieuByBeatdz title) {
+        if (title == null || title.timeMS <= 0 || title.array.length == 0) return y + 2;
+        int frame = (int) (System.currentTimeMillis() / title.timeMS % title.array.length);
+        TextureRegion texture = title.array[frame];
+        if (texture == null) {
+            mImage image = LangLa_fq.a(title.array_Id[frame]);
+            if (image != null && image != LangLa_fq.$state_LangLa_fq().a) {
+                texture = new TextureRegion(image.b());
+                title.array[frame] = texture;
+                Canvas.vImage.remove(image);
+            }
+        }
+        if (texture != null) title.lastFrame = texture;
+        texture = title.lastFrame;
+        int titleY = y + title.y;
+        if (texture != null) {
+            graphics.a2(graphics, texture, 0, x + title.x, titleY,
+                    getZ(texture.getRegionWidth(), title.size), getZ(texture.getRegionHeight(), title.size));
+        }
+        return titleY;
     }
 
     private int e(Graphics var1, int var2, int var3) {

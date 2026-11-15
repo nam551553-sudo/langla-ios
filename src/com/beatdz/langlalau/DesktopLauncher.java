@@ -43,52 +43,53 @@ public class DesktopLauncher implements AppEventListener, IDialogTextListener {
     public native byte[] jc(byte[] var1);
 
     public static void main(String[] var0) {
+        b = new DesktopLauncher();
+        MyCrashHandler crashHandler = new MyCrashHandler(b, var0);
+        Thread.setDefaultUncaughtExceptionHandler(crashHandler);
         try {
-         
-
-            b = new DesktopLauncher();
-
             Gdx.files = new com.badlogic.gdx.backends.lwjgl.LwjglFiles();
             SoftwareRenderer.install(var0);
-            try {
-                Binary.a = "animesoft/1/";
-                 ClassLoader classLoader = DesktopLauncher.class.getClassLoader();
-        try (InputStream inputStream = classLoader.getResourceAsStream("path.txt");
-             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                // Xử lý từng dòng của file
-                Binary.a = line;
+            Binary.a = "animesoft/1/";
+            ClassLoader classLoader = DesktopLauncher.class.getClassLoader();
+            try (InputStream inputStream = classLoader.getResourceAsStream("path.txt")) {
+                if (inputStream != null) {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) Binary.a = line;
+                    }
+                }
+            } catch (IOException error) {
+                error.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-                AutoPro.update();
-                Thread.setDefaultUncaughtExceptionHandler(new MyCrashHandler(b));
-                config = new LwjglApplicationConfiguration();
-                config.foregroundFPS = 60;
-                config.backgroundFPS = 15;
-                config.vSyncEnabled = true;
-                GameM.a((IDialogTextListener) (b));
-                short[] sc = Binary.b();
-                config.width = sc[0];
-                config.height = sc[1];
-                config.addIcon("resource/icons/icon-128.png", FileType.Internal);
-                config.addIcon("resource/icons/icon-32.png", FileType.Internal);
-                config.addIcon("resource/icons/icon-16.png", FileType.Internal);
-                config.title = "Làng Lá Test";
-                config.resizable = false;
-                GameM.b(b);
-                new LwjglApplication(GameM.l(), config);
-                Gdx.app.postRunnable(() -> Gdx.app.log("Renderer", Gdx.gl.glGetString(7937)));
-
-                Gdx.graphics.setWindowedMode(sc[0], sc[1]);
-                Caption.loadVN();
-            } catch (Exception var5) {
-                var5.printStackTrace();
-                b.a("Thông Báo", "Rất tiếc! Máy tính của bạn cần hổ trợ tối thiểu phiên bản OpenGL 2.0 trở lên để có thể chơi được.");
-            }
-        } catch (Exception ex) {
+            AutoPro.update();
+            // Initialize captions before the rendering thread can create a screen.
+            Caption.loadVN();
+            config = new LwjglApplicationConfiguration();
+            config.foregroundFPS = 60;
+            config.backgroundFPS = 15;
+            config.vSyncEnabled = true;
+            beatdz.FrameRate.install(fps -> {
+                config.foregroundFPS = fps;
+                Gdx.graphics.setVSync(fps == 60);
+            });
+            GameM.a((IDialogTextListener) b);
+            short[] sc = Binary.b();
+            config.width = sc[0];
+            config.height = sc[1];
+            config.addIcon("resource/icons/icon-128.png", FileType.Internal);
+            config.addIcon("resource/icons/icon-32.png", FileType.Internal);
+            config.addIcon("resource/icons/icon-16.png", FileType.Internal);
+            config.title = "Làng Lá Blue";
+            config.resizable = false;
+            GameM.b(b);
+            new LwjglApplication(GameM.l(), config);
+            // Window creation and resizing belong to LWJGL's rendering thread.
+            Gdx.app.postRunnable(() -> {
+                crashHandler.graphicsReady();
+                Gdx.app.log("Renderer", Gdx.gl.glGetString(7937));
+            });
+        } catch (Throwable error) {
+            crashHandler.uncaughtException(Thread.currentThread(), error);
         }
     }
 

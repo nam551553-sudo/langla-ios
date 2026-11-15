@@ -3,7 +3,7 @@ application { mainClass = 'com.langla.launcher.Launcher' }
 dependencies { implementation "com.badlogicgames.gdx:gdx:$gdxVersion" }
 tasks.register('fatJar', Jar) {
     dependsOn ':desktop:fatJar'
-    archiveFileName = 'LangLaTest.jar'
+    archiveFileName = 'LangLaBlue.jar'
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest { attributes 'Main-Class': application.mainClass.get() }
     from sourceSets.main.output
@@ -17,14 +17,14 @@ tasks.register('packagePc', Exec) {
     def output = rootProject.file(providers.gradleProperty('pcOutput').getOrElse('release/ReferenceUpdate/PC'))
     doFirst { if (output.exists()) throw new GradleException("Output already exists: $output") }
     commandLine new File(System.getProperty('java.home'), 'bin/jpackage').absolutePath,
-        '--type','app-image','--name','LangLaTest','--input',layout.buildDirectory.dir('pc-input').get().asFile.absolutePath,
-        '--main-jar','LangLaTest.jar','--main-class',application.mainClass.get(),
-        '--jlink-options','--strip-debug --no-man-pages --no-header-files',
-        '--icon',rootProject.file('resource/icons/lang-la-test.ico').absolutePath,
-        '--add-launcher','LangLaTest-Software='+project(':desktop').file('software-launcher.properties').absolutePath,
+        '--type','app-image','--name','LangLaBlue','--input',layout.buildDirectory.dir('pc-input').get().asFile.absolutePath,
+        '--main-jar','LangLaBlue.jar','--main-class',application.mainClass.get(),
+        '--add-modules',rootProject.desktopRuntimeModules,'--jlink-options',rootProject.desktopRuntimeOptions,
+        '--icon',rootProject.file('resource/icons/lang-la-blue.ico').absolutePath,
+        '--add-launcher','LangLaBlue-Software='+project(':desktop').file('software-launcher.properties').absolutePath,
         '--dest',output.absolutePath
     doLast {
-        def java = new File(output, 'LangLaTest/runtime/bin/java.exe')
+        def java = new File(output, 'LangLaBlue/runtime/bin/java.exe')
         if (!java.isFile()) throw new GradleException('PC runtime is missing java.exe; cannot start the game process')
         exec { commandLine java.absolutePath, '-version' }
     }

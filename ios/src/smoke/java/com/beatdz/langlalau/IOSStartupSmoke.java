@@ -9,13 +9,15 @@ import org.robovm.apple.uikit.UIApplication;
 /** CI-only entry point; excluded from the shipping app's source set. */
 public class IOSStartupSmoke extends IOSLauncher {
     private long loginObserved;
+    private long optionalIconRequested;
     @Override protected IOSApplication createApplication() {
         IOSApplication application = super.createApplication();
         final long started = System.nanoTime();
         Thread monitor = new Thread(() -> {
             while (true) {
                 try { Thread.sleep(1000); } catch (InterruptedException error) { return; }
-                if (Gdx.app == null) continue;
+                // Gdx.app is assigned before IOSApplication finishes creating its graphics backend.
+                if (Gdx.app == null || Gdx.graphics == null) continue;
                 Gdx.app.postRunnable(() -> {
                     DataCenter data = DataCenter.gI();
                     System.out.println("IOS_SMOKE phase=" + data.startupPhase + " bytes=" + Session.gI().countRecv
@@ -32,6 +34,17 @@ public class IOSStartupSmoke extends IOSLauncher {
                                 || data.aP == null || data.arrayServers == null || data.arrayServers.length == 0) {
                             System.err.println("FAIL IOS_NATIVE_STARTUP incomplete login data"); System.exit(3);
                         }
+                        if (LangLa_fq.a(643).c <= 1) {
+                            System.err.println("FAIL IOS_NATIVE_STARTUP missing base UI icon"); System.exit(11);
+                        }
+                        if (data.zoomLevel >= 3 && LangLa_fq.a(21137).c <= 1) {
+                            if (optionalIconRequested == 0) optionalIconRequested = System.nanoTime();
+                            if (System.nanoTime() - optionalIconRequested < 45_000_000_000L) return;
+                            System.err.println("FAIL IOS_NATIVE_STARTUP deferred icon did not load"); System.exit(12);
+                        }
+                        Gdx.audio.newMusic(Gdx.files.internal("music/0.mp3")).dispose();
+                        Gdx.audio.newSound(Gdx.files.internal("sound/0.mp3")).dispose();
+                        System.out.println("PASS IOS_NATIVE_ASSETS base UI, deferred HD icon and bundled MP3s");
                         LoginPCScreen login = (LoginPCScreen) data.currentScreen;
                         int selectors = 0;
                         boolean selectedNameVisible = false;
@@ -80,6 +93,15 @@ public class IOSStartupSmoke extends IOSLauncher {
                         }
                         MultiSession.select(0);
                         System.out.println("PASS IOS_NATIVE_X6 six independent tabs, profile paths and account switching");
+                        try {
+                            QuestTrackerTabScenario.verify();
+                            System.out.println("PASS IOS_NATIVE_QUEST_TRACKER rendered on tab 2 and restored across six tabs");
+                            System.out.println("PASS IOS_NATIVE_TAP_MOVEMENT correct targets across six tabs");
+                        } catch (Throwable error) {
+                            System.err.println("FAIL IOS_NATIVE_STARTUP quest tracker");
+                            error.printStackTrace();
+                            System.exit(13);
+                        }
                         System.out.println("PASS IOS_NATIVE_STARTUP downloaded data via NSURLSession and reached login");
                         System.out.flush(); System.exit(0);
                     }

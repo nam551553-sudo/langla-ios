@@ -178,6 +178,9 @@ public class LangLa_y extends LangLa_kj {
             mFont.b(mFont.d, var1, "- " + Utlis.replaceAll(Caption.gZ, "" + (this.a[0].Z() + this.g)), 150, this.a_() + 74, 0, -1, -16777216);
          }
 
+         if (this.a[0] != null) {
+            mFont.b(mFont.d, var1, "Bạc cần: 0 | Ngọc đã chọn: " + this.y, 150, this.a_() + 158, 0, -1, -16777216);
+         }
          int var2;
          if (this.x != null) {
             if (this.d == 0 || this.d % 12 > 2) {
@@ -196,7 +199,7 @@ public class LangLa_y extends LangLa_kj {
                      mFont.b(mFont.d, var1, "- " + Caption.cZ + this.x[1], 150, this.a_() + 102, 0, -1, -16777216);
                      mFont.b(mFont.d, var1, "- " + Caption.lL + " " + this.x[3] + " " + Caption.lM, 150, this.a_() + 116, 0, -1, -16777216);
                      if (this.y > this.x[3]) {
-                        mFont.b(mFont.d, var1, "- " + Caption.lN, 150, this.a_() + 130, 0, -2560, -16777216);
+                        mFont.b(mFont.d, var1, "- Ngọc dư được giữ lại", 150, this.a_() + 130, 0, -2560, -16777216);
                      }
                   }
 

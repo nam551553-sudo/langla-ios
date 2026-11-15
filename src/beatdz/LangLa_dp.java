@@ -113,12 +113,10 @@ public class LangLa_dp {
          this.d();
          if (var1) {
             for(int var4 = 0; var4 < this.b.length; ++var4) {
-               byte[] var2 = Utlis.b(Utlis.internal("sound/" + var4).readBytes());
-               Binary.write("sound" + var4, var2, "mp3");
-               this.b[var4] = Gdx.audio.newSound(Utlis.external(Binary.a + "sound" + var4 + ".mp3"));
+               this.b[var4] = Gdx.audio.newSound(AudioAssets.open("sound", var4));
             }
 
-            Binary.deleteStartsWith("sound");
+            AudioAssets.cleanLegacyFiles("sound");
          }
 
       } catch (Exception var3) {
@@ -320,20 +318,15 @@ public class LangLa_dp {
                var5 = 27;
             }
 
-            byte[] var3;
             if (var5 >= 0) {
-               var3 = Utlis.b(Utlis.internal("music/" + var5).readBytes());
-               Binary.write("music" + var5, var3, "mp3");
-               this.d = Gdx.audio.newMusic(Utlis.external(Binary.a + "music" + var5 + ".mp3"));
+               this.d = Gdx.audio.newMusic(AudioAssets.open("music", var5));
             }
 
             if (var2 >= 0) {
-               var3 = Utlis.b(Utlis.internal("music/" + var2).readBytes());
-               Binary.write("music" + var2, var3, "mp3");
-               this.e = Gdx.audio.newMusic(Utlis.external(Binary.a + "music" + var2 + ".mp3"));
+               this.e = Gdx.audio.newMusic(AudioAssets.open("music", var2));
             }
 
-            Binary.deleteStartsWith("music");
+            AudioAssets.cleanLegacyFiles("music");
             this.f();
          }
 

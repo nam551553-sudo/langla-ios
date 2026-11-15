@@ -2,6 +2,11 @@ package com.beatdz.langlalau;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /** Optional bundled Mesa backend for Windows machines without a usable graphics driver. */
 public final class SoftwareRenderer {
@@ -27,6 +32,23 @@ public final class SoftwareRenderer {
         System.setProperty("langla.softwareRenderer", "true");
         System.load(target.file().getAbsolutePath());
         System.out.println("Bundled Mesa loaded: " + architecture);
+    }
+
+    /** A new JVM is required because LWJGL has already loaded the failing driver. */
+    public static int relaunch(String[] arguments) throws IOException, InterruptedException {
+        List<String> command = new ArrayList<>();
+        command.add(new File(System.getProperty("java.home"), "bin/java.exe").getAbsolutePath());
+        command.add("-Dfile.encoding=UTF-8");
+        command.add("-Dlangla.softwareRenderer=true");
+        command.add("-cp");
+        command.add(System.getProperty("java.class.path"));
+        command.add(DesktopLauncher.class.getName());
+        Collections.addAll(command, arguments);
+        File log = new File("support/logs/software-renderer.log");
+        log.getParentFile().mkdirs();
+        System.err.println("[Startup] Graphics driver unavailable; retrying with bundled Mesa. Log: " + log.getAbsolutePath());
+        return new ProcessBuilder(command).redirectErrorStream(true)
+                .redirectOutput(ProcessBuilder.Redirect.appendTo(log)).start().waitFor();
     }
 
     private static int machine(byte[] data) {

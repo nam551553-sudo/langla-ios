@@ -2,13 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
 <key>CFBundleIdentifier</key><string>${app.id}</string>
-<key>CFBundleName</key><string>Làng Lá Test</string><key>CFBundleDisplayName</key><string>Làng Lá Test</string><key>CFBundleIcons</key><dict><key>CFBundlePrimaryIcon</key><dict><key>CFBundleIconFiles</key><array><string>Icon60</string><string>Icon40</string><string>Icon29</string></array></dict></dict><key>CFBundleIcons~ipad</key><dict><key>CFBundlePrimaryIcon</key><dict><key>CFBundleIconFiles</key><array><string>Icon76</string><string>Icon83.5</string></array></dict></dict>
+<key>CFBundleName</key><string>Làng Lá Blue</string><key>CFBundleDisplayName</key><string>Làng Lá Blue</string><key>CFBundleIcons</key><dict><key>CFBundlePrimaryIcon</key><dict><key>CFBundleIconFiles</key><array><string>Icon60</string><string>Icon40</string><string>Icon29</string></array></dict></dict><key>CFBundleIcons~ipad</key><dict><key>CFBundlePrimaryIcon</key><dict><key>CFBundleIconFiles</key><array><string>Icon76</string><string>Icon83.5</string></array></dict></dict>
 <key>CFBundleExecutable</key><string>${app.executable}</string>
 <key>CFBundleVersion</key><string>${app.build}</string>
 <key>CFBundleShortVersionString</key><string>${app.version}</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>LSRequiresIPhoneOS</key><true/>
 <key>MinimumOSVersion</key><string>12.0</string>
+<key>CADisableMinimumFrameDurationOnPhone</key><true/>
 <key>UILaunchStoryboardName</key><string>LaunchScreen</string>
 <key>UIStatusBarHidden</key><true/>
 <key>UIViewControllerBasedStatusBarAppearance</key><true/>

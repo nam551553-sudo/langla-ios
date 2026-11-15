@@ -13,6 +13,7 @@ public class mSocket {
    public mSocket(String var1, int var2) throws IOException {
       InetSocketAddress var3 = new InetSocketAddress(var1, var2);
       this.b.connect(var3, beatdz.Utlis.$state_Utlis().timeOut);
+      this.b.setTcpNoDelay(true);
    }
 
    public DataOutputStream a() throws IOException {

@@ -1,14 +1,18 @@
 package beatdz;
 public class LangLa_ir extends Entity {
    public boolean j;
-   private Entity k;
+   private final Entity k;
 
    public Entity renderSubject() { return k; }
 
    public LangLa_ir(boolean var1, int var2, int var3, Entity var4) {
-      this.setXY(var2, var3);
-      this.j = var1;
       this.k = var4;
+      position(var1, var2, var3);
+   }
+
+   void position(boolean facingRight, int x, int y) {
+      this.setXY(x, y);
+      this.j = facingRight;
    }
 
    public int a() {

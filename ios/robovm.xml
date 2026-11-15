@@ -7,7 +7,7 @@
     <resources><resource><directory>launch</directory></resource>
         <resource><directory>bootstrap</directory></resource>
         <resource><directory>icons</directory><includes><include>*.png</include></includes></resource>
-        <resource><directory>..</directory><includes><include>resource/**</include><include>music/**</include><include>sound/**</include><include>support/**</include><include>DanhHieu/**</include></includes></resource>
+        <resource><directory>../build/gameAssets</directory></resource>
     </resources>
     <forceLinkClasses><pattern>com.badlogic.gdx.backends.iosrobovm.**</pattern><pattern>com.badlogic.gdx.graphics.g3d.particles.**</pattern></forceLinkClasses>
     <libs><lib>z</lib></libs>

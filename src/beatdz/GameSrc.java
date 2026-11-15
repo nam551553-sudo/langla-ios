@@ -91,7 +91,7 @@ public class GameSrc extends MainScreen {
                                 if (SettingsTab.gI().a[3] != -1) {
                                     for (int var5 = 0; var5 < var0.aE.size(); ++var5) {
                                         Skill var6;
-                                        if ((var6 = (Skill) var0.aE.elementAt(var5)) != null && (var6.d() || var6.idTemplate == 4 || var6.getSkillTemplate().type == 0 && AutoPro.isAuto(7) || var6.idTemplate == 7 || var6.idTemplate == 31 || var6.idTemplate == 1 || var6.idTemplate == 32 || var6.idTemplate == 13 || var6.idTemplate == 34 || var6.idTemplate == 19 || var6.idTemplate == 33 || var6.idTemplate == 25) && Char.gI().level() >= var6.getSkillTemplate().levelNeed && var6.a(Char.gI()) && var6.getSkillTemplate().levelNeed < 60) {
+                                        if ((var6 = (Skill) var0.aE.elementAt(var5)) != null && (var6.d() || var6.idTemplate == 4 || var6.idTemplate == 7 || var6.idTemplate == 31 || var6.idTemplate == 1 || var6.idTemplate == 32 || var6.idTemplate == 13 || var6.idTemplate == 34 || var6.idTemplate == 19 || var6.idTemplate == 33 || var6.idTemplate == 25) && Char.gI().level() >= var6.getSkillTemplate().levelNeed && var6.a(Char.gI()) && var6.getSkillTemplate().levelNeed < 60) {
                                             var0.a(var6, false);
 
                                         }
@@ -152,10 +152,7 @@ public class GameSrc extends MainScreen {
                                     if (Char.gI().a(var22) && var22.item.id != 223) {
                                         var0.aA = null;
                                     } else if (Utlis.getRange(var0.aA.cx, var0.aA.cy, Char.gI().cx, Char.gI().cy) > 50) {
-                                        if (AutoPro.isAuto(8)) {
-                                            Char.gI().cx = var0.aA.cx;
-                                            Char.gI().cy = var0.aA.cy;
-                                        }
+
 
                                         Char.gI().setDir(var0.aA);
                                         Char.gI().pointMove = new PointMove(var0.aA.cx, var0.aA.cy, Char.gI().speedMove);
@@ -534,6 +531,9 @@ public class GameSrc extends MainScreen {
     public boolean cB;
     private int dK = 0;
     final RenderMotion renderMotion = new RenderMotion();
+    private boolean drawOrderDirty;
+    private boolean refreshItemUseInventory;
+    final BulkItemUse bulkItemUse = new BulkItemUse();
 
     public GameSrc() {
         this.vItemMap = new Vector();
@@ -745,7 +745,42 @@ public class GameSrc extends MainScreen {
 
     }
 
+    private void prefetchNearbyActors() {
+        Char player = Char.gI();
+        java.util.Set<Short> images = new java.util.LinkedHashSet<Short>();
+        // Load the first visible pose early; the normal renderer still requests later frames.
+        for (Object entity : vNpc.toArray()) {
+            Npc npc = (Npc) entity;
+            if (Math.abs(npc.cx - player.cx) > 420 || Math.abs(npc.cy - player.cy) > 300) continue;
+            NpcTemplate template = npc.getNpcTemplate();
+            if (template != null) addFirstActorFrame(images, template.a, template.b, npc.status, 12);
+            if (images.size() >= 12) break;
+        }
+        for (Object entity : vMob.toArray()) {
+            Mob mob = (Mob) entity;
+            if (Math.abs(mob.cx - player.cx) > 420 || Math.abs(mob.cy - player.cy) > 300) continue;
+            MobTemplate template = mob.getMobTemplate();
+            if (template != null) addFirstActorFrame(images, template.a, template.b, mob.status, 24);
+            if (images.size() >= 24) break;
+        }
+        LangLa_fq.prefetchMapActors(images);
+    }
+
+    private static void addFirstActorFrame(java.util.Set<Short> images, byte[][] animation, LangLa_hz[] frames, int status, int limit) {
+        if (frames == null || animation == null || animation.length == 0) return;
+        if (status < 0 || status >= animation.length) status = 0;
+        byte[] sequence = animation[status];
+        if (sequence == null || sequence.length == 0) return;
+        int frame = sequence[0] & 255;
+        if (frame >= frames.length || frames[frame] == null || frames[frame].a == null) return;
+        for (LangLa_ia layer : frames[frame].a) {
+            if (layer != null && layer.a > 0) images.add(layer.a);
+            if (images.size() >= limit) return;
+        }
+    }
+
     public void createMap() {
+        if (Gdx.app.getType() == ApplicationType.Android) renderMotion.reset();
         if (this.cx.size() > 0) {
             for (int var1 = this.cx.size() - 1; var1 >= 0; --var1) {
                 ((LangLa_en) this.cx.get(var1)).d();
@@ -761,6 +796,11 @@ public class GameSrc extends MainScreen {
             beatdz.LangLa_cx.$state_LangLa_cx().cN = true;
             this.ba = false;
             LangLa_dp.a().b();
+            try {
+                prefetchNearbyActors();
+            } catch (RuntimeException unavailable) {
+                Utlis.println(unavailable, "Map actor prefetch");
+            }
             if ((var27 = Binary.createReader("arr_map_" + this.mapID)) == null) {
                 return;
             }
@@ -1206,7 +1246,7 @@ public class GameSrc extends MainScreen {
                 }
 
                 var28.c((LangLa_cs) var28.S.a());
-                var28.j(mConfig.gI().readBoolean(14));
+                var28.restoreQuestTrackerLayout();
                 var28.ag = var28.a(AppListener.gI().o, var28.ak.cy + 46, "", var28, 1012, -11);
                 LangLa_dz var53 = var28.ag;
                 DataCenter.gI();
@@ -1520,11 +1560,18 @@ public class GameSrc extends MainScreen {
         }
     }
 
-    private void applyRenderMotion(Graphics g, Entity entity) {
-        if (!Canvas.isMobile()) return;
+    private void applyRenderMotion(Graphics g, Entity entity, float alpha, float cameraX) {
+        if (renderMotion.usesPreciseCamera() && entity instanceof LangLa_lo) {
+            LangLa_lo scenery = (LangLa_lo) entity;
+            float ratio = scenery.parallaxRatio();
+            if (ratio != 0f) {
+                // Derive the layer from the camera's draw position, including fractional pixels.
+                g.motionX += scenery.l + cameraX * ratio - scenery.cx;
+                return;
+            }
+        }
         Entity subject = entity instanceof LangLa_ir ? ((LangLa_ir)entity).renderSubject() : entity;
         if (subject == null) return;
-        float alpha = AppListener.gI().canvas.renderAlpha;
         g.motionX += renderMotion.exactX(subject, alpha);
         g.motionY += renderMotion.exactY(subject, alpha);
     }
@@ -1542,7 +1589,7 @@ public class GameSrc extends MainScreen {
         if (dF != null) dF.setXY(dF.cx, dF.cy + dy / 2);
         if (dD != null) dD.setXY(dD.cx, dD.cy + dy / 2);
         if (ag != null) ag.setXY(ag.cx, ag.cy + dy / 2);
-        if (S != null) S.relayout(!mConfig.gI().readBoolean(14));
+        restoreQuestTrackerLayout();
         o(0); g();
         X.setXY(X.cx, height - X.height - (mConfig.gI().readBoolean(15) ? 25 : 20)); X.d();
         if (aj != null) {
@@ -1562,6 +1609,15 @@ public class GameSrc extends MainScreen {
 
     public void j() {
         try {
+            bulkItemUse.update(this);
+            if (refreshItemUseInventory && MultiSession.visible()) {
+                refreshItemUseInventory = false;
+                if (this.H() instanceof LangLa_kl) {
+                    LangLa_kl inventory = (LangLa_kl) this.H();
+                    inventory.d = false;
+                    inventory.e(0);
+                }
+            }
             int var1 = Char.gI().cx - DataCenter.gI().widthScreen / 2;
             int var2 = Char.gI().cy - DataCenter.gI().heightScreen / 2 - Char.gI().height / 2;
             int var3 = Char.gI().cx + DataCenter.gI().widthScreen / 2;
@@ -1592,37 +1648,30 @@ public class GameSrc extends MainScreen {
                 var2 = (short) (this.maxY - DataCenter.gI().heightScreen);
             }
 
-            DataCenter var10000;
-            if (DataCenter.gI().j != var1) {
-                this.dl = var1 - DataCenter.gI().j << 2;
-                this.dm += this.dl;
-                var10000 = DataCenter.gI();
-                var10000.j += this.dm >> 5;
-                this.dm &= 15;
+            DataCenter data = DataCenter.gI();
+            if (Gdx.app.getType() == ApplicationType.Android) {
+                renderMotion.followCamera(data, var1, var2);
+            } else {
+                if (data.j != var1) {
+                    this.dl = var1 - data.j << 2;
+                    this.dm += this.dl;
+                    data.j += this.dm >> 5;
+                    this.dm &= 15;
+                }
+
+                if (data.k != var2) {
+                    this.dn = var2 - data.k << 2;
+                    this.do_ += this.dn;
+                    data.k += this.do_ >> 5;
+                    this.do_ &= 15;
+                }
             }
 
-            if (DataCenter.gI().k != var2) {
-                this.dn = var2 - DataCenter.gI().k << 2;
-                this.do_ += this.dn;
-                var10000 = DataCenter.gI();
-                var10000.k += this.do_ >> 5;
-                this.do_ &= 15;
-            }
-
-            DataCenter.gI().l = DataCenter.gI().j + DataCenter.gI().widthScreen;
-            DataCenter.gI().m = DataCenter.gI().k + DataCenter.gI().heightScreen;
+            data.l = data.j + data.widthScreen;
+            data.m = data.k + data.heightScreen;
 
             for (var2 = 0; var2 < this.d.size(); ++var2) {
-                LangLa_lo var6;
-                if ((var6 = (LangLa_lo) this.d.get(var2)).o().type == 7) {
-                    var6.cx = (short) (var6.l + DataCenter.gI().j * 20 / 23);
-                } else if (var6.o().type == 8) {
-                    var6.cx = (short) (var6.l + DataCenter.gI().j * 10 / 13);
-                } else if (var6.o().type == 9) {
-                    var6.cx = (short) (var6.l + DataCenter.gI().j * 20 / 22);
-                } else if (var6.o().type == 10) {
-                    var6.cx = (short) (var6.l + DataCenter.gI().j * 10 / 12);
-                }
+                ((LangLa_lo)this.d.get(var2)).updateParallax(data.j);
             }
 
         } catch (Exception var5) {
@@ -1890,6 +1939,7 @@ public class GameSrc extends MainScreen {
 
             boolean var13 = true;
             this.K.removeAllElements();
+            drawOrderDirty = true;
             this.M.removeAllElements();
             this.L.removeAllElements();
             if (this.aA != null && (this.aA instanceof Mob && !((Mob) this.aA).x() || this.aA instanceof ItemMap && ((ItemMap) this.aA).item.id == 224 || !this.vItemMap.contains(this.aA) && !this.vChar.contains(this.aA) && !this.vNpc.contains(this.aA) && !this.vMob.contains(this.aA))) {
@@ -1908,6 +1958,9 @@ public class GameSrc extends MainScreen {
 
             int var19;
             int var21;
+            DataCenter data = DataCenter.gI();
+            int sceneryPaddingX = renderMotion.cameraPaddingX(data.j);
+            int sceneryPaddingY = renderMotion.cameraPaddingY(data.k);
             for (var3 = 0; var3 < gI().d.size(); ++var3) {
                 LangLa_lo var16;
                 if ((var16 = (LangLa_lo) gI().d.elementAt(var3)) != null) {
@@ -2009,7 +2062,9 @@ public class GameSrc extends MainScreen {
                         Utlis.println(var11);
                     }
 
-                    if (Utlis.inRange(var16.a(), var16.c(), var16.b(), var16.d(), DataCenter.gI().j, DataCenter.gI().k, DataCenter.gI().l, DataCenter.gI().m)) {
+                    if (Utlis.inRange(var16.a(), var16.c(), var16.b(), var16.d(),
+                            data.j - sceneryPaddingX, data.k - sceneryPaddingY,
+                            data.l + sceneryPaddingX, data.m + sceneryPaddingY)) {
                         this.K.addElement(var16);
                     }
                 }
@@ -2032,13 +2087,13 @@ public class GameSrc extends MainScreen {
 
             this.K.addElement(var23);
             if (var23.status != 6 && var23.D == 0) {
-                this.K.addElement(new LangLa_ir(var23.i(), var23.ai, var23.aj, var23));
+                this.K.addElement(var23.shadow(var23.i(), var23.ai, var23.aj));
                 if (var23.aL != null) {
-                    this.K.addElement(new LangLa_ir(var23.aL.i(), var23.aL.x, var23.aL.y, var23.aL));
+                    this.K.addElement(var23.aL.shadow(var23.aL.i(), var23.aL.x, var23.aL.y));
                 }
 
                 if (var23.bh != null) {
-                    this.K.addElement(new LangLa_ir(var23.bh.i(), var23.bh.ai, var23.bh.aj, var23.bh));
+                    this.K.addElement(var23.bh.shadow(var23.bh.i(), var23.bh.ai, var23.bh.aj));
                 }
             }
 
@@ -2064,9 +2119,9 @@ public class GameSrc extends MainScreen {
 
                     this.K.addElement(var23);
                     if (var23.status != 6 && var23.D == 0) {
-                        this.K.addElement(new LangLa_ir(var23.i(), var23.ai, var23.aj, var23));
+                        this.K.addElement(var23.shadow(var23.i(), var23.ai, var23.aj));
                         if (var23.aL != null) {
-                            this.K.addElement(new LangLa_ir(var23.aL.i(), var23.aL.x, var23.aL.y, var23.aL));
+                            this.K.addElement(var23.aL.shadow(var23.aL.i(), var23.aL.x, var23.aL.y));
                         }
                     }
 
@@ -2135,7 +2190,7 @@ public class GameSrc extends MainScreen {
                 if (Utlis.inRange(var36.a(), var36.c(), var36.b(), var36.s(), DataCenter.gI().j, DataCenter.gI().k, DataCenter.gI().l, DataCenter.gI().m)) {
                     this.K.addElement(var36);
                     if (var36.status != 4 && var36.status != 6) {
-                        this.K.addElement(new LangLa_ir(var36.i(), var36.x, var36.y, var36));
+                        this.K.addElement(var36.shadow(var36.i(), var36.x, var36.y));
                     }
 
                     if (var36.status == 4 || var36.status == 6 || var36.status == 5) {
@@ -2173,7 +2228,7 @@ public class GameSrc extends MainScreen {
                 if (Utlis.inRange(var34.a(), var34.c(), var34.b(), var34.cy + var34.height, DataCenter.gI().j, DataCenter.gI().k, DataCenter.gI().l, DataCenter.gI().m)) {
                     this.K.addElement(var34);
                     if (var34.status != 6) {
-                        this.K.addElement(new LangLa_ir(var34.i(), var34.cx, var34.cy, var34));
+                        this.K.addElement(var34.shadow(var34.i(), var34.cx, var34.cy));
                     }
 
                     if (var34.status != 4 && var34.status != 6 && var34.status != 5) {
@@ -2301,11 +2356,7 @@ public class GameSrc extends MainScreen {
                 }
             }
 
-            try {
-                Collections.sort(this.K, beatdz.XYEntity.$state_XYEntity().db);
-            } catch (Exception var8) {
-                Utlis.println(var8);
-            }
+            if (MultiSession.visible()) sortDrawOrder();
 
             if (this.T != null) {
                 this.T.b();
@@ -2375,7 +2426,17 @@ public class GameSrc extends MainScreen {
             Utlis.println(var12);
         }
 
-        this.W();
+        if (MultiSession.visible()) this.W();
+    }
+
+    private void sortDrawOrder() {
+        if (!drawOrderDirty) return;
+        drawOrderDirty = false;
+        try {
+            Collections.sort(this.K, beatdz.XYEntity.$state_XYEntity().db);
+        } catch (Exception error) {
+            Utlis.println(error);
+        }
     }
 
     public void l() {
@@ -2676,10 +2737,7 @@ public class GameSrc extends MainScreen {
             Char.gI().setDir(this.aA);
             Char.gI().pointMove = new PointMove(this.aA.cx, this.aA.cy, Char.gI().speedMove);
         }
-        if (AutoPro.isAuto(8)) {
-            Char.gI().cx = this.aA.cx;
-            Char.gI().cy = this.aA.cy;
-        }
+
     }
 
     private void g(boolean var1) {
@@ -2960,7 +3018,7 @@ public class GameSrc extends MainScreen {
 
     public void o() {
         try {
-            if (System.currentTimeMillis() - this.dA >= 100L && (!(gI().H() instanceof LangLa_ar) || ((LangLa_ar) gI().H()).isAutoCuongHoa) && !(gI().H() instanceof LangLa_au)) {
+            if (System.currentTimeMillis() - this.dA >= 100L && !(gI().H() instanceof LangLa_ar) && !(gI().H() instanceof LangLa_au)) {
                 int var1;
                 if ((var1 = SettingsTab.gI().k()) > 0) {
                     for (var1 = var1; var1 >= 0 && !this.t(var1); --var1) {
@@ -3307,10 +3365,15 @@ public class GameSrc extends MainScreen {
                     this.r();
                 }
 
-                this.a(var1, -DataCenter.gI().j, -DataCenter.gI().k);
-                if (Canvas.isMobile()) {
-                    var1.motionX = -renderMotion.cameraOffsetX(AppListener.gI().canvas.renderAlpha);
-                    var1.motionY = -renderMotion.cameraOffsetY(AppListener.gI().canvas.renderAlpha);
+                sortDrawOrder();
+                DataCenter data = DataCenter.gI();
+                this.a(var1, -data.j, -data.k);
+                boolean smooth = Canvas.smoothMotion();
+                float alpha = smooth ? AppListener.gI().canvas.renderAlpha : 1f;
+                float cameraX = smooth ? renderMotion.drawnCameraX(data.j, alpha) : data.j;
+                if (smooth) {
+                    var1.motionX = data.j - cameraX;
+                    var1.motionY = data.k - renderMotion.drawnCameraY(data.k, alpha);
                 }
 
                 for (var14 = 0; var14 < this.K.size(); ++var14) {
@@ -3318,7 +3381,7 @@ public class GameSrc extends MainScreen {
                     var20 = (Entity)this.K.elementAt(var14);
                     int savedX = var1.a, savedY = var1.b;
                     float savedMotionX = var1.motionX, savedMotionY = var1.motionY;
-                    applyRenderMotion(var1, var20);
+                    if (smooth) applyRenderMotion(var1, var20, alpha, cameraX);
                     try {
                     if (var20 instanceof LangLa_hm) {
                         LangLa_hm var22 = (LangLa_hm) var20;
@@ -3336,7 +3399,7 @@ public class GameSrc extends MainScreen {
                     Entity entity = ((Entity) this.K.elementAt(var14));
                     int savedX = var1.a, savedY = var1.b;
                     float savedMotionX = var1.motionX, savedMotionY = var1.motionY;
-                    applyRenderMotion(var1, entity);
+                    if (smooth) applyRenderMotion(var1, entity, alpha, cameraX);
                     try { entity.b(var1); } finally { var1.a = savedX; var1.b = savedY; var1.motionX = savedMotionX; var1.motionY = savedMotionY; }
 //                    if (entity instanceof Char || entity instanceof Mob || entity instanceof Npc || entity instanceof ItemMap) {
 //                        GameM.gI().canvas.graphics.shapeRenderer.setColor(1, 0, 0, 1); // Red line
@@ -3354,117 +3417,7 @@ public class GameSrc extends MainScreen {
                 int var8;
                 int var26;
                 if (!this.bb && !DataCenter.gI().aH && this.cD.lastElement().equals(this) && beatdz.LangLa_cz.$state_LangLa_cz().cV.size() == 0) {
-                    Binary.cleanImage(beatdz.GameSrc.$state_GameSrc().dB);
-                    Pixmap var28;
-                    (var28 = (beatdz.GameSrc.$state_GameSrc().dB = Binary.createImage(this.width * DataCenter.gI().zoomLevel, this.height * DataCenter.gI().zoomLevel)).b).setColor(new Color(0.0F, 0.0F, 0.0F, 0.0F));
-                    var28.fill();
-                    DataCenter.gI();
-                    mImage var23 = LangLa_fq.a((int) 17);
-                    Binary2.a(var28, var23.b, 0, 0, 44 * DataCenter.gI().zoomLevel, 44 * DataCenter.gI().zoomLevel, this.Z.cx * DataCenter.gI().zoomLevel, this.Z.cy * DataCenter.gI().zoomLevel, this.Z.width * DataCenter.gI().zoomLevel, this.Z.height * DataCenter.gI().zoomLevel, Blending.None);
-                    var25 = this.aj.cx;
-                    var30 = this.aj.cy - 3;
-                    var28.setColor(Utlis.createColor(-1278446549L));
-                    var28.setBlending(Blending.SourceOver);
-                    var28.fillRectangle((var25 + 1) * DataCenter.gI().zoomLevel, (var30 + 1) * DataCenter.gI().zoomLevel, (this.aj.width - 2) * DataCenter.gI().zoomLevel, (this.aj.height + 6 - 2) * DataCenter.gI().zoomLevel);
-                    var23 = LangLa_fq.a((int) 84);
-                    Binary2.a(var28, var23.b, var25 * DataCenter.gI().zoomLevel, var30 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    mImage var24 = mImage.b(var23, 0, 0, var23.c, var23.d, -360);
-                    Binary2.a(var28, var24.b, (var25 + this.aj.width - 6) * DataCenter.gI().zoomLevel, var30 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    var24.a();
-                    var24 = mImage.b(var23, 0, 0, var23.c, var23.d, -180);
-                    Binary2.a(var28, var24.b, var25 * DataCenter.gI().zoomLevel, (var30 + this.aj.height + 6 - 6) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    var24.a();
-                    var24 = mImage.b(var23, 0, 0, var23.c, var23.d, -270);
-                    Binary2.a(var28, var24.b, (var25 + this.aj.width - 6) * DataCenter.gI().zoomLevel, (var30 + this.aj.height + 6 - 6) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    var24.a();
-                    var23 = LangLa_fq.a((int) 5);
-                    Binary2.a(var28, var23.b, (var25 + 6) * DataCenter.gI().zoomLevel, var30 * DataCenter.gI().zoomLevel, (this.aj.width - 12) * DataCenter.gI().zoomLevel, 0, Blending.SourceOver);
-                    var24 = mImage.b(var23, 0, 0, var23.c, var23.d, 180);
-                    Binary2.a(var28, var24.b, (var25 + 6) * DataCenter.gI().zoomLevel, (var30 + this.aj.height + 6 - 20) * DataCenter.gI().zoomLevel, (this.aj.width - 12) * DataCenter.gI().zoomLevel, 0, Blending.SourceOver);
-                    var24.a();
-                    var24 = mImage.b(var23, 0, 0, var23.c, var23.d, 270);
-                    Binary2.a(var28, var24.b, var25 * DataCenter.gI().zoomLevel, (var30 + 6) * DataCenter.gI().zoomLevel, 0, (this.aj.height + 6 - 12) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    var24.a();
-                    var24 = mImage.b(var23, 0, 0, var23.c, var23.d, 90);
-                    Binary2.a(var28, var24.b, (var25 + this.aj.width - 20) * DataCenter.gI().zoomLevel, (var30 + 6) * DataCenter.gI().zoomLevel, 0, (this.aj.height + 6 - 12) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    var24.a();
-                    var23 = LangLa_fq.a((int) 73);
-                    Binary2.a(var28, var23.b, this.du.cx * DataCenter.gI().zoomLevel, this.du.cy * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    var26 = AppListener.gI().o;
-                    DataCenter.gI();
-                    var23 = LangLa_fq.a((int) 59);
-                    Binary2.a(var28, var23.b, var26 * DataCenter.gI().zoomLevel, (this.ak.cy + 46) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    if (!mConfig.gI().readBoolean(12)) {
-                        var23 = LangLa_fq.a((int) 20);
-                        Binary2.a(var28, var23.b, 0, 0, 60 * DataCenter.gI().zoomLevel, 60 * DataCenter.gI().zoomLevel, this.X.cx * DataCenter.gI().zoomLevel, this.X.cy * DataCenter.gI().zoomLevel, this.X.width * DataCenter.gI().zoomLevel, this.X.height * DataCenter.gI().zoomLevel, Blending.None);
-                    }
-
-                    var23 = LangLa_fq.a((int) 554);
-                    Binary2.a(var28, var23.b, 0, 0, 25 * DataCenter.gI().zoomLevel, 25 * DataCenter.gI().zoomLevel, this.ab.cx * DataCenter.gI().zoomLevel, this.ab.cy * DataCenter.gI().zoomLevel, this.ab.width * DataCenter.gI().zoomLevel, this.ab.height * DataCenter.gI().zoomLevel, Blending.None);
-                    var23 = LangLa_fq.a((int) 554);
-                    Binary2.a(var28, var23.b, 0, 0, 25 * DataCenter.gI().zoomLevel, 25 * DataCenter.gI().zoomLevel, this.ac.cx * DataCenter.gI().zoomLevel, this.ac.cy * DataCenter.gI().zoomLevel, this.ac.width * DataCenter.gI().zoomLevel, this.ac.height * DataCenter.gI().zoomLevel, Blending.None);
-                    var23 = LangLa_fq.a((int) 554);
-                    Binary2.a(var28, var23.b, 0, 0, 25 * DataCenter.gI().zoomLevel, 25 * DataCenter.gI().zoomLevel, this.ad.cx * DataCenter.gI().zoomLevel, this.ad.cy * DataCenter.gI().zoomLevel, this.ad.width * DataCenter.gI().zoomLevel, this.ad.height * DataCenter.gI().zoomLevel, Blending.None);
-                    var23 = LangLa_fq.a((int) 554);
-                    Binary2.a(var28, var23.b, 0, 0, 25 * DataCenter.gI().zoomLevel, 25 * DataCenter.gI().zoomLevel, this.ae.cx * DataCenter.gI().zoomLevel, this.ae.cy * DataCenter.gI().zoomLevel, this.ae.width * DataCenter.gI().zoomLevel, this.ae.height * DataCenter.gI().zoomLevel, Blending.None);
-                    var23 = LangLa_fq.a((int) 554);
-                    Binary2.a(var28, var23.b, 0, 0, 25 * DataCenter.gI().zoomLevel, 25 * DataCenter.gI().zoomLevel, this.af.cx * DataCenter.gI().zoomLevel, this.af.cy * DataCenter.gI().zoomLevel, this.af.width * DataCenter.gI().zoomLevel, this.af.height * DataCenter.gI().zoomLevel, Blending.None);
-                    var23 = LangLa_fq.a((int) 553);
-                    Binary2.a(var28, var23.b, (this.ae.cx + this.ae.width / 2 - 5) * DataCenter.gI().zoomLevel, (this.ae.cy + this.ae.height / 2 - 8) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    var23 = LangLa_fq.a((int) 751);
-                    Binary2.a(var28, var23.b, (this.af.cx + this.af.width / 2 - 8) * DataCenter.gI().zoomLevel, (this.af.cy + this.af.height / 2 - 8) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    DataCenter.gI();
-                    if (DataCenter.gI().widthScreen > 400) {
-                        DataCenter.gI();
-                    }
-
-                    int var9;
-                    for (var8 = 0; var8 < this.P.c.size(); ++var8) {
-                        if (this.P.c.get(var8) instanceof LangLa_dz) {
-                            LangLa_dz var29 = (LangLa_dz) this.P.c.get(var8);
-
-                            for (var9 = 0; var9 < this.aE.size(); ++var9) {
-                                if (((Skill) this.aE.get(var9)).getSkillTemplate().idIcon == var29.d) {
-                                    var23 = LangLa_fq.b(var29.d);
-                                    Binary2.a(var28, var23.b, var29.cx * DataCenter.gI().zoomLevel, var29.cy * DataCenter.gI().zoomLevel, Blending.None);
-                                    var23.a();
-                                }
-                            }
-                        }
-                    }
-
-                    var23 = LangLa_fq.a((int) 34);
-                    Binary2.a(var28, var23.b, 0 * DataCenter.gI().zoomLevel, 0 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                    var23 = LangLa_fq.a((int) DataCenter.gI().DataIconChar[Char.gI().idChar].idIcon);
-                    Binary2.a(var28, var23.b, 3 * DataCenter.gI().zoomLevel, 7 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-
-                    for (var9 = 0; var9 < 10; ++var9) {
-                        var26 = var9 * (this.width / 10);
-                        if (var9 == 9) {
-                            var7 = this.width - var26;
-                        } else {
-                            var7 = this.width / 10;
-                        }
-
-                        var30 = this.height - 4;
-                        var28.setColor(Utlis.createColor(-16777216L));
-                        var28.setBlending(Blending.SourceOver);
-                        var28.fillRectangle((var26 + 1) * DataCenter.gI().zoomLevel, (var30 + 1) * DataCenter.gI().zoomLevel, (var7 - 2) * DataCenter.gI().zoomLevel, 2 * DataCenter.gI().zoomLevel);
-                        var23 = LangLa_fq.a((int) 705);
-                        Binary2.a(var28, var23.b, var26 * DataCenter.gI().zoomLevel, var30 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                        var24 = mImage.b(var23, 0, 0, var23.c, var23.d, -360);
-                        Binary2.a(var28, var24.b, (var26 + var7 - 2) * DataCenter.gI().zoomLevel, var30 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                        var24.a();
-                        var23 = LangLa_fq.a((int) 706);
-
-                        for (var4 = 2; var4 < var7 - 2; ++var4) {
-                            Binary2.a(var28, var23.b, (var26 + var4) * DataCenter.gI().zoomLevel, var30 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-                        }
-                    }
-
-                    // The former minimap frame is not part of the cached HUD anymore.
-                    Binary.disposeImage(beatdz.GameSrc.$state_GameSrc().dB);
-                    DataCenter.gI().aH = true;
+                    rebuildHudBackground();
                 }
 
                 if (this.cD.size() > 0 && this.cD.lastElement().equals(this) || this.cD.size() == 2 && this.cD.lastElement() instanceof LangLa_dl) {
@@ -3477,6 +3430,7 @@ public class GameSrc extends MainScreen {
                     var1.m = 1.0F;
                     if (!this.bb) {
                         var1.a(beatdz.GameSrc.$state_GameSrc().dB, 0, 0);
+                        if (this.ag != null) var1.a(LangLa_fq.a(59), this.ag.cx, this.ag.cy);
                         if (beatdz.LangLa_cz.$state_LangLa_cz().cZ) {
                             mFont.a(mFont.d, var1, Caption.qG, DataCenter.gI().widthScreen / 2, DataCenter.gI().heightScreen - 74, 2, -2560, 2, 1);
                         } else if (this.ca) {
@@ -3593,6 +3547,91 @@ public class GameSrc extends MainScreen {
 
     private long lastHudErrorLog;
 
+    private void rebuildHudBackground() {
+        // Character data can open this screen before the map packet creates its controls.
+        if (this.P == null || this.P.c == null || this.Z == null || this.X == null
+                || this.aj == null || this.du == null || this.af == null) return;
+        DataCenter data = DataCenter.gI();
+        int zoom = data.zoomLevel;
+        SessionState state = $state_GameSrc();
+        Binary.cleanImage(state.dB);
+        state.dB = Binary.createImage(this.width * zoom, this.height * zoom);
+        data.aH = true;
+        if (state.dB == null) return;
+        Pixmap background = state.dB.b;
+        background.setColor(Color.CLEAR);
+        background.fill();
+        drawHudButton(background, LangLa_fq.a(17), this.Z, 44, zoom);
+        drawHudPanel(background, this.aj.cx, this.aj.cy - 3, this.aj.width, this.aj.height + 6);
+        drawHudIcon(background, LangLa_fq.a(73), this.du.cx * zoom, this.du.cy * zoom, Blending.SourceOver);
+        if (!mConfig.gI().readBoolean(12)) {
+            drawHudButton(background, LangLa_fq.a(20), this.X, 60, zoom);
+        }
+
+        mImage slot = LangLa_fq.a(554);
+        drawHudButton(background, slot, this.ab, 25, zoom);
+        drawHudButton(background, slot, this.ac, 25, zoom);
+        drawHudButton(background, slot, this.ad, 25, zoom);
+        drawHudButton(background, slot, this.ae, 25, zoom);
+        drawHudButton(background, slot, this.af, 25, zoom);
+        drawHudIcon(background, LangLa_fq.a(553), (this.ae.cx + this.ae.width / 2 - 5) * zoom,
+                (this.ae.cy + this.ae.height / 2 - 8) * zoom, Blending.SourceOver);
+        drawHudIcon(background, LangLa_fq.a(751), (this.af.cx + this.af.width / 2 - 8) * zoom,
+                (this.af.cy + this.af.height / 2 - 8) * zoom, Blending.SourceOver);
+
+        for (Object control : this.P.c) {
+            if (!(control instanceof LangLa_dz)) continue;
+            LangLa_dz button = (LangLa_dz) control;
+            for (Object skill : this.aE) {
+                if (((Skill) skill).getSkillTemplate().idIcon != button.d) continue;
+                mImage icon = LangLa_fq.b(button.d);
+                drawHudIcon(background, icon, button.cx * zoom, button.cy * zoom, Blending.None);
+                Binary.cleanImage(icon);
+                break;
+            }
+        }
+
+        drawHudIcon(background, LangLa_fq.a(34), 0, 0, Blending.SourceOver);
+        int character = Char.gI().idChar;
+        if (data.DataIconChar != null && character >= 0 && character < data.DataIconChar.length
+                && data.DataIconChar[character] != null) {
+            drawHudIcon(background, LangLa_fq.a((int) data.DataIconChar[character].idIcon), 3 * zoom, 7 * zoom, Blending.SourceOver);
+        }
+
+        mImage cap = LangLa_fq.a(705);
+        mImage reflectedCap = hasHudPixels(cap) ? mImage.b(cap, 0, 0, cap.c, cap.d, -360) : null;
+        mImage edge = LangLa_fq.a(706);
+        int y = (this.height - 4) * zoom;
+        for (int segment = 0; segment < 10; ++segment) {
+            int x = segment * (this.width / 10);
+            int width = segment == 9 ? this.width - x : this.width / 10;
+            background.setColor(Color.BLACK);
+            background.setBlending(Blending.SourceOver);
+            background.fillRectangle((x + 1) * zoom, y + zoom, (width - 2) * zoom, 2 * zoom);
+            drawHudIcon(background, cap, x * zoom, y, Blending.SourceOver);
+            drawHudIcon(background, reflectedCap, (x + width - 2) * zoom, y, Blending.SourceOver);
+            for (int offset = 2; offset < width - 2; ++offset) {
+                drawHudIcon(background, edge, (x + offset) * zoom, y, Blending.SourceOver);
+            }
+        }
+        Binary.cleanImage(reflectedCap);
+        Binary.disposeImage(state.dB);
+    }
+
+    private static boolean hasHudPixels(mImage icon) {
+        return icon != null && icon.b != null && icon != LangLa_fq.$state_LangLa_fq().a;
+    }
+
+    private static void drawHudIcon(Pixmap target, mImage icon, int x, int y, Blending blending) {
+        if (hasHudPixels(icon)) Binary2.a(target, icon.b, x, y, blending);
+    }
+
+    private static void drawHudButton(Pixmap target, mImage icon, LangLa_cs button, int size, int zoom) {
+        if (button == null || !hasHudPixels(icon)) return;
+        Binary2.a(target, icon.b, 0, 0, Math.min(icon.c, size * zoom), Math.min(icon.d, size * zoom),
+                button.cx * zoom, button.cy * zoom, button.width * zoom, button.height * zoom, Blending.None);
+    }
+
     private void paintHudGroup(Graphics graphics, LangLa_cj group) {
         // T contains the minimap, position markers, coordinates and its collapse control.
         // The location name is painted independently by the main HUD (Q).
@@ -3681,7 +3720,7 @@ public class GameSrc extends MainScreen {
     }
 
     public void a(LangLa_jz var1, int var2, int var3) {
-        if (this.i() && !this.bN) {
+        if (this.i() && !this.bN && this.Q != null) {
             this.Q.a(false);
             this.I.add(new LangLa_jw(146, var2 + DataCenter.gI().j, var3 + DataCenter.gI().k, 1));
             boolean var11;
@@ -3915,6 +3954,7 @@ public class GameSrc extends MainScreen {
                     }
                     break;
                 case 9000:
+                    if (this.X == null || this.h == null || this.ah == null) break;
                     if (Gdx.app.getType() == ApplicationType.Desktop && !this.ah.v && this.ah.cx != -200 && this.ah.cy != -200) {
                         this.ah.setXY(-200, -200);
                         this.ah.b(true);
@@ -3925,6 +3965,7 @@ public class GameSrc extends MainScreen {
                         var2 = var15;
                         GameSrc var8 = this;
 
+                        sortDrawOrder();
                         for (var15 = this.K.size() - 1; var15 >= 0; --var15) {
                             Entity var17;
                             if (!(var17 = (Entity) var8.K.elementAt(var15)).j() && (var17 instanceof Char && (Char) var17 != Char.gI() || var17 instanceof Npc || var17 instanceof Mob || var17 instanceof ItemMap || var17 instanceof WayPoint) && Utlis.inRange(var17.a(), var17.c(), var17.b(), var17.d(), var2, var3)) {
@@ -4270,9 +4311,7 @@ public class GameSrc extends MainScreen {
                         this.k(!this.U.c());
                         break;
                     case 1101:
-                        this.dD.b(false);
-                        this.j(!this.S.c());
-                        DataCenter.gI().aH = false;
+                        this.setQuestTrackerExpanded(!this.S.c());
                         break;
                     case 1102:
                         Vector var10 = new Vector();
@@ -4686,7 +4725,7 @@ public class GameSrc extends MainScreen {
     }
 
     public void s() {
-        this.X.d();
+        this.X.resetUnlessAndroidHeld();
     }
 
     public void e(Message var1) throws java.io.IOException {
@@ -4713,6 +4752,7 @@ public class GameSrc extends MainScreen {
         Char.gI().idCharPk = -1;
         this.zoneID = msg.reader.dis.readShort();
         this.mapID = msg.reader.dis.readShort();
+        MapAssetPrefetch.schedule(this.mapID);
         Char.gI().cx = beatdz.SessionMove.$state_SessionMove().x = msg.reader.dis.readShort();
         Char.gI().cy = beatdz.SessionMove.$state_SessionMove().y = msg.reader.dis.readShort();
         this.vItemMap.clear();
@@ -4984,6 +5024,7 @@ public class GameSrc extends MainScreen {
                 case 38:
                 case 39:
                 case 40:
+                case 119:
                     var46 = var1;
                     var2 = var2;
                     var25 = this;
@@ -4991,6 +5032,12 @@ public class GameSrc extends MainScreen {
                     try {
                         var25.l.clear();
                         short var43;
+                        int cardId = 0;
+                        if (var2 == LucDaoShopUI.TYPE) {
+                            cardId = var46.reader.dis.readShort();
+                            LucDaoShopUI.state().icon = var46.reader.dis.readShort();
+                            if (cardId != LucDaoShopUI.CARD) throw new java.io.IOException("Invalid Luc Dao currency");
+                        }
                         Item[][] var38 = new Item[var43 = var46.reader.dis.readShort()][3];
                         boolean[] var44 = new boolean[var43];
 
@@ -5006,6 +5053,7 @@ public class GameSrc extends MainScreen {
                             var34.vangKhoaBuy = var46.reader.dis.readInt();
                             var34.bacKhoaBuy = var46.reader.dis.readInt();
                             var34.bacBuy = var46.reader.dis.readInt();
+                            if (var2 == LucDaoShopUI.TYPE) { var34.shopCurrencyId = cardId;var34.shopIcon = var46.reader.dis.readShort(); }
                             var25.l.add(var34);
                             if (var2 == 39) {
                                 var44[var10] = var46.reader.dis.readBoolean();
@@ -5103,6 +5151,9 @@ public class GameSrc extends MainScreen {
                             case 40:
                                 var47 = 3;
                                 break;
+                            case 119:
+                                var47 = 4;
+                                break;
                             case 38:
                                 var45 = Caption.ao;
                                 var47 = 4;
@@ -5114,7 +5165,7 @@ public class GameSrc extends MainScreen {
                             return;
                         }
                         LangLa_cx var36 = var25.H();
-                        if (var2 != 6 && var2 != 7 && var2 != 39 && var2 != 40) {
+                        if (var2 != 6 && var2 != 7 && var2 != 39 && var2 != 40 && var2 != LucDaoShopUI.TYPE) {
                             LangLa_br var52;
                             if (var36 instanceof LangLa_br) {
                                 (var52 = (LangLa_br) var36).b(var47);
@@ -5334,10 +5385,14 @@ public class GameSrc extends MainScreen {
                         (var12 = (LangLa_br) var11).b(var33);
                     } catch (Exception var21) {
                     }
+                    return;
                 case 41:
+                    String title = var1.readUTF();
+                    String details = var1.readUTF();
+                    String imageUrl = var1.readUTF();
                     GoldTopUpPanel topup = H() instanceof GoldTopUpPanel ? (GoldTopUpPanel)H() : new GoldTopUpPanel(this);
                     if (H() != topup) a((LangLa_cx)topup);
-                    topup.receive(var1.readUTF(), var1.readUTF(), var1.readUTF());
+                    topup.receive(title, details, imageUrl);
                     return;
                 case 31:
                 case 42:
@@ -5664,6 +5719,12 @@ public class GameSrc extends MainScreen {
                 case 102:
                     Controller.readLatHinh(var1);
                     return;
+                case EquipmentQuote.CHANNEL:
+                    EquipmentQuote.receive(this, var1);
+                    return;
+                case LangLa_cd.SCHEDULE_CHANNEL:
+                    LangLa_cd.readSchedule(var1);
+                    return;
             }
 
         } catch (Exception var24) {
@@ -5825,6 +5886,10 @@ public class GameSrc extends MainScreen {
     public void n(Message var1) {
         try {
             short var2 = var1.reader.dis.readShort();
+            if (var2 == -1) {
+                bulkItemUse.acknowledge(this, var1.reader.dis.readInt(), var1.readShort());
+                return;
+            }
             Item var3;
             (var3 = Char.gI().arrItemBag[var2]).isLock = var1.reader.dis.readBoolean();
             Char.gI().arrItemBag[var2] = null;
@@ -5863,12 +5928,7 @@ public class GameSrc extends MainScreen {
                 Char.gI().arrItemBag[var2] = var3;
             }
 
-            LangLa_cx var8;
-            if ((var8 = this.H()) instanceof LangLa_kl) {
-                LangLa_kl var10;
-                (var10 = (LangLa_kl) var8).d = false;
-                var10.e(0);
-            }
+            refreshItemUseInventory = true;
 
             if (var3.z()) {
                 this.g();
@@ -6044,8 +6104,11 @@ public class GameSrc extends MainScreen {
             Char.gI().arrItemBag[var1.index] = var1;
             if (var1.expiry != 0L) {
                 if (var1.id < 269 || var1.id > 273) {
-                    LangLa_kw.a(7, Caption.bz, Caption.k + " " + var4 + " " + var1.getItemTemplate().name);
-                    DataCenter.gI().currentScreen.showMessage(Caption.k + " " + var4 + " " + var1.getItemTemplate().name, -1);
+                    String name = var1.getItemTemplate().name;
+                    if (!gI().bulkItemUse.recordReward(name, var4)) {
+                        LangLa_kw.a(7, Caption.bz, Caption.k + " " + var4 + " " + name);
+                        DataCenter.gI().currentScreen.showMessage(Caption.k + " " + var4 + " " + name, -1);
+                    }
                 }
 
                 return;
@@ -6334,7 +6397,7 @@ public class GameSrc extends MainScreen {
     public void C(Message var1) {
         try {
             boolean var2 = var1.reader.dis.readBoolean();
-            boolean var3 = var1.reader.dis.readBoolean();
+            var1.reader.dis.readBoolean();
             Char.gI().a(var1.reader.dis.readLong(), false, false);
             Char.gI().b(var1.reader.dis.readLong(), false, false);
             byte var4 = var1.reader.dis.readByte();
@@ -6358,16 +6421,8 @@ public class GameSrc extends MainScreen {
             Char.gI().h(var11.TYPE_TEMP)[var11.index] = var11;
             LangLa_cx var8;
             if ((var8 = this.H()) instanceof LangLa_ar) {
-                LangLa_ar var9;
-                (var9 = (LangLa_ar) var8).d = 100;
+                LangLa_ar var9 = (LangLa_ar) var8;
                 var9.f = new LangLa_jw(114, 0, 0);
-                if (var2) {
-                    var9.e = 1;
-                } else if (!var3) {
-                    var9.e = 2;
-                } else {
-                    var9.e = 3;
-                }
 
                 int var10;
                 for (var10 = 0; var10 < var9.b.length; ++var10) {
@@ -6380,6 +6435,7 @@ public class GameSrc extends MainScreen {
 
                 var9.a[0] = var11;
                 Char.gI().h(var11.TYPE_TEMP)[var11.index] = null;
+                var9.upgradeResult(var2);
             }
 
         } catch (Exception var7) {
@@ -7393,7 +7449,7 @@ public class GameSrc extends MainScreen {
                 try {
                     var6.y.levelCheTao = var8.reader.dis.readInt();
                     var6.y.hoatLuc = var8.reader.dis.readInt();
-                    var6.y.sachChienDau = var8.reader.dis.readByte();
+                    var6.y.sachChienDau = (byte) Math.max(0, Math.min(18, var8.reader.dis.readByte()));
                     var6.v = var8.reader.dis.readShort();
                     var6.i = var6.u = var8.reader.dis.readShort();
                     LangLa_ce var10 = var6.B;
@@ -7428,7 +7484,7 @@ public class GameSrc extends MainScreen {
                     var6.x[4] = var8.reader.dis.readShort();
                     var6.x[5] = var8.reader.dis.readShort();
                     var6.x[6] = var8.reader.dis.readShort();
-                    var6.y.speedMove = Char.movementSpeed(var6.x[6]);
+                    var6.y.setMovementSpeed(var6.x[6]);
                     var6.x[7] = var8.reader.dis.readShort();
                     var6.x[8] = var8.reader.dis.readShort();
                     var6.x[9] = var8.reader.dis.readShort();
@@ -7914,12 +7970,22 @@ public class GameSrc extends MainScreen {
 
     public static void a(Item var0) {
         try {
-            Message var1;
-            (var1 = new Message((byte) 116)).writeShort(var0.index);
-            var1.send();
-        } catch (Exception var2) {
-            Utlis.println(var2);
+            Message message = new Message((byte) 116);
+            message.writeShort(var0.index);
+            message.send();
+        } catch (Exception error) {
+            Utlis.println(error);
         }
+    }
+
+    boolean startBulkUse(Item item, int amount) {
+        if (bulkItemUse.active()) {
+            showMessage("Đang xử lý lượt dùng vật phẩm trước.", -65536);
+            return false;
+        }
+        if (amount == 1) a(item);
+        else bulkItemUse.start(item, amount);
+        return true;
     }
 
     private Item h(boolean var1) {
@@ -8969,7 +9035,7 @@ public class GameSrc extends MainScreen {
             var2.idhe = var1.reader.dis.readByte();
             var2.idClass = var1.reader.dis.readByte();
             var2.gioiTinh = var1.reader.dis.readByte();
-            var2.sachChienDau = var1.reader.dis.readByte();
+            var2.sachChienDau = (byte) Math.max(0, Math.min(18, var1.reader.dis.readByte()));
             var2.arrItemBody = Char.readItemBody(var1, var2.arrItemBody);
             var2.arrItemBody2 = Char.readItemBody(var1, var2.arrItemBody2);
             Skill[] var3 = new Skill[var1.reader.dis.readShort()];
@@ -9015,7 +9081,7 @@ public class GameSrc extends MainScreen {
             Char var2;
             (var2 = this.f(var1.reader.dis.readInt())).lvPk = var1.reader.dis.readByte();
             var2.taiPhu = var1.reader.dis.readInt();
-            var2.speedMove = Char.movementSpeed(var1.reader.dis.readShort());
+            var2.setMovementSpeed(var1.reader.dis.readShort());
             var2.statusGD = var1.reader.dis.readByte();
         } catch (Exception var4) {
             Utlis.println(var4);
@@ -9547,13 +9613,16 @@ public class GameSrc extends MainScreen {
 
     public void bg(Message var1) {
         try {
-            this.ak.c(false);
-            int var2 = this.idStep;
-            this.Task = var1.reader.dis.readShort();
-            this.idStep = var1.reader.dis.readByte();
-            this.idRequire = var1.reader.dis.readUnsignedShort();
+            int previousStep = this.idStep;
+            int taskId = var1.reader.dis.readShort();
+            int step = var1.reader.dis.readByte();
+            int progress = var1.reader.dis.readUnsignedShort();
+            this.Task = taskId;
+            this.idStep = step;
+            this.idRequire = progress;
             this.loadAfterNextMap();
-            if (var2 != this.idStep) {
+            if (this.ak != null) this.ak.c(false);
+            if (previousStep != this.idStep) {
                 Task var5;
                 if ((var5 = this.A()) != null && this.idStep >= var5.vStep.size()) {
                     Char.gI().aF.addElement(new LangLa_jw(85, 0, 0));
@@ -9570,7 +9639,6 @@ public class GameSrc extends MainScreen {
                 var8.f();
             }
 
-            this.ak.d();
             if (AppListener.gI().listener != null && this.Task == 15 && this.idStep == -1) {
                 SDKListener var10000 = AppListener.gI().listener;
             }
@@ -9584,15 +9652,8 @@ public class GameSrc extends MainScreen {
     }
 
     public Task A() {
-        try {
-            if (this.Task < DataCenter.gI().Task.length) {
-                return DataCenter.gI().Task[gI().Task];
-            }
-        } catch (Exception var2) {
-            Utlis.println(var2);
-        }
-
-        return null;
+        Task[] tasks = DataCenter.gI().Task;
+        return tasks != null && this.Task >= 0 && this.Task < tasks.length ? tasks[this.Task] : null;
     }
 
     public Step B() {
@@ -10694,8 +10755,7 @@ public class GameSrc extends MainScreen {
 
             LangLa_cx var8;
             if ((var8 = this.H()) instanceof LangLa_am) {
-                LangLa_am var9;
-                (var9 = (LangLa_am) var8).f = true;
+                LangLa_am var9 = (LangLa_am) var8;
                 var9.d = new LangLa_jw(114, 0, 0);
 
                 int var7;
@@ -10901,50 +10961,63 @@ public class GameSrc extends MainScreen {
         }
     }
 
-    public static void a(Pixmap var0, LangLa_cz var1, int var2, int var3, int var4, int var5) {
-        var0.setColor(Utlis.createColor(-1278446549L));
-        var0.setBlending(Blending.SourceOver);
-        var0.fillRectangle(1 * DataCenter.gI().zoomLevel, 1 * DataCenter.gI().zoomLevel, (var1.width - 2) * DataCenter.gI().zoomLevel, (var1.height - 2) * DataCenter.gI().zoomLevel);
-        mImage var6;
-        var3 = (var6 = LangLa_fq.a((int) 84)).c / DataCenter.gI().zoomLevel;
-        Binary2.a(var0, var6.b, 0 * DataCenter.gI().zoomLevel, 0 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-        mImage var7 = mImage.b(var6, 0, 0, var6.c, var6.d, -360);
-        Binary2.a(var0, var7.b, (0 + var1.width - var3) * DataCenter.gI().zoomLevel, 0 * DataCenter.gI().zoomLevel, Blending.SourceOver);
-        var7.a();
-        var7 = mImage.b(var6, 0, 0, var6.c, var6.d, -180);
-        Binary2.a(var0, var7.b, 0 * DataCenter.gI().zoomLevel, (0 + var1.height + 0 - var3) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-        var7.a();
-        var7 = mImage.b(var6, 0, 0, var6.c, var6.d, -270);
-        Binary2.a(var0, var7.b, (0 + var1.width - var3) * DataCenter.gI().zoomLevel, (0 + var1.height + 0 - var3) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-        var7.a();
-        var6 = LangLa_fq.a((int) 5);
-        Binary2.a(var0, var6.b, (0 + var3) * DataCenter.gI().zoomLevel, 0 * DataCenter.gI().zoomLevel, (var1.width - var3 * 2) * DataCenter.gI().zoomLevel, 0, Blending.SourceOver);
-        var7 = mImage.b(var6, 0, 0, var6.c, var6.d, 180);
-        Binary2.a(var0, var7.b, (0 + var3) * DataCenter.gI().zoomLevel, (0 + var1.height + 0 - var6.c / DataCenter.gI().zoomLevel) * DataCenter.gI().zoomLevel, (var1.width - var3 * 2) * DataCenter.gI().zoomLevel, 0, Blending.SourceOver);
-        var7.a();
-        var7 = mImage.b(var6, 0, 0, var6.c, var6.d, 270);
-        Binary2.a(var0, var7.b, 0 * DataCenter.gI().zoomLevel, (0 + var3) * DataCenter.gI().zoomLevel, 0, (var1.height + 0 - var3 * 2) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-        var7.a();
-        var7 = mImage.b(var6, 0, 0, var6.c, var6.d, 90);
-        Binary2.a(var0, var7.b, (0 + var1.width - var6.c / DataCenter.gI().zoomLevel) * DataCenter.gI().zoomLevel, (0 + var3) * DataCenter.gI().zoomLevel, 0, (var1.height + 0 - var3 * 2) * DataCenter.gI().zoomLevel, Blending.SourceOver);
-        var7.a();
+    static void drawHudPanel(Pixmap target, int x, int y, int width, int height) {
+        int zoom = DataCenter.gI().zoomLevel;
+        x *= zoom;
+        y *= zoom;
+        width *= zoom;
+        height *= zoom;
+        target.setColor(Utlis.createColor(-1278446549L));
+        target.setBlending(Blending.SourceOver);
+        target.fillRectangle(x + zoom, y + zoom, width - 2 * zoom, height - 2 * zoom);
+        mImage corner = LangLa_fq.a(84);
+        mImage edge = LangLa_fq.a(5);
+        if (!hasHudPixels(corner) || !hasHudPixels(edge)) return;
+        int inset = corner.c;
+        if (width <= 2 * inset || height <= 2 * inset) return;
+        Binary2.a(target, corner.b, x, y, Blending.SourceOver);
+        mImage rotated = mImage.b(corner, 0, 0, corner.c, corner.d, -360);
+        Binary2.a(target, rotated.b, x + width - inset, y, Blending.SourceOver);
+        rotated.a();
+        rotated = mImage.b(corner, 0, 0, corner.c, corner.d, -180);
+        Binary2.a(target, rotated.b, x, y + height - inset, Blending.SourceOver);
+        rotated.a();
+        rotated = mImage.b(corner, 0, 0, corner.c, corner.d, -270);
+        Binary2.a(target, rotated.b, x + width - inset, y + height - inset, Blending.SourceOver);
+        rotated.a();
+        Binary2.a(target, edge.b, x + inset, y, width - 2 * inset, 0, Blending.SourceOver);
+        rotated = mImage.b(edge, 0, 0, edge.c, edge.d, 180);
+        Binary2.a(target, rotated.b, x + inset, y + height - edge.c, width - 2 * inset, 0, Blending.SourceOver);
+        rotated.a();
+        rotated = mImage.b(edge, 0, 0, edge.c, edge.d, 270);
+        Binary2.a(target, rotated.b, x, y + inset, 0, height - 2 * inset, Blending.SourceOver);
+        rotated.a();
+        rotated = mImage.b(edge, 0, 0, edge.c, edge.d, 90);
+        Binary2.a(target, rotated.b, x + width - edge.c, y + inset, 0, height - 2 * inset, Blending.SourceOver);
+        rotated.a();
     }
 
-    private void j(boolean var1) {
-        mConfig.gI().writeBoolean(14, var1);
-        this.S.a(!mConfig.gI().readBoolean(14));
-        LangLa_dz var10000;
-        if (var1) {
+    private void restoreQuestTrackerLayout() {
+        if (this.S == null || this.dF == null || this.dD == null) return;
+        boolean expanded = mConfig.gI().isQuestTrackerExpanded();
+        this.S.relayout(expanded);
+        updateQuestTrackerControls(expanded);
+    }
+
+    private void setQuestTrackerExpanded(boolean expanded) {
+        mConfig.gI().setQuestTrackerExpanded(expanded);
+        this.S.a(!expanded);
+        if (expanded) {
             this.S.f();
-            var10000 = (LangLa_dz) this.S.a();
-            byte var3 = 0;
-            var10000.e = var3;
         } else {
             this.S.e();
-            var10000 = (LangLa_dz) this.S.a();
-            short var2 = 180;
-            var10000.e = var2;
         }
+        updateQuestTrackerControls(expanded);
+    }
+
+    private void updateQuestTrackerControls(boolean expanded) {
+        this.dF.e = expanded ? 0 : 180;
+        this.dD.b(!expanded);
     }
 
     private void k(boolean var1) {
@@ -11004,6 +11077,7 @@ public class GameSrc extends MainScreen {
     }
 
     public void updateMove() {
+        MapAssetPrefetch.approach(this.mapID, Char.gI().cx, Char.gI().cy, DataCenter.gI().dataWayPoint);
         int var21;
         Item var5;
         boolean var4 = false;
@@ -11183,10 +11257,7 @@ public class GameSrc extends MainScreen {
 
             var13 = true;
             var23.t();
-            int c = 100;
-            while (var23.pointMove != null && var23.pointMove.getRe() >= 20 && AutoPro.isAuto(3) && c-- > 0) {
-                var23.t();
-            }
+
         }
     }
 

@@ -118,14 +118,9 @@ public class SettingsTab extends LangLa_fo {
             }
             this.s[3] = new LangLa_ce[beatdz.SettingsTab.$state_SettingsTab().arrayAuto.length];
             for (int i = 0; i < beatdz.SettingsTab.$state_SettingsTab().arrayAuto.length; i++) {
-                var5 = i;
-                if (var5 <= 6) {
-                    this.s[3][i] = this.a(this.z, this.A + var5 * this.l, beatdz.SettingsTab.$state_SettingsTab().arrayAuto[i], this, 2907 + i);
-                } else {
-
-                    var5 -= 7;
-                    this.s[3][i] = this.a(129, this.A + var5 * this.l, beatdz.SettingsTab.$state_SettingsTab().arrayAuto[i], this, 2907 + i);
-                }
+                int optionId = AutoOptions.idAt(i);
+                this.s[3][i] = this.a(this.z, this.A + i * this.l,
+                    beatdz.SettingsTab.$state_SettingsTab().arrayAuto[i], this, 2907 + optionId);
                 this.s[3][i].v = beatdz.SettingsTab.$state_SettingsTab().arrayAuto[i].contains("Auto");
                 this.B.a((LangLa_cs) this.s[3][i], 3);
             }
@@ -268,6 +263,11 @@ public class SettingsTab extends LangLa_fo {
                 this.zoomRadios[zoomOption] = this.a(zoomX, zoomY, "Zoom " + (zoomOption + 1), this, this.zoomKC);
                 this.B.a((LangLa_cs) this.zoomRadios[zoomOption], 2);
             }
+            LangLa_kc fpsChoice = new LangLa_kc(1008, FrameRate.selection());
+            for (int option = 0; option < 3; option++) {
+                this.B.a((LangLa_cs) this.a(16 + option * 78, this.A + 145,
+                        FrameRate.label(option), this, fpsChoice), 2);
+            }
 
             if (Gdx.app.getType() == ApplicationType.Desktop) {
                 this.l = 24;
@@ -339,7 +339,7 @@ public class SettingsTab extends LangLa_fo {
         for (var1 = 0; var1 < this.s[3].length; ++var1) {
 
             var10000 = this.s[3][var1];
-            var3 = this.a[var1 + 100] != -1;
+            var3 = AutoOptions.enabled(this.a, AutoOptions.idAt(var1));
             var10000.a = var3;
         }
 
@@ -464,6 +464,7 @@ public class SettingsTab extends LangLa_fo {
     }
 
     public void z() {
+        AutoOptions.disableRemoved(this.a);
         Binary.write("arr_auto_" + Char.gI().idEntity, this.a);
     }
 
@@ -498,6 +499,7 @@ public class SettingsTab extends LangLa_fo {
                 }
             }
         }
+        if (AutoOptions.disableRemoved(this.a)) this.z();
     }
 
     public void a(LangLa_jz var1, int var2, int var3) {
@@ -609,6 +611,13 @@ public class SettingsTab extends LangLa_fo {
         var1.close();
     }
 
+    public static boolean autoEnabled(int id) {
+        if (AutoOptions.removed(id)) return false;
+        SettingsTab settings = $state_SettingsTab().D;
+        if (settings == null) settings = gI();
+        return AutoOptions.enabled(settings.a, id);
+    }
+
     public static SettingsTab gI() {
         if (beatdz.SettingsTab.$state_SettingsTab().D == null) {
             beatdz.SettingsTab.$state_SettingsTab().D = new SettingsTab();
@@ -625,11 +634,12 @@ public class SettingsTab extends LangLa_fo {
     public void a(int var1, Object var2, LangLa_cy var3) {
         try {
             if (var1 >= 2907) {
-                var1 -= 2907;
-                var1 += 100;
-                this.a[var1] = (byte) (this.s[3][var1 - 100].a ? 0 : -1);
+                int optionId = var1 - 2907;
+                int row = AutoOptions.rowOf(optionId);
+                if (row < 0) return;
+                this.a[optionId + 100] = (byte) (this.s[3][row].a ? 0 : -1);
                 this.z();
-                DataCenter.gI().currentScreen.showMessage((this.s[3][var1 - 100].a ? "Bật " : "Tắt ") + beatdz.SettingsTab.$state_SettingsTab().arrayAuto[var1 - 100], -2560);
+                DataCenter.gI().currentScreen.showMessage((this.s[3][row].a ? "Bật " : "Tắt ") + beatdz.SettingsTab.$state_SettingsTab().arrayAuto[row], -2560);
             } else if (var1 == 100) {
                 try {
                     Message var7;
@@ -740,6 +750,9 @@ public class SettingsTab extends LangLa_fo {
                         case 1007:
                             AppListener.gI().canvas.setZoom(((LangLa_kc)var2).b + 1);
                             break;
+                        case 1008:
+                            FrameRate.select(((LangLa_kc)var2).b);
+                            break;
                     }
                 }
 
@@ -801,6 +814,7 @@ public class SettingsTab extends LangLa_fo {
         } else if (this.B.b.b == 2) {
             int zoom = Math.max(1, Math.min(4, mConfig.gI().readByte(25)));
             mFont.b(mFont.d, var1, "Zoom: " + (50 + zoom * 25) + "%", 130, this.A + 88, 0, -1, -16777216);
+            mFont.b(mFont.d, var1, "FPS thực tế: " + Gdx.graphics.getFramesPerSecond(), 16, this.A + 124, 0, -1, -16777216);
         } else {
             if (this.B.b.b == 4) {
                 Graphics var2 = var1;
@@ -961,17 +975,9 @@ this.arrayAuto = new String[]{
         "Nhận phúc lợi",
         "Ưu tiên đánh tinh anh",
         "Ưu tiên đánh thủ lĩnh",
-        "Speed hack",
         "Hiện đường khẽ Người",
         "Hiện đường khẽ Vật Phẩm",
-        "Hiện đường khẽ Npc",
-//        "Đóng băng quái",
-//        "Tự mua HPMP",
-//        "Tự mua Thức Ăn",
-//        "Nhồi máu cực nhanh",
-        "Đánh nhiều skill",
-//        "Đi xuyên tường",
-        "Dịch chuyển đến quái/vật phẩm",
+        "Hiện đường khẽ Npc"
     };
 }
 }

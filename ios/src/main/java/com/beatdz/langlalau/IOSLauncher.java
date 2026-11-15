@@ -19,13 +19,15 @@ public class IOSLauncher extends IOSApplication.Delegate {
         config.statusBarVisible = false;
         config.hideHomeIndicator = true;
         IOSApplication app = new IOSApplication(GameM.l(), config);
+        beatdz.FrameRate.install(fps -> ((org.robovm.apple.glkit.GLKViewController)
+                app.getUIViewController()).setPreferredFramesPerSecond(fps));
         checkForUpdate(app);
         return app;
     }
     private void checkForUpdate(IOSApplication application) {
         Thread worker = new Thread(() -> {
             try (NSAutoreleasePool pool = new NSAutoreleasePool()) {
-                String base = "http://103.77.172.222/langlaapp/langla-test/";
+                String base = com.langla.config.Endpoints.UPDATE_BASE;
                 byte[] json = beatdz.HttpDownloads.bytes(base + "version.json?t=" + System.currentTimeMillis(), 5000, 1024 * 1024);
                 com.badlogic.gdx.utils.JsonValue manifest = new com.badlogic.gdx.utils.JsonReader().parse(new String(json, "UTF-8"));
                 com.badlogic.gdx.utils.JsonValue ios = manifest.get("ios");

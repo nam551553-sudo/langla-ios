@@ -9,6 +9,7 @@ public class LangLa_ek {
    public int e;
    public int f;
    public String[] g;
+   String timeLabel;
    
 
    public LangLa_ek() {
@@ -21,6 +22,7 @@ public class LangLa_ek {
       this.d = var2;
       this.e = var5;
       this.f = var6;
+      this.timeLabel = Utlis.m(var3) + " - " + Utlis.m(var4);
    }
 
    public boolean a() {

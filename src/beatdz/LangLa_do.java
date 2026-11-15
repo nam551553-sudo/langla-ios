@@ -17,7 +17,7 @@ package beatdz;
          String url = var10000.append(DataCenter.a(this.a.d) + 1).append("/").append(this.a.d).toString();
          int downloaded = -1;
          for (int attempt = 0; attempt < 3; attempt++) {
-            try { downloaded = AssetArchives.download(url, false); break; }
+            try { downloaded = AssetArchives.download(url, false, this.a.b); break; }
             catch (java.io.IOException error) { if (attempt == 2) throw error; Utlis.sleep(1000L); }
          }
          // iOS creates/disposes interface images on the render thread at finalization.

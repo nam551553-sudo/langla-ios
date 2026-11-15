@@ -16,7 +16,7 @@ package beatdz;
             }
 
             synchronized(beatdz.LangLa_cz.$state_LangLa_cz().cU) {
-               beatdz.LangLa_cz.$state_LangLa_cz().cU.notify();
+               beatdz.LangLa_cz.$state_LangLa_cz().cU.notifyAll();
             }
          } catch (Exception var6) {
             Utlis.println(var6);

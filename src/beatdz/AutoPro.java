@@ -23,7 +23,7 @@ public class AutoPro {
 
     public static synchronized mImage getIconTool() {
         if (iconTool == null || iconTool.b == null) {
-            iconTool = loadToolImage("arr_icon", "logo-main.png", "resource/4.png");
+            iconTool = decodeToolImage(com.badlogic.gdx.Gdx.files.internal("resource/icons/icon-128.png").readBytes());
         }
         return iconTool;
     }
@@ -189,7 +189,7 @@ public class AutoPro {
     }
 
     public static boolean isAuto(int i) {
-        return SettingsTab.gI().a[i + 100] == 0;
+        return SettingsTab.autoEnabled(i);
     }
 
     public static void autoBuyItem(int func, int id, int amount) {
@@ -250,10 +250,12 @@ this.mk = "";
                 boolean b = false;
                 while (true) {
                     long var2 = System.currentTimeMillis();
+                    boolean backgroundWork = false;
 
                     try {
                         if (Session.gI().isConnected() && DataCenter.gI().currentScreen instanceof GameSrc) {
                             if (Graphics.m()) {
+                                backgroundWork = true;
                                 GameSrc.gI().updateMove();
                                 GameSrc.gI().Char_O();
                             }
@@ -284,7 +286,7 @@ this.mk = "";
                         ex.printStackTrace();
                     } finally {
                         int var15;
-                        if ((var15 = 28 - (int) (System.currentTimeMillis() - var2)) <= 0) {
+                        if ((var15 = (backgroundWork ? 28 : 250) - (int) (System.currentTimeMillis() - var2)) <= 0) {
                             var15 = 1;
                         }
                         Utlis.sleep((long) var15);

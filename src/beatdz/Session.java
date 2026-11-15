@@ -4,13 +4,15 @@ import beatdz.*;
 
 import beatdz.DataCenter;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.Vector;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class Session {
 
     private long s;
-    public boolean isConnected;
-    public boolean isConnecting;
+    public volatile boolean isConnected;
+    public volatile boolean isConnecting;
     public mSocket socket;
     public Writer writer;
     public Reader reader;
@@ -30,6 +32,8 @@ public class Session {
     private Thread threadWaitTimeOut;
     public Thread threadSendMessage;
     public Thread threadRecvMessage;
+    private final ArrayBlockingQueue<Runnable> incoming = new ArrayBlockingQueue<>(512);
+    private volatile int connectionVersion;
     
 
     public static Session gI() {
@@ -82,100 +86,95 @@ public class Session {
     }
 
     private void read(Reader var1, boolean var2) throws IOException {
+        read(var1, var2, 0);
+    }
+
+    private void read(Reader var1, boolean var2, int depth) throws IOException {
+        if (depth > 4) throw new IOException("Server packet nesting is too deep");
         byte var3 = var1.dis.readByte();
         byte var5 = 0;
         short var6 = 0;
         int var4;
         switch (var3) {
             case -128:
-                var3 = var1.dis.readByte();
+                var5 = var1.dis.readByte();
                 var4 = var1.dis.readInt();
                 break;
             case -86:
-                this.vMessage.clear();
-                gI().close();
-                DataCenter.gI().setScreen((MainScreen) LoginPCScreen.getScreenLogin());
+                dispatch(() -> {
+                    close();
+                    DataCenter.gI().setScreen(LoginPCScreen.getScreenLogin());
+                });
                 return;
             case -84:
-                GameSrc.gI().a(var1.dis.readInt(), var1.dis.readShort(), var1.dis.readShort(), true);
-                return;
-            case -80:
-                var5 = var1.dis.readByte();
-                var4 = var1.dis.readShort();
-                break;
-            case -79:
-                var6 = var1.dis.readShort();
-                var4 = var1.dis.readShort();
-                break;
             case 123:
                 final int entity = var1.dis.readInt();
                 final short x = var1.dis.readShort(), y = var1.dis.readShort();
-                dispatch(() -> GameSrc.gI().a(entity, x, y, false));
+                final boolean immediate = var3 == -84;
+                dispatch(() -> GameSrc.gI().a(entity, x, y, immediate));
                 return;
+            case -80:
+                var5 = var1.dis.readByte();
+                var4 = var1.dis.readUnsignedShort();
+                break;
+            case -79:
+                int count = var1.dis.readUnsignedShort();
+                if (count > 4096) throw new IOException("Too many batched server packets");
+                var6 = (short) count;
+                var4 = var1.dis.readUnsignedShort();
+                break;
             default:
                 var4 = var1.dis.readUnsignedShort();
         }
 
+        if (var4 < 0 || var4 > PacketPayload.MAX_BYTES) throw new IOException("Invalid server packet length: " + var4);
         byte[] var7 = new byte[var4];
-        int var10;
-        if (var2) {
-            var1.read(var7, 0, var7.length);
-        } else {
-            var10 = 0;
-
-            while (var4 > 0) {
-                int var8;
-                if (var4 - 2048 <= 0) {
-                    var8 = var4;
-                } else {
-                    var8 = 2048;
-                }
-
-                int var9;
-                if ((var9 = this.socket.a.available()) == 0) {
-                    Utlis.sleep(1L);
-                } else {
-                    if (var8 > var9) {
-                        var8 = var9;
-                    }
-
-                    var1.read(var7, var10, var8);
-                    var10 += var8;
-                    this.countRecv += var8;
-                    var4 -= var8;
-                }
-            }
-        }
+        var1.dis.readFully(var7);
+        if (!var2) this.countRecv += var7.length;
 
         //   System.out.println("recv: "+var3+", "+var5);
         if (var3 != -79) {
-            if (var3 != -80 && var3 != -128) {
-                this.read(new Message(var3, var7));
-            } else {
-                this.read(new Message(var5, Utlis.inflateByteArray(var7)));
-            }
+            // -128 is a long uncompressed frame on the server-to-client connection.
+            this.read(new Message(var3 == -80 || var3 == -128 ? var5 : var3,
+                    var3 == -80 ? PacketPayload.inflate(var7) : var7));
         } else {
-            var1 = new Reader(Utlis.inflateByteArray(var7));
-
-            for (var10 = 0; var10 < var6; ++var10) {
-                this.read(var1, true);
-            }
-
-            var1.close();
+            Reader batch = new Reader(PacketPayload.inflate(var7));
+            try {
+                for (int var10 = 0; var10 < var6; ++var10) this.read(batch, true, depth + 1);
+                if (batch.dis.available() != 0) throw new IOException("Trailing batched server data");
+            } finally { batch.close(); }
         }
     }
 
-    private void read(Message var1) {
-        // Apply a complete packet between frames, under its owning account.
-        // The receive thread must not expose half-built HUD/settings to rendering.
+    private void read(Message var1) throws IOException {
         dispatch(() -> readOnGameThread(var1));
     }
 
-    private void dispatch(Runnable action) {
-        Runnable owned = MultiSession.bind(action);
-        if (com.badlogic.gdx.Gdx.app != null) com.badlogic.gdx.Gdx.app.postRunnable(owned);
-        else owned.run();
+    private void dispatch(Runnable action) throws InterruptedIOException {
+        if (com.badlogic.gdx.Gdx.app == null) {
+            action.run();
+            return;
+        }
+        int version = connectionVersion;
+        try {
+            incoming.put(() -> {
+                if (version == connectionVersion) action.run();
+            });
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw new InterruptedIOException("Packet delivery interrupted");
+        }
     }
+
+    void applyIncoming(long deadline, int limit) {
+        for (int handled = 0; handled < limit && System.nanoTime() < deadline; handled++) {
+            Runnable action = incoming.poll();
+            if (action == null) return;
+            action.run();
+        }
+    }
+
+    int connectionVersion() { return connectionVersion; }
 
     private void readOnGameThread(Message var1) {
         try {
@@ -213,6 +212,8 @@ public class Session {
 
     public void close() {
         try {
+            connectionVersion++;
+            incoming.clear();
             if (this.isConnecting) {
                 this.handler.b();
             } else if (this.isConnected) {

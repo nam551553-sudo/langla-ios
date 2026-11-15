@@ -1743,7 +1743,7 @@ public class Caption {
         ls = "Chưa đủ bộ cường hóa cấp 4";
         lt = "% bỏ qua kháng tính";
         lu = "Tăng thêm";
-        lv = "Làng Lá Test";
+        lv = "Làng Lá Blue";
         lw = "Đề cử";
         lx = "Vứt bỏ vật phẩm sẽ tắt chế độ tự động nhặt vật phẩm. Bạn có đồng ý vứt bỏ vật phẩm không?";
         ly = "Tùy chỉnh tối ưu:";
@@ -2062,7 +2062,7 @@ public class Caption {
         rx = new String[]{"Ghép đá", "Cường hóa", "Nâng cấp bùa nổ", "Tách cường hóa", "Dịch chuyển trang bị", "Khảm ngọc", "Tách ngọc khảm", "Ghép cải trang", "Tách cải trang"};
         ry = new String[]{"Giá cũ: ", "Giá mới: ", "Còn: # lượt mua", "Hết hàng"};
         rz = new String[]{"- Sau khi tách cường hóa trang bị", "sẽ trở về trạng thái ban đầu"};
-        rA = new String[]{"Khu vàng", "Vàng khóa", "Khu Rank", "Khuyến mãi"};
+        rA = new String[]{"Khu vàng", "Vàng khóa", "Khu Rank", "Khuyến mãi", "Lục Đạo"};
         rB = new String[]{"Mua vào", "Bán ra"};
         rC = new String[]{"gần", "hết giờ"};
         rD = new String[]{"Số vỏ sò hiện có:", "Mức cược: ", "Bắt đầu", "vỏ sò", "Thưởng", "Vỏ sò", "Tiếp", "", "", ""};
@@ -2074,7 +2074,7 @@ public class Caption {
         rJ = new String[]{"Thông tin", "Thành viên", "Vật phẩm", "Kỹ năng", "Xem log"};
         rK = new String[]{"Ngồi yên", "Về làng", "Quay về", "Hồi sinh"};
         rL = new String[]{"Bơm HP:", "Bơm MP:", "Phạm vi đánh:", "Sử dụng chiêu hỗ trợ", "Dùng thức ăn", "Dùng vàng hồi sinh", "Tự uống rượu", "Tự ghép đá (trên 50%)", "Tự quay về điểm chết", "Tự dọn rác", "Né Linh Thú"};
-        rM = new String[]{"Sức mạnh: tăng tấn công (gợi ý tăng 35%)\nChakra: tăng tấn công, HP, MP, né tránh (gợi ý tăng 20%)\nMp cơ bản: tăng Mp (gợi ý tăng 10%)\nHp cơ bản: tăng Hp (gợi ý tăng 35%)\nDưới cấp 15 được tẩy điểm miễn phí tại giáo viên dạy võ.\nLưu ý: điểm chí mạng chỉ tối đa là 3.000, nếu vượt quá 3.000 thì cứ 1 điểm chí mạng sẽ được tăng thêm 2 điểm lực tấn công", "Không sử dụng sức mạnh để làm tấn công\nChakra: tăng tấn công, HP, MP, né tránh (gợi ý tăng 20%)\nMp cơ bản: tăng Mp và tấn công (gợi ý tăng 40%)\nHp cơ bản: tăng Hp (gợi ý tăng 40%)\nDưới cấp 15 được tẩy điểm miễn phí tại giáo viên dạy võ.\nLưu ý: điểm chí mạng chỉ tối đa là 3.000, nếu vượt quá 3.000 thì cứ 1 điểm chí mạng sẽ được tăng thêm 2 điểm lực tấn công"};
+        rM = new String[]{"Sức mạnh: tăng tấn công bằng Chakra trên mỗi điểm tiềm năng.\nChakra: tăng tấn công, HP, MP, né tránh (gợi ý tăng 20%)\nMp cơ bản: tăng Mp (gợi ý tăng 10%)\nHp cơ bản: tăng Hp (gợi ý tăng 35%)\nDưới cấp 15 được tẩy điểm miễn phí tại giáo viên dạy võ.\nLưu ý: điểm chí mạng chỉ tối đa là 3.000, nếu vượt quá 3.000 thì cứ 1 điểm chí mạng sẽ được tăng thêm 2 điểm lực tấn công", "Sức mạnh: tăng tấn công bằng Chakra trên mỗi điểm tiềm năng.\nChakra: tăng tấn công, HP, MP, né tránh (gợi ý tăng 20%)\nMp cơ bản: tăng Mp và tấn công (gợi ý tăng 40%)\nHp cơ bản: tăng Hp (gợi ý tăng 40%)\nDưới cấp 15 được tẩy điểm miễn phí tại giáo viên dạy võ.\nLưu ý: điểm chí mạng chỉ tối đa là 3.000, nếu vượt quá 3.000 thì cứ 1 điểm chí mạng sẽ được tăng thêm 2 điểm lực tấn công"};
         rN = new String[]{"Tự động", "Nhặt đồ", "Cấu hình", "Auto Game", "Phím tắt"};
         rO = new String[]{"Điểm Hokage Đai Trán", "Điểm Hokage Vũ khí", "Điểm Hokage Áo", "Điểm Hokage Dây Thừng", "Điểm Hokage Bao Tay", "Điểm Hokage Móc Sắt", "Điểm Hokage Quần", "Điểm Hokage Ống Tiêu", "Điểm Hokage Giày", "Điểm Hokage Túi Nhẫn giả"};
         rP = new String[]{"Tin lân cận", "Tin thế giới", "Tin Làng", "Tin hệ thống", "Tin gia tộc", "Tin nhóm", "Tin riêng", "Tin lớp", "Ẩn âm thanh chính mình", "Giảm lag tin chat", "Ẩn âm thanh thế giới", "Âm thanh nhạc nền", "Ẩn âm thanh gia tộc", "Âm thanh hiệu ứng"};
@@ -2175,7 +2175,7 @@ public class Caption {
         tG = new String[]{"Sora", "Inuzuka", "Yamato", "Karu", "Kikunojou", "Kuranai", "Haruna", "Tamanaka", "Yakomo"};
         tH = new String[]{"Lớp: Kiếm\nĐịnh vị: Cận chiến\nHệ: Lôi\nMức thao tác: Khó\nThầy: Fugaki", "Lớp: Ám khí\nĐịnh vị: Viễn chiến\nHệ: Thổ\nMức thao tác: Dễ\nThầy: Doria", "Lớp: Gậy\nĐịnh vị: Viễn chiến\nHệ: Thủy\nMức thao tác: Khó\nCô: Nohara", "Lớp: Đao\nĐịnh vị: Viễn chiến\nHệ: Hỏa\nMức thao tác: Vừa\nThầy: Nawasaki", "Lớp: Dao\nĐịnh vị: Cận chiến\nHệ: Phong\nMức thao tác: Vừa\nThầy: Ultimo"};
         tI = new String[]{"Set 1", "Set 2", "Set 3", "All"};
-        tJ = new String[]{"Mặc định", "Ẩn cải trang", "Ẩn thời trang", "Ẩn cải trang và thời trang"};
+        tJ = new String[]{"Hiện tất cả", "Hiện Tanto", "Hiện áo choàng", "Ẩn cải trang", "Ẩn thời trang", "Ẩn cải trang và thời trang", "Ẩn Tanto", "Ẩn áo choàng"};
     }
 
     static {

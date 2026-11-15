@@ -5,7 +5,7 @@ import zipfile
 
 root = Path(__file__).resolve().parent.parent
 folders = ['src', 'resource', 'music', 'sound', 'support', 'DanhHieu', 'ios',
-           'core', 'desktop', 'launcher', 'gradle', '.github', 'tools/ci']
+           'core', 'desktop', 'launcher', 'gradle', '.github', 'tools/ci', 'test/shared']
 excluded = {'build', '.gradle', '__pycache__', '.idea', '.git'}
 secret_suffixes = {'.pk8', '.pem', '.jks', '.keystore', '.p12', '.pfx', '.mobileprovision'}
 files = []
@@ -15,7 +15,7 @@ for folder in folders:
                 and path.suffix.lower() not in secret_suffixes):
             files.append(path)
 for name in ['build.gradle', 'settings.gradle', 'gradlew', 'gradlew.bat',
-             'version.properties', '.gitignore', 'README-GITHUB-IOS.md']:
+             'version.properties', 'release-config.json', '.gitignore', 'README-GITHUB-IOS.md']:
     files.append(root / name)
 files.append(Path(__file__).resolve())
 with zipfile.ZipFile(sys.argv[1], 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as archive:

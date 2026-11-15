@@ -14,3 +14,4 @@ web-dist/
 *.pfx
 *.mobileprovision
 .DS_Store
+.build-all.lock

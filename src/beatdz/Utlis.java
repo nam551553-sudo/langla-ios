@@ -60,33 +60,21 @@ public class Utlis {
     }
 
     public static int getDay() {
-        Calendar calendar;
-        (calendar = Calendar.getInstance()).setTimeInMillis(System.currentTimeMillis() + beatdz.Utlis.$state_Utlis().timeAdd);
-        byte day = 0;
-        switch (calendar.get(7)) {
-            case 1:
-                day = 6;
-                break;
-            case 2:
-                day = 0;
-                break;
-            case 3:
-                day = 1;
-                break;
-            case 4:
-                day = 2;
-                break;
-            case 5:
-                day = 3;
-                break;
-            case 6:
-                day = 4;
-                break;
-            case 7:
-                day = 5;
-        }
+        return activityDay(activitySeconds());
+    }
 
-        return day;
+    static long activitySeconds() {
+        // All scheduled activities use Vietnam time, even if the device uses another zone.
+        return time() / 1000L + 7 * 3600L;
+    }
+
+    static int activityDay(long localSeconds) {
+        // January 1, 1970 was Thursday, at index 3 in the Monday-first calendar.
+        return (int) ((localSeconds / 86400L + 3) % 7);
+    }
+
+    static int activitySecondOfDay(long localSeconds) {
+        return (int) (localSeconds % 86400L);
     }
 
     public static void sleep(long var0) {
@@ -742,37 +730,16 @@ public class Utlis {
     }
 
     public static String m(int var0) {
-        Calendar var1;
-        (var1 = Calendar.getInstance()).setTime(new Date(946573200129L + (long) var0 * 1000L));
-        return o(var1.get(11)) + ":" + o(var1.get(12));
+        return o(var0 / 3600) + ":" + o(var0 / 60 % 60);
     }
 
     public static boolean d(int var0, int var1) {
-        Calendar var2;
-        (var2 = Calendar.getInstance()).setTimeInMillis(System.currentTimeMillis() + beatdz.Utlis.$state_Utlis().timeAdd);
-        var2.set(11, 0);
-        var2.set(12, 0);
-        var2.set(13, 0);
-        var2.setTimeInMillis(var2.getTimeInMillis() + (long) var0 * 1000L);
-        Calendar var6;
-        (var6 = Calendar.getInstance()).setTimeInMillis(System.currentTimeMillis() + beatdz.Utlis.$state_Utlis().timeAdd);
-        var6.set(11, 0);
-        var6.set(12, 0);
-        var6.set(13, 0);
-        var6.setTimeInMillis(var6.getTimeInMillis() + (long) var1 * 1000L);
-        long var4 = System.currentTimeMillis() + beatdz.Utlis.$state_Utlis().timeAdd;
-        return var2.getTimeInMillis() <= var4 && var4 <= var6.getTimeInMillis();
+        int second = activitySecondOfDay(activitySeconds());
+        return var0 <= second && second < var1;
     }
 
     public static int n(int var0) {
-        Calendar var1;
-        (var1 = Calendar.getInstance()).setTimeInMillis(System.currentTimeMillis() + beatdz.Utlis.$state_Utlis().timeAdd);
-        var1.set(11, 0);
-        var1.set(12, 0);
-        var1.set(13, 0);
-        var1.setTimeInMillis(var1.getTimeInMillis() + (long) var0 * 1000L);
-        long var2 = System.currentTimeMillis() + beatdz.Utlis.$state_Utlis().timeAdd;
-        return (int) (var1.getTimeInMillis() - var2) / 1000;
+        return var0 - activitySecondOfDay(activitySeconds());
     }
 
     public static String f(long var0) {

@@ -26,9 +26,7 @@ import java.util.Arrays;
                byte[] var8 = var1;
                Writer var2 = this.a.writer;
 
-               for(int var4 = 0; var4 < var8.length; ++var4) {
-                  var2.dos.writeByte(var8[var4]);
-               }
+               var2.dos.write(var8);
 
                this.a.writer.dos.flush();
                var10000 = this.a;
@@ -36,7 +34,11 @@ import java.util.Arrays;
 
             synchronized(this.a.lockSendMessage) {
                try {
-                  this.a.lockSendMessage.wait(3600000L);
+                  // Test the queue while holding the same lock as the producer's notify.
+                  // A packet enqueued between draining and waiting must never lose its wakeup.
+                  while (this.a.isConnected && this.a.vMessage.isEmpty()) {
+                     this.a.lockSendMessage.wait(1000L);
+                  }
                } catch (Exception var5) {
                   Utlis.println(var5);
                }
