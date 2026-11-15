@@ -102,6 +102,17 @@ try:
                     process.kill()
     text = Path('ios-native-smoke.log').read_text(errors='replace')
     print('Simulator process exit code:', process.returncode, flush=True)
+    # Keep the result independently of NSLog/--console buffering during System.exit.
+    container = subprocess.run(['xcrun', 'simctl', 'get_app_container', udid, bundle, 'data'],
+                               capture_output=True, text=True, check=True).stdout.strip()
+    result_file = Path(container) / 'Documents/ios-native-result.txt'
+    result = ''
+    if result_file.is_file():
+        result = result_file.read_text(errors='replace')
+        Path('ios-native-result.txt').write_text(result)
+        print('Persisted native test result:\n' + result, flush=True)
+        text += '\n' + result
+        Path('ios-native-smoke.log').write_text(text)
     if 'PASS IOS_NATIVE_STARTUP' not in text and 'FAIL IOS_NATIVE_STARTUP' not in text:
         pid_match = re.search(re.escape(bundle) + r':\s*(\d+)', text)
         app_alive = False
@@ -139,7 +150,8 @@ try:
                     shutil.copy2(report, diagnostics / report.name)
                     print('Copied native crash report:', report.name, flush=True)
     print(text[-20000:])
-    if 'PASS IOS_NATIVE_STARTUP' not in text:
+    if ('PASS IOS_NATIVE_STARTUP' not in text or 'FAIL IOS_NATIVE_STARTUP' in text
+            or 'IOS_NATIVE_EXIT_CODE=0' not in result):
         raise SystemExit('Native iOS startup did not reach login; inspect ios-native-smoke.log')
 finally:
     subprocess.run(['xcrun', 'simctl', 'shutdown', udid], check=False)
