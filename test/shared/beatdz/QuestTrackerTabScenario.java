@@ -9,28 +9,34 @@ public final class QuestTrackerTabScenario {
     private static final int COLLAPSE_TRACKER = 1101;
 
     public static void verify() {
+        trace("select root");
         MultiSession.select(0);
         ByteBuffer map = ByteBuffer.allocate(15);
         map.putShort((short) 0).putShort((short) 0).putShort((short) 1200).putShort((short) 600)
                 .put((byte) 0).putShort((short) 0).putShort((short) 0).putShort((short) 0);
         Binary.write("arr_map_" + MAP, map.array());
 
+        trace("open first map");
         GameSrc first = openMap(0, 2);
         checkTracker(first, true);
         first.a(COLLAPSE_TRACKER, null, first.S.a());
         checkTracker(first, false);
 
+        trace("open second tab");
         selectOrOpenTab(1);
         GameSrc second = openMap(1, 3);
         checkTracker(second, true);
+        trace("select root");
         MultiSession.select(0);
         checkTracker(first, false);
         MultiSession.select(1);
         checkTracker(second, true);
+        trace("render texture-only icons");
         renderWithTextureOnlyIcons(second);
         check(contains(second.ak, "3/9"), "tab 2 displays its own quest progress");
 
         second.a(COLLAPSE_TRACKER, null, second.S.a());
+        trace("select root");
         MultiSession.select(0);
         first.a(COLLAPSE_TRACKER, null, first.S.a());
         MultiSession.select(1);
@@ -50,8 +56,10 @@ public final class QuestTrackerTabScenario {
             checkTracker(game, true);
             int progress = slot == 0 ? 2 : slot == 1 ? 3 : slot + 2;
             check(contains(game.ak, progress + "/9"), "restored quest progress in tab " + (slot + 1));
+            trace("tap movement tab " + slot);
             checkTapMovement(slot);
         }
+        trace("check switch cancels press");
         checkSwitchCancelsPress();
     }
 
@@ -102,6 +110,7 @@ public final class QuestTrackerTabScenario {
     }
 
     private static GameSrc openMap(int task, int progress) {
+        trace("map data access");
         DataCenter data = DataCenter.gI();
         data.MapTemplate = new MapTemplate[]{new MapTemplate(MAP)};
         data.MapTemplate[MAP].name = "Test map";
@@ -122,12 +131,14 @@ public final class QuestTrackerTabScenario {
         quest.putShort((short) task).put((byte) 0).putShort((short) progress);
         Session.gI().handler.a(new Message((byte) 103, quest.array()));
         check(game.Task == task && game.idRequire == progress, "quest packet before HUD creation");
+        trace("render map");
         render(game);
         check(!data.aH, "HUD cache waits for the map controls");
         ByteBuffer map = ByteBuffer.allocate(30);
         map.putShort((short) 1).putShort((short) MAP).putShort((short) 180).putShort((short) 200)
                 .putShort((short) 0).put((byte) 0).putShort((short) 0).putShort((short) 0)
                 .put((byte) 0).putLong(0L).putInt(0).put((byte) 0).put((byte) 0);
+        trace("apply map packet");
         Session.gI().handler.a(new Message((byte) -103, map.array()));
         check(game.ak != null && game.X != null && game.af != null && game.V == null, "game map HUD");
         return game;
@@ -136,6 +147,7 @@ public final class QuestTrackerTabScenario {
     private static void checkTapMovement(int slot) {
         int x = 138 + slot * 6;
         int y = 109;
+        trace("map data access");
         DataCenter data = DataCenter.gI();
         data.j = 200 + slot * 10;
         data.k = 48;
@@ -192,6 +204,7 @@ public final class QuestTrackerTabScenario {
             LangLa_fq.$state_LangLa_fq().e.put((short) id, icon);
         }
         check(LangLa_mg.$state_LangLa_mg().g == null, "HUD has yet to render");
+        trace("render map");
         render(game);
         mImage panel = LangLa_mg.$state_LangLa_mg().g;
         check(DataCenter.gI().aH && panel != null && panel.a != null, "quest HUD draws when icons have no pixmap");
@@ -224,5 +237,9 @@ public final class QuestTrackerTabScenario {
 
     private static void check(boolean result, String description) {
         if (!result) throw new AssertionError(description);
+    }
+    private static void trace(String step) {
+        System.out.println("IOS_SCENARIO " + MultiSession.selected() + " " + step);
+        System.out.flush();
     }
 }

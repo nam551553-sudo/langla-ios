@@ -1,5 +1,7 @@
 """Build and run the CI-only app on a fresh simulator; require actual login readiness."""
 import json
+import re
+import signal
 import os
 from pathlib import Path
 import plistlib
@@ -100,6 +102,32 @@ try:
                     process.kill()
     text = Path('ios-native-smoke.log').read_text(errors='replace')
     print('Simulator process exit code:', process.returncode, flush=True)
+    if 'PASS IOS_NATIVE_STARTUP' not in text and 'FAIL IOS_NATIVE_STARTUP' not in text:
+        pid_match = re.search(re.escape(bundle) + r':\s*(\d+)', text)
+        app_alive = False
+        if pid_match:
+            try:
+                os.kill(int(pid_match.group(1)), 0)
+                app_alive = True
+            except ProcessLookupError:
+                pass
+        print('Simulator application still alive:', app_alive, flush=True)
+        if app_alive:
+            predicate = 'process == "LangLaBlue"'
+            for _ in range(15):
+                unified = subprocess.run(['xcrun', 'simctl', 'spawn', udid, 'log', 'show',
+                    '--last', '2m', '--style', 'compact', '--predicate', predicate],
+                    capture_output=True, text=True, timeout=15).stdout
+                records = [line for line in unified.splitlines()
+                           if 'IOS_NATIVE' in line or 'IOS_SCENARIO' in line]
+                if records:
+                    text += '\n' + '\n'.join(records) + '\n'
+                    Path('ios-native-smoke.log').write_text(text)
+                if 'PASS IOS_NATIVE_STARTUP' in text or 'FAIL IOS_NATIVE_STARTUP' in text:
+                    break
+                time.sleep(2)
+    if 'PASS IOS_NATIVE_STARTUP' not in text:
+        time.sleep(3)
     diagnostics = Path('ios-native-diagnostics')
     diagnostics.mkdir(exist_ok=True)
     roots = [Path.home() / 'Library/Logs/DiagnosticReports',
@@ -107,7 +135,7 @@ try:
     for root in roots:
         if root.exists():
             for report in root.rglob('*'):
-                if report.is_file() and 'LangLa' in report.name and report.suffix in ('.ips', '.crash'):
+                if report.is_file() and ('LangLa' in report.name or 'JetsamEvent' in report.name) and report.suffix in ('.ips', '.crash'):
                     shutil.copy2(report, diagnostics / report.name)
                     print('Copied native crash report:', report.name, flush=True)
     print(text[-20000:])

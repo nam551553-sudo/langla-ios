@@ -12,6 +12,11 @@ public class IOSStartupSmoke extends IOSLauncher {
     private long optionalIconRequested;
     private long baseIconRequested;
     @Override protected IOSApplication createApplication() {
+        Thread.setDefaultUncaughtExceptionHandler((thread, failure) -> {
+            System.out.println("FAIL IOS_NATIVE_STARTUP uncaught on " + thread.getName());
+            failure.printStackTrace(System.out);
+            System.out.flush();
+        });
         IOSApplication application = super.createApplication();
         final long started = System.nanoTime();
         Thread monitor = new Thread(() -> {
