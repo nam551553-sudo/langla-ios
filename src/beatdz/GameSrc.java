@@ -5887,7 +5887,10 @@ public class GameSrc extends MainScreen {
         try {
             short var2 = var1.reader.dis.readShort();
             if (var2 == -1) {
-                bulkItemUse.acknowledge(this, var1.reader.dis.readInt(), var1.readShort());
+                int request = var1.reader.dis.readInt();
+                short used = var1.readShort();
+                if (used > 0) refreshItemUseInventory = true;
+                bulkItemUse.acknowledge(this, request, used);
                 return;
             }
             Item var3;
@@ -6097,13 +6100,14 @@ public class GameSrc extends MainScreen {
             Item var1;
             (var1 = new Item()).read(var0);
             int var4 = var1.getAmount();
-            if (Char.gI().arrItemBag[var1.index] != null) {
-                var4 -= Char.gI().arrItemBag[var1.index].getAmount();
+            Item previous = Char.gI().arrItemBag[var1.index];
+            if (previous != null && previous.id == var1.id) {
+                var4 -= previous.getAmount();
             }
 
             Char.gI().arrItemBag[var1.index] = var1;
             if (var1.expiry != 0L) {
-                if (var1.id < 269 || var1.id > 273) {
+                if (var4 > 0 && (var1.id < 269 || var1.id > 273)) {
                     String name = var1.getItemTemplate().name;
                     if (!gI().bulkItemUse.recordReward(name, var4)) {
                         LangLa_kw.a(7, Caption.bz, Caption.k + " " + var4 + " " + name);

@@ -7,6 +7,11 @@ import java.math.BigDecimal;
 import java.util.Vector;
 
 public class LangLa_cj extends LangLa_cz {
+   static final int MOB_TARGET_WIDTH = 174;
+   static final int MOB_TARGET_HEIGHT = 58;
+   static final int MOB_TARGET_LOWER_Y = 76;
+   private static final int EFFECT_ROW_X = 5;
+   private static final int EFFECT_SLOT_WIDTH = 18;
    public Vector a = new Vector();
    public Vector b;
    public Vector c;
@@ -361,17 +366,17 @@ public class LangLa_cj extends LangLa_cz {
          Graphics var12 = var1;
 
          try {
-            if (GameSrc.gI().aA != null) {
-               if (GameSrc.gI().aA instanceof Char) {
-                  drawLivingTarget(var12, GameSrc.gI().aA);
-               } else if (GameSrc.gI().aA instanceof Npc) {
-                  drawLivingTarget(var12, GameSrc.gI().aA);
-               } else {
-                  Mob var18;
-                  if (GameSrc.gI().aA instanceof Mob && (var18 = (Mob)GameSrc.gI().aA).getMobTemplate().type != 10) {
-                     drawMobTarget(var12, var18);
-                  }
+            GameSrc game = GameSrc.gI();
+            Entity target = game.aA;
+            if (target instanceof Char || target instanceof Npc) {
+               drawLivingTarget(var12, target);
+            } else if (hasMobTarget(target)) {
+               int x = mobTargetTopX(game);
+               int y = x < 0 ? MOB_TARGET_LOWER_Y : 0;
+               if (x < 0) {
+                  x = mobTargetLowerX(DataCenter.gI().widthScreen);
                }
+               drawMobTarget(var12, (Mob)target, x, y);
             }
          } catch (Exception var9) {
          }
@@ -435,24 +440,51 @@ public class LangLa_cj extends LangLa_cz {
          beatdz.LangLa_cj.$state_LangLa_cj().targetPortraitFrame = Binary.createImage(com.badlogic.gdx.Gdx.files.internal("resource/zzzzzz.png").readBytes());
    }
 
-   private static void drawMobTarget(Graphics graphics, Mob mob) {
+   static boolean hasMobTarget(Entity target) {
+      if (!(target instanceof Mob)) return false;
+      MobTemplate template = ((Mob)target).getMobTemplate();
+      return template != null && template.type != 10;
+   }
+
+   static int mobTargetTopX(GameSrc game) {
+      int rightDockX = game.U == null ? DataCenter.gI().widthScreen - 86 : game.U.cx;
+      return mobTargetTopX(rightDockX, Char.gI().vEffect.size(), AppListener.gI().o);
+   }
+
+   static int mobTargetTopX(int rightDockX, int effectCount, int effectOffset) {
+      int afterEffects = EFFECT_ROW_X + effectOffset + effectCount * EFFECT_SLOT_WIDTH;
+      int x = Math.max(140, afterEffects);
+      return x + MOB_TARGET_WIDTH + 3 <= rightDockX ? x : -1;
+   }
+
+   static int mobTargetLowerX(int screenWidth) {
+      return Math.max(0, screenWidth - MOB_TARGET_WIDTH - 4);
+   }
+
+   static int noticeYForMobTarget(int noticeY, int topTargetX) {
+      return topTargetX < 0 ? noticeY : Math.max(noticeY, MOB_TARGET_HEIGHT + 6);
+   }
+
+   private static void drawMobTarget(Graphics graphics, Mob mob, int x, int y) {
       ensureTargetFrame();
-      int hpWidth = mob.hpFull <= 0 ? 0 : (int)(96L * Math.max(0, Math.min(mob.hp, mob.hpFull)) / mob.hpFull);
-      graphics.f(0x3f1016); graphics.c(178, 23, 96, 9);
-      graphics.f(0xdb1830); graphics.c(178, 23, hpWidth, 9);
-      graphics.f(0xff7777); graphics.c(178, 23, hpWidth, 2);
+      int hpWidth = barWidth(mob.hp, mob.hpFull);
+      int barX = x + 58;
+      graphics.f(0x3f1016); graphics.c(barX, y + 23, 96, 9);
+      graphics.f(0xdb1830); graphics.c(barX, y + 23, hpWidth, 9);
+      graphics.f(0xff7777); graphics.c(barX, y + 23, hpWidth, 2);
       // EXP is the kill reward sent by the server, not a monster experience-progress ratio.
-      graphics.f(mob.exp > 0 ? 0x8239b9 : 0x22163d); graphics.c(178, 37, 96, 8);
-      if (mob.exp > 0) { graphics.f(0xd676f5); graphics.c(178, 37, 96, 2); }
-      drawMobPortrait(graphics, mob, 155, 43);
-      graphics.a(beatdz.LangLa_cj.$state_LangLa_cj().targetPortraitFrame, 0, 0, beatdz.LangLa_cj.$state_LangLa_cj().targetPortraitFrame.c, beatdz.LangLa_cj.$state_LangLa_cj().targetPortraitFrame.d, 0, 120, 0,
-         174 * DataCenter.gI().zoomLevel, 58 * DataCenter.gI().zoomLevel, 0);
+      graphics.f(mob.exp > 0 ? 0x8239b9 : 0x22163d); graphics.c(barX, y + 37, 96, 8);
+      if (mob.exp > 0) { graphics.f(0xd676f5); graphics.c(barX, y + 37, 96, 2); }
+      drawMobPortrait(graphics, mob, x + 35, y + 43);
+      mImage frame = $state_LangLa_cj().targetPortraitFrame;
+      int zoom = DataCenter.gI().zoomLevel;
+      graphics.a(frame, 0, 0, frame.c, frame.d, 0, x, y, MOB_TARGET_WIDTH * zoom, MOB_TARGET_HEIGHT * zoom, 0);
       String name = mob.f();
       while (name.length() > 1 && mFont.a(mFont.d, name) > 101) name = name.substring(0, name.length() - 1);
-      mFont.a(mFont.d, graphics, name, 227, 11, 2, -16646423, -11184811);
-      mFont.a(mFont.d, graphics, "Lv." + mob.level, 155, 49, 2, -1, -10275328);
-      mFont.a((BitmapFont)Graphics.b(78), graphics, targetNumber(mob.hp) + "/" + targetNumber(mob.hpFull), 226, 28, 2, -1, -10275328);
-      mFont.a((BitmapFont)Graphics.b(78), graphics, "EXP +" + targetNumber(mob.exp), 226, 41, 2, -1, -10275328);
+      mFont.a(mFont.d, graphics, name, x + 107, y + 11, 2, -16646423, -11184811);
+      mFont.a(mFont.d, graphics, "Lv." + mob.level, x + 35, y + 49, 2, -1, -10275328);
+      mFont.a((BitmapFont)Graphics.b(78), graphics, targetNumber(mob.hp) + "/" + targetNumber(mob.hpFull), x + 106, y + 28, 2, -1, -10275328);
+      mFont.a((BitmapFont)Graphics.b(78), graphics, "EXP +" + targetNumber(mob.exp), x + 106, y + 41, 2, -1, -10275328);
    }
    private static void drawMobPortrait(Graphics graphics, Mob mob, int x, int baseline) {
       MobTemplate template = mob.getMobTemplate();
@@ -667,14 +699,14 @@ public class LangLa_cj extends LangLa_cz {
    }
 
    private static void c(Graphics var0) {
-      int var1 = 5 + AppListener.gI().o;
+      int var1 = EFFECT_ROW_X + AppListener.gI().o;
       int var2 = 47 + AppListener.gI().o / 2;
 
       for(int var4 = 0; var4 < Char.gI().vEffect.size(); ++var4) {
          Effect var3;
          (var3 = (Effect)Char.gI().vEffect.elementAt(var4)).a(var0, var1, var2, Char.gI());
          var3.setXY(var1, var2);
-         var1 += 18;
+         var1 += EFFECT_SLOT_WIDTH;
       }
 
    }

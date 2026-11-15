@@ -7,6 +7,7 @@ import com.badlogic.gdx.Application.ApplicationType;
 import com.listener.SDKListener;
 import com.tgame.model.Caption;
 import java.io.File;
+import java.io.IOException;
 import java.util.Vector;
 
 public class Controller implements IMessageHandler {
@@ -2037,11 +2038,15 @@ public class Controller implements IMessageHandler {
     }
 
     public static void readLatHinh(Message msg) {
-        if (GameSrc.gI().H() instanceof LatHinh) {
-            ((LatHinh) GameSrc.gI().H()).read(msg);
-        } else {
-            LatHinh lathinh = new LatHinh(GameSrc.gI());
-            GameSrc.gI().a(lathinh);
+        GameSrc game = GameSrc.gI();
+        try {
+            if (game.H() instanceof LatHinh) {
+                ((LatHinh) game.H()).read(msg);
+            } else if (msg.reader.dis.available() == 0) {
+                game.a(new LatHinh(game));
+            }
+        } catch (IOException error) {
+            Utlis.println(error);
         }
     }
 

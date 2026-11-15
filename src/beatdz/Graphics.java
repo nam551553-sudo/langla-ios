@@ -33,6 +33,7 @@ public class Graphics {
     public Rectangle c = new Rectangle();
     Rectangle d;
     public SpriteBatch spriteBatch;
+    private ShaderProgram artworkShader;
     public ShapeRenderer shapeRenderer;
     public Canvas canvas;
     private int r;
@@ -383,7 +384,8 @@ public class Graphics {
     public SpriteBatch getSpriteBatch() {
         try {
             if (this.spriteBatch == null && DataCenter.gI().b()) {
-                this.spriteBatch = new SpriteBatch();
+                artworkShader = ArtworkQuality.createShader();
+                this.spriteBatch = new SpriteBatch(1000, artworkShader);
             }
         } catch (Exception var2) {
             Utlis.println(var2);
@@ -1282,6 +1284,10 @@ public class Graphics {
             if (this.spriteBatch != null) {
                 this.spriteBatch.dispose();
                 this.spriteBatch = null;
+            }
+            if (artworkShader != null) {
+                artworkShader.dispose();
+                artworkShader = null;
             }
 
         } catch (Exception var2) {

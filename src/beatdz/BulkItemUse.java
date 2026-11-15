@@ -5,7 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 final class BulkItemUse {
-    private static final int CHUNK_SIZE = 8;
+    private static final int CHUNK_SIZE = 16;
+    private static final int REWARD_DETAIL_LINES = 6;
     private final Map<String, Long> rewards = new LinkedHashMap<>();
     private int remaining, requested, completed, itemId, token, inFlight;
     private int connectionVersion;
@@ -94,8 +95,15 @@ final class BulkItemUse {
     }
 
     private void publishRewards() {
-        rewards.forEach((name, amount) -> LangLa_kw.a(7, Caption.bz,
-                Caption.k + " " + Utlis.numberFormat(amount) + " " + name));
+        int lines = 0;
+        for (Map.Entry<String, Long> entry : rewards.entrySet()) {
+            if (lines == REWARD_DETAIL_LINES) break;
+            LangLa_kw.a(7, Caption.bz, Caption.k + " " + Utlis.numberFormat(entry.getValue()) + " " + entry.getKey());
+            lines++;
+        }
+        if (rewards.size() > lines) {
+            LangLa_kw.a(7, Caption.bz, "Và " + (rewards.size() - lines) + " loại vật phẩm khác trong túi.");
+        }
         rewards.clear();
     }
 }

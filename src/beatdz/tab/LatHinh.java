@@ -5,425 +5,276 @@ import beatdz.Char;
 import beatdz.DataCenter;
 import beatdz.Graphics;
 import beatdz.Item;
+import beatdz.ItemTemplate;
 import beatdz.LangLa_cy;
 import beatdz.LangLa_dz;
 import beatdz.LangLa_fo;
 import beatdz.LangLa_fq;
-import beatdz.LangLa_ii;
-import beatdz.LangLa_ij;
 import beatdz.LangLa_jz;
 import beatdz.MainScreen;
 import beatdz.Message;
+import beatdz.Session;
 import beatdz.Utlis;
-import beatdz.mFont;
+
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
 import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class LatHinh extends LangLa_fo {
+    private static final int CARD_COUNT = 40;
+    private static final int COVER_ITEM = 774;
+    private static final int TICKET_ITEM = 932;
+    private static final int FIRST_CARD = 2907;
+    private static final int AUTO_FLIP = 9999;
+    private static final int SHUFFLE = 10000;
+    private static final int RESET = 10001;
+    private static final int MOVE_MS = 180;
+    private static final int RESPONSE_TIMEOUT_MS = 10_000;
+    private static final AtomicInteger REQUESTS = new AtomicInteger();
 
-    public Item[] arrayI = new Item[40];
-    public BoxItem[] arrayBoxItem = new BoxItem[40];
-    public int c2 = 0;
-    private long delayOpen = System.currentTimeMillis() * 2;
-    private int tick;
-    private BoxItem selectItem;
-    private boolean ran;
-    public LangLa_dz btn_TuLat;
-    public LangLa_dz btn_ThuLai;
-    public LangLa_dz btn_ThayDoi;
-    private long delayOpen2;
-    public Short[] idItem = new Short[40];
-    private boolean isReadItem;
+    private enum Phase { COVERED, WAITING, REVEALED }
 
-    public LatHinh(MainScreen var1) {
+    private final int[] x = new int[CARD_COUNT];
+    private final int[] y = new int[CARD_COUNT];
+    private final int[] oldX = new int[CARD_COUNT];
+    private final int[] oldY = new int[CARD_COUNT];
+    private final int[] results = new int[CARD_COUNT];
+    private final int[] rewardIcons = new int[CARD_COUNT];
+    private final LangLa_jz[] cardButtons = new LangLa_jz[CARD_COUNT];
+    private final int coverIcon;
+    private final LangLa_dz autoFlip;
+    private final LangLa_dz shuffle;
+    private final LangLa_dz reset;
+
+    private Phase phase = Phase.COVERED;
+    private int selected = -1;
+    private Item prize;
+    private boolean haveResult;
+    private boolean shuffling;
+    private long started;
+    private Session pendingSession;
+    private int connectionVersion;
+    private int request;
+
+    public LatHinh(MainScreen owner) {
         this.a(320, 240);
-        this.p = var1;
+        this.p = owner;
         this.r = false;
         this.cF = 2;
-        btn_TuLat = this.a((this.width / 2) - 30 - 90, getZ(this.height, 87), "Tự Lật", this, 9999, -8);
-        btn_ThayDoi = this.a((this.width / 2) - 30, getZ(this.height, 87), "Thay Đổi", this, 10000, -8);
-        btn_ThuLai = this.a((this.width / 2) - 30 + 90, getZ(this.height, 87), "Thử Lại", this, 10001, -8);
-        btn_ThuLai.a(true);
+        int bottom = height * 87 / 100;
+        autoFlip = this.a(width / 2 - 120, bottom, "Tự Lật", this, AUTO_FLIP, -8);
+        shuffle = this.a(width / 2 - 30, bottom, "Thay Đổi", this, SHUFFLE, -8);
+        reset = this.a(width / 2 + 60, bottom, "Thử Lại", this, RESET, -8);
+        coverIcon = icon(COVER_ITEM);
+        resetBoard();
     }
 
-    public void read(Message msg) {
+    public void read(Message message) {
+        if (phase != Phase.WAITING || haveResult) return;
         try {
-            for (int i = 0; i < 40; i++) {
-                short id = msg.readShort();
-                idItem[i] = id;
+            int bytes = message.reader.dis.available();
+            if (bytes == Integer.BYTES) {
+                if (message.reader.dis.readInt() == request) resetBoard();
+                return;
             }
-            isReadItem = true;
-        } catch (IOException ex) {
-            Logger.getLogger(LatHinh.class.getName()).log(Level.SEVERE, null, ex);
+            int boardBytes = CARD_COUNT * Short.BYTES;
+            if (bytes != boardBytes && bytes != boardBytes + Integer.BYTES) return;
+            for (int i = 0; i < CARD_COUNT; i++) results[i] = message.readShort() & 0xffff;
+            if (bytes > boardBytes && message.reader.dis.readInt() != request) return;
+
+            for (int i = 0; i < CARD_COUNT; i++) rewardIcons[i] = icon(results[i]);
+            prize = rewardIcons[selected] >= 0 ? new Item(results[selected]) : null;
+            haveResult = true;
+        } catch (IOException error) {
+            Utlis.println(error);
         }
     }
 
-    @Override
-    public void a(int var1, Object var2, LangLa_cy var3) {
-    }
+    @Override public void a(int action, Object payload, LangLa_cy source) { }
 
-    @Override
-    public void a(int var1, Object var2) {
-    }
+    @Override public void a(int action, Object payload) { }
 
-    @Override
-    public void a(Graphics var1) {
-        this.a(var1, this.cx, this.cy, this.width, this.height, "Lật hình", (byte) 2, this.r);
-
-        for (int i = 0; i < arrayI.length; i++) {
-            arrayI[i] = new Item(774);
-            arrayI[i].level = 0;
-            arrayI[i].rangeNE = true;
-        }
-        int count = 90;
-        int size = 35;
-        int z = getZ(this.width, count) / size;
-        for (int i = 0; i < arrayBoxItem.length; i++) {
-            if (arrayBoxItem[i] == null) {
-                arrayBoxItem[i] = new BoxItem();
-                arrayBoxItem[i].item = arrayI[i];
-                int x = 6 + ((i % z) * size) + (getZ(this.width, 100 - count) / 2);
-                int y = ((i / z) * size) + 35;
-                arrayBoxItem[i].x = x;
-                arrayBoxItem[i].y = y;
-                arrayBoxItem[i].xMain = x;
-                arrayBoxItem[i].yMain = y;
-            }
-        }
-        tick++;
-        int delay = 50;
-        long time = 300;
-        if (time < 200) {
-            time = 200;
-        }
-        BoxItem boxMain = selectItem;
-        for (int i = 0; i < arrayBoxItem.length;
-                i++) {
-            BoxItem box = arrayBoxItem[i];
-            if (box.x2 > 0 || box.y2 > 0) {
-                box.range = 0;
-            } else {
-                if (tick % 40 <= 5) {
-                    box.range = new Random().nextBoolean() ? -1 : 1;
-                } else {
-                    box.range = 0;
-                }
-            }
-            if (box.move) {
-                b(var1, box.x, box.y, null, false);
-                Binary2.a(var1, -5, 0, box.x + 2, box.y + 2, 25, (int) 25);
-            } else {
-                b(var1, box.xMain, box.yMain, null, false);
-                Binary2.a(var1, -5, 0, box.xMain + 2, box.yMain + 2, 25, (int) 25);
-            }
-        }
-        if (boxMain != null && ran) {
-
-            b(var1, boxMain.x + boxMain.range, boxMain.y + boxMain.range, null, true);
-            Binary2.a(var1, -5, 0, boxMain.x + boxMain.range + 2, boxMain.y + boxMain.range + 2, 25, (int) 25);
-
-        }
-        boolean c = false;
-        for (int i = 0; i < arrayBoxItem.length;
-                i++) {
-            BoxItem box = arrayBoxItem[i];
-            if (box.isChange) {
-                var1.a((float) 1.2F, (float) 0.1F);
-                box.range2++;
-                box.tick++;
-                box.range2 = (box.range2) % 11;
-                if (box.tick < 10) {
-                    if (box.idTemp != -1) {
-                        LangLa_fq.a(var1, DataCenter.gI().ItemTemplate[box.idTemp].idIcon, Utlis.c((byte) (box.range2)), box.x + 14, box.y + 15, 3);
-                    } else {
-                        LangLa_fq.a(var1, box.item.getItemTemplate().idIcon, Utlis.c((byte) (box.range2)), box.x + 14, box.y + 15, 3);
-                    }
-                } else {
-                    LangLa_fq.a(var1, DataCenter.gI().ItemTemplate[774].idIcon, Utlis.c((byte) (box.range2)), box.x + 14, box.y + 15, 3);
-
-                }
-                var1.h();
-            } else if (box != boxMain) {
-
-                if (selectItem != null) {
-                    box.range2++;
-                    box.range2 = (box.range2) % 11;
-                }
-
-                if (box.idTemp != -1) {
-
-                    LangLa_fq.a(var1, DataCenter.gI().ItemTemplate[box.idTemp].idIcon, 0, box.x + 14, box.y + 15, 3);
-
-                } else {
-
-                    if (selectItem == null) {
-                        if (tick % 40 <= 5) {
-                            var1.a((float) 1.2F, (float) 0.1F);
-                        }
-                        LangLa_fq.a(var1, box.item.getItemTemplate().idIcon, Utlis.c((byte) (box.range2)), box.x + box.range + 14, box.y + 15, 3);
-                        if (tick % 40 <= 5) {
-                            var1.h();
-                        }
-                    } else {
-                        LangLa_fq.a(var1, box.item.getItemTemplate().idIcon, Utlis.c((byte) (box.range2)), box.x + 14, box.y + 15, 3);
-                    }
-
-                }
-
-            } else {
-
-                box.item.level = (byte) (selectItem != null && selectItem == box ? 4 : 0);
-            }
-
-            if (System.currentTimeMillis() - delayOpen >= 200L || box.move) {
-                if (box.idTemp != -1) {
-                    time = 50;
-                }
-                if (box.move) {
-
-                    time = 200;
-                }
-                if (box.x2 > 0) {
-                    if (box.x != box.x2) {
-                        c = true;
-                        if (box.countX == -1) {
-                            box.countX = (box.x2 - box.x);
-                        }
-                        delay = (int) (Utlis.positive(box.countX) / (time / 25));
-                        if (delay == 0) {
-                            delay = 1;
-                        }
-                        if (box.x > box.x2) {
-                            box.x -= delay;
-                            if (box.x < box.x2) {
-                                box.x = box.x2;
-                            }
-                        } else {
-
-                            box.x += delay;
-                            if (box.x > box.x2) {
-                                box.x = box.x2;
-                            }
-                        }
-
-                    } else {
-                        box.x2 = 0;
-                    }
-                }
-                if (box.y2 > 0) {
-                    if (box.y != box.y2) {
-                        c = true;
-                        if (box.countY == -1) {
-                            box.countY = box.y2 - box.y;
-                        }
-                        delay = (int) (Utlis.positive(box.countY) / (time / 25));
-                        if (delay == 0) {
-                            delay = 1;
-                        }
-                        if (box.y > box.y2) {
-                            box.y -= delay;
-                            if (box.y < box.y2) {
-                                box.y = box.y2;
-                            }
-                        } else {
-                            box.y += delay;
-                            if (box.y > box.y2) {
-                                box.y = box.y2;
-                            }
-                        }
-                    } else {
-                        box.y2 = 0;
-                    }
-                }
-                if (!c) {
-                    box.move = false;
-                }
-            }
-        }
-        if (selectItem == null) {
-            if (!c) {
-
-                btn_ThayDoi.a(false);
-            }
-        }
-        if (selectItem != null && System.currentTimeMillis() - delayOpen >= 200L) {
-            if (!c && ran && isReadItem) {
-                ran = false;
-                isReadItem = false;
-                btn_ThuLai.a(false);
-                for (int i = 0; i < arrayBoxItem.length; i++) {
-                    if (arrayBoxItem[i] != boxMain) {
-                        arrayBoxItem[i].x2 = arrayBoxItem[i].xMain;
-                        arrayBoxItem[i].y2 = arrayBoxItem[i].yMain;
-                        arrayBoxItem[i].countX = -1;
-                        arrayBoxItem[i].countY = -1;
-                        arrayBoxItem[i].idTemp = idItem[i];
-                    }else{
-                        boxMain.item = new Item(idItem[i]);
-                    }
-                }
-
-            }
-        }
-        if (boxMain != null && !ran && !boxMain.isChange) {
-            if (tick % 40 <= 5) {
-                var1.a((float) 1.2F, (float) 0.5F);
-            }
-            b(var1, boxMain.x + boxMain.range, boxMain.y + boxMain.range, boxMain.item, true);
-            if (tick % 40 <= 5) {
-                var1.h();
-            }
+    @Override public void a(Graphics graphics) {
+        long now = now();
+        advance(now);
+        this.a(graphics, cx, cy, width, height, "Lật hình", (byte)2, r);
+        float progress = fraction(now);
+        if (phase == Phase.WAITING && progress >= 1f) {
+            drawCard(graphics, selected, x[selected], y[selected]);
         } else {
+            for (int i = 0; i < CARD_COUNT; i++) {
+                if (i != selected) drawMovingCard(graphics, i, progress);
+            }
+            if (selected >= 0) drawMovingCard(graphics, selected, progress);
         }
-        if (delayOpen2 != 0 && System.currentTimeMillis() - delayOpen2 >= 0) {
-            delayOpen2 = 0L;
-            btn_ThayDoi.a(false);
-            btn_TuLat.a(false);
-            btn_ThuLai.a(true);
-            delayOpen = System.currentTimeMillis() * 2;
-            selectItem = null;
-            arrayBoxItem = new BoxItem[arrayBoxItem.length];
-        }
-
-        this.b(var1);
+        this.b(graphics);
     }
 
-    public void a(LangLa_jz var1, int var2, int var3) {
-        if (var1.b >= 2907 && var1.b < 9999) {
-            if(!checkVeMayMan()){
-                    DataCenter.gI().currentScreen.showMessage("Bạn không có vé may mắn để tham gia", -65536);
-                    return;
-            }
-            if (selectItem == null) {
-                btn_ThayDoi.a(true);
-                btn_TuLat.a(true);
-                int var1z = var1.b - 2907;
-                selectCard((byte) var1z);
-                selectItem = arrayBoxItem[var1z];
-                c2 = var1z;
-                ran = true;
-                delayOpen = System.currentTimeMillis();
-                for (int i = 0; i < arrayBoxItem.length; i++) {
-                    arrayBoxItem[i].countX = -1;
-                    arrayBoxItem[i].countY = -1;
+    private void drawMovingCard(Graphics graphics, int index, float progress) {
+        int left = x[index], top = y[index];
+        if (shuffling) {
+            left = interpolate(oldX[index], left, progress);
+            top = interpolate(oldY[index], top, progress);
+        } else if (phase == Phase.WAITING) {
+            left = interpolate(left, x[selected], progress);
+            top = interpolate(top, y[selected], progress);
+        } else if (phase == Phase.REVEALED) {
+            left = interpolate(x[selected], left, progress);
+            top = interpolate(y[selected], top, progress);
+        }
+        drawCard(graphics, index, left, top);
+    }
 
-                    arrayBoxItem[i].x2 = selectItem.xMain;
-                    arrayBoxItem[i].y2 = selectItem.yMain;
-                }
-            }
-        } else if (var1.b == 9999) {
-             if(!checkVeMayMan()){
-                    DataCenter.gI().currentScreen.showMessage("Bạn không có vé may mắn để tham gia", -65536);
-                    return;
-            }
-            if (selectItem == null&&checkVeMayMan()) {
-                btn_ThayDoi.a(true);
-                btn_TuLat.a(true);
-                int var1z = Utlis.nextInt(arrayBoxItem.length);
-                selectCard((byte) var1z);
-                selectItem = arrayBoxItem[var1z];
-                c2 = var1z;
-                ran = true;
-                delayOpen = System.currentTimeMillis();
-                for (int i = 0; i < arrayBoxItem.length; i++) {
-                    arrayBoxItem[i].countX = -1;
-                    arrayBoxItem[i].countY = -1;
-                    arrayBoxItem[i].x2 = selectItem.xMain;
-                    arrayBoxItem[i].y2 = selectItem.yMain;
-                }
-            }
-        } else if (var1.b == 10000) {
-            btn_ThayDoi.a(true);
-            ArrayList<BoxItem> list = new ArrayList(Arrays.asList(arrayBoxItem));
-            ArrayList<BoxItem> list2 = new ArrayList(Arrays.asList(arrayBoxItem.clone()));
-            while (list.size() > 0 && list2.size() > 0) {
-                int random = Utlis.nextInt(list.size());
-                int random2 = Utlis.nextInt(list2.size());
-                BoxItem b1 = list.remove(random);
-                BoxItem b2 = list2.remove(random2);
-                b1.countX = -1;
-                b1.countY = -1;
-                b1.x2 = b2.x;
-                b1.y2 = b2.y;
-                b1.xMain = b2.x;
-                b1.yMain = b2.y;
-                b1.move = true;
+    private void drawCard(Graphics graphics, int index, int left, int top) {
+        boolean focus = index == selected;
+        if (focus && phase == Phase.REVEALED && prize != null) {
+            b(graphics, left, top, prize, true);
+            return;
+        }
+        b(graphics, left, top, null, focus);
+        Binary2.a(graphics, -5, 0, left + 2, top + 2, 25, (int)25);
+        int iconId = phase == Phase.REVEALED ? rewardIcons[index] : coverIcon;
+        if (iconId >= 0) LangLa_fq.a(graphics, iconId, 0, left + 14, top + 15, 3);
+    }
 
-            }
-        } else if (var1.b == 10001) {
-            delayOpen2 = System.currentTimeMillis() + 100;
-            for (int i = 0; i < arrayBoxItem.length; i++) {
-                arrayBoxItem[i].tick = 0;
-                arrayBoxItem[i].isChange = true;
-
+    @Override public void a(LangLa_jz button, int px, int py) {
+        int action = button.b;
+        if (action == RESET && phase == Phase.REVEALED) {
+            resetBoard();
+        } else if (phase == Phase.COVERED && !shuffling) {
+            if (action == SHUFFLE) {
+                shuffleBoard();
+            } else if (action == AUTO_FLIP || (action >= FIRST_CARD && action < FIRST_CARD + CARD_COUNT)) {
+                requestFlip(action == AUTO_FLIP ? Utlis.nextInt(CARD_COUNT) : action - FIRST_CARD);
             }
         }
     }
-    public boolean checkVeMayMan(){
-        for(Item item: Char.gI().arrItemBag){
-            if(item!= null &&item.id==932){
-                return true;
-            }
+
+    private void requestFlip(int index) {
+        if (!checkVeMayMan()) {
+            DataCenter.gI().currentScreen.showMessage("Bạn không có vé may mắn để tham gia", -65536);
+            return;
+        }
+        try {
+            pendingSession = Session.gI();
+            if (!pendingSession.isConnected()) return;
+            connectionVersion = pendingSession.connectionVersion();
+            request = REQUESTS.incrementAndGet();
+            if (request == 0) request = REQUESTS.incrementAndGet();
+            selected = index;
+            haveResult = false;
+            phase = Phase.WAITING;
+            started = now();
+            updateButtons();
+            Message message = new Message((byte)122);
+            message.writeByte(102);
+            message.writeByte(index);
+            message.writeInt(request);
+            message.send();
+        } catch (IOException error) {
+            resetBoard();
+            Utlis.println(error);
+        }
+    }
+
+    public boolean checkVeMayMan() {
+        Item[] bag = Char.gI().arrItemBag;
+        if (bag == null) return false;
+        for (Item item : bag) {
+            if (item != null && item.id == TICKET_ITEM && item.getAmount() > 0) return true;
         }
         return false;
     }
 
-    public Vector c() {
-        Vector vec = super.c();
-        for (int i = 0; i < arrayBoxItem.length; i++) {
-            if (arrayBoxItem[i] != null) {
-                vec.add(new LangLa_jz(2907 + i, arrayBoxItem[i].xMain, arrayBoxItem[i].yMain, arrayBoxItem[i].xMain + 35, arrayBoxItem[i].yMain + 35, null, this));
-            }
+    private void shuffleBoard() {
+        System.arraycopy(x, 0, oldX, 0, CARD_COUNT);
+        System.arraycopy(y, 0, oldY, 0, CARD_COUNT);
+        for (int i = CARD_COUNT - 1; i > 0; i--) {
+            int j = Utlis.nextInt(i + 1);
+            int left = x[i], top = y[i];
+            x[i] = x[j]; y[i] = y[j];
+            x[j] = left; y[j] = top;
         }
-        return vec;
+        shuffling = true;
+        started = now();
+        updateCardButtons();
+        updateButtons();
     }
 
-    public void selectCard(byte index) {
-        try {
-            Message msg = new Message((byte) 122);
-            msg.writeByte(102);
-            msg.writeByte(index);
-            msg.send();
-        } catch (Exception ex) {
+    private void resetBoard() {
+        selected = -1;
+        prize = null;
+        haveResult = false;
+        shuffling = false;
+        pendingSession = null;
+        phase = Phase.COVERED;
+        int columns = Math.max(1, width * 90 / 100 / 35);
+        for (int i = 0; i < CARD_COUNT; i++) {
+            x[i] = 6 + width / 20 + (i % columns) * 35;
+            y[i] = 35 + (i / columns) * 35;
+        }
+        updateCardButtons();
+        updateButtons();
+    }
 
+    private void updateCardButtons() {
+        for (int i = 0; i < CARD_COUNT; i++) {
+            cardButtons[i] = new LangLa_jz(FIRST_CARD + i, x[i], y[i], x[i] + 35, y[i] + 35, null, this);
         }
     }
 
-    @Override
-    public void b() {
+    private void updateButtons() {
+        boolean ready = phase == Phase.COVERED && !shuffling;
+        autoFlip.a(!ready);
+        shuffle.a(!ready);
+        reset.a(phase != Phase.REVEALED);
     }
 
-    public int getZ(int total, int p) {
-        return total * p / 100;
+    @Override public Vector c() {
+        Vector buttons = super.c();
+        if (phase == Phase.COVERED && !shuffling) {
+            for (LangLa_jz card : cardButtons) buttons.add(card);
+        }
+        return buttons;
     }
 
-    public static class BoxItem {
+    @Override public void b() {
+        advance(now());
+    }
 
-        public int range;
-        public int range2;
-        public int x;
-        public int y;
-        public int x2;
-        public int y2;
+    private void advance(long now) {
+        if (shuffling && now - started >= MOVE_MS) {
+            shuffling = false;
+            updateButtons();
+        }
+        if (phase != Phase.WAITING) return;
+        if (haveResult && now - started >= MOVE_MS) {
+            phase = Phase.REVEALED;
+            started = now;
+            pendingSession = null;
+            updateButtons();
+        } else if (pendingSession != Session.gI() || pendingSession.connectionVersion() != connectionVersion
+                || !pendingSession.isConnected() || now - started >= RESPONSE_TIMEOUT_MS) {
+            resetBoard();
+            DataCenter.gI().currentScreen.showMessage("Lượt lật vé đã dừng. Kiểm tra túi trước khi thử lại.", -65536);
+        }
+    }
 
-        public int tickX1;
-        public int tickX2;
-        public int tickY1;
-        public int tickY2;
-        public int countX = -1;
-        public int countY = -1;
-        public Item item;
-        private int xMain;
-        private int yMain;
-        private boolean move;
-        private int idTemp = -1;
-        private boolean isChange;
-        public int tick;
+    private float fraction(long now) {
+        return Math.max(0f, Math.min(1f, (now - started) / (float) MOVE_MS));
+    }
+
+    private static int interpolate(int start, int end, float progress) {
+        return start + Math.round((end - start) * progress);
+    }
+
+    private static long now() {
+        return System.nanoTime() / 1_000_000L;
+    }
+
+    private static int icon(int id) {
+        ItemTemplate[] templates = DataCenter.gI().ItemTemplate;
+        return templates != null && id >= 0 && id < templates.length && templates[id] != null
+                ? templates[id].idIcon : -1;
     }
 }

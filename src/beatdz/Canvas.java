@@ -98,8 +98,9 @@ public abstract class Canvas implements Screen {
             DataCenter.gI().zoomLevel = 1;
         }
 
-        if (mConfig.gI().readBoolean(15)) {
-            --DataCenter.gI().zoomLevel;
+        boolean reduced = mConfig.gI().readBoolean(15);
+        if (reduced) {
+            DataCenter.gI().zoomLevel = Math.max(1, DataCenter.gI().zoomLevel - 1);
         }
 
         DataCenter.gI().zoomLevelScreen = DataCenter.gI().zoomLevel;
@@ -109,9 +110,8 @@ public abstract class Canvas implements Screen {
             DataCenter.gI().zoomLevel = 3;
         }
 
-        if (DataCenter.gI().zoomLevel > 4) {
-            DataCenter.gI().zoomLevel = 4;
-        }
+        DataCenter.gI().zoomLevel = ArtworkQuality.assetScale(DataCenter.gI().zoomLevel,
+                Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight(), isMobile(), reduced);
 
     }
 

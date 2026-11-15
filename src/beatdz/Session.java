@@ -174,7 +174,7 @@ public class Session {
         }
     }
 
-    int connectionVersion() { return connectionVersion; }
+    public int connectionVersion() { return connectionVersion; }
 
     private void readOnGameThread(Message var1) {
         try {

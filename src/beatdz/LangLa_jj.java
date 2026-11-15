@@ -22,8 +22,14 @@ public class LangLa_jj extends LangLa_cz {
    public void a(Graphics var1) {
       int var2 = var1.a;
       int var3 = var1.b;
-      if (GameSrc.gI().cE instanceof GameSrc) {
-         this.a(var1, this.cx, this.cy);
+      GameSrc game = GameSrc.gI();
+      if (game.cE instanceof GameSrc) {
+         int y = this.cy;
+         if (!game.bb && game.Q != null && DataCenter.gI().currentScreen == game
+                 && LangLa_cj.hasMobTarget(game.aA)) {
+            y = LangLa_cj.noticeYForMobTarget(y, LangLa_cj.mobTargetTopX(game));
+         }
+         this.a(var1, this.cx, y);
       } else {
          this.a(var1, this.cx, this.cy - 42);
       }
