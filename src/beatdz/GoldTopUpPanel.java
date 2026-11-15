@@ -1,17 +1,10 @@
 package beatdz;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.utils.Base64Coder;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.regex.Pattern;
 
 /** Client for the server's existing bank top-up events; never credits currency locally. */
 public final class GoldTopUpPanel extends LangLa_fo {
-    private static final Pattern EMBEDDED_PNG = Pattern.compile("href=\"data:image/png;base64,([A-Za-z0-9+/=]+)\"");
     @Override public void a(int event, Object value) { }
     @Override public void a(int event, Object value, LangLa_cy source) { }
     @Override public void b() { tiers.b(); }
@@ -40,8 +33,14 @@ public final class GoldTopUpPanel extends LangLa_fo {
     static boolean validQrUrl(String value) {
         try {
             URI uri = new URI(value);
-            return "https".equalsIgnoreCase(uri.getScheme()) && "img.vietqr.io".equalsIgnoreCase(uri.getHost())
-                && uri.getUserInfo() == null && (uri.getPort() == -1 || uri.getPort() == 443);
+            if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getUserInfo() != null
+                    || uri.getFragment() != null || (uri.getPort() != -1 && uri.getPort() != 443)) return false;
+            if ("img.vietqr.io".equalsIgnoreCase(uri.getHost())) return true;
+            URI base = new URI(ClientConfig.DATA_URL);
+            URI endpoint = base.resolve("charge/bank-qr.php");
+            return base.getHost() != null && base.getHost().equalsIgnoreCase(uri.getHost())
+                && endpoint.getRawPath().equals(uri.getRawPath())
+                && (uri.getRawQuery() == null || uri.getRawQuery().matches("ref=LLDC[A-F0-9]{16}"));
         } catch (Exception e) { return false; }
     }
 
@@ -57,52 +56,27 @@ public final class GoldTopUpPanel extends LangLa_fo {
         status = url == null ? "QR không hợp lệ" : "Đang tải QR...";
         if (url == null) return;
         final String source = url;
-        Thread worker = new Thread(() -> {
+        Thread worker = new Thread(MultiSession.bind(() -> {
             byte[] result = null;
-            HttpURLConnection connection = null;
             try {
-                URI imageUri = new URI(source);
-                if (imageUri.getPath().endsWith(".png")) {
-                    String svgUrl = source.replaceFirst("\\.png(?=\\?|$)", ".svg");
-                    imageUri = new URI(svgUrl);
-                }
-                connection = (HttpURLConnection)imageUri.toURL().openConnection();
-                connection.setConnectTimeout(10000);
-                connection.setReadTimeout(10000);
-                connection.setInstanceFollowRedirects(false);
-                if (connection.getResponseCode() != 200) throw new java.io.IOException();
-                try (InputStream input = connection.getInputStream(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-                    byte[] buffer = new byte[8192];
-                    int count;
-                    while ((count = input.read(buffer)) != -1) {
-                        if (output.size() + count > 2 * 1024 * 1024) throw new java.io.IOException();
-                        output.write(buffer, 0, count);
-                    }
-                    byte[] bytes = output.toByteArray();
-                    String contentType = connection.getContentType();
-                    if (contentType != null && contentType.startsWith("image/svg+xml")) {
-                        java.util.regex.Matcher png = EMBEDDED_PNG.matcher(new String(bytes, StandardCharsets.UTF_8));
-                        if (png.find()) result = Base64Coder.decode(png.group(1));
-                    } else if (contentType != null && contentType.startsWith("image/png")) {
-                        result = bytes;
-                    }
-                }
+                byte[] bytes = HttpDownloads.bytes(source, 15000, 2 * 1024 * 1024);
+                if (validQrPng(bytes)) result = bytes;
             } catch (Exception ignored) {
                 // The browser fallback remains available; never log payment references or URLs.
-            } finally { if (connection != null) connection.disconnect(); }
+            }
             final byte[] image = result;
             Gdx.app.postRunnable(MultiSession.bind(() -> {
                 if (closed || generation != ticket) return;
                 if (image != null) qr = mImage.a(image, 0, image.length);
                 status = qr == null ? "Không tải được QR; chọn Mở QR" : "";
             }));
-        }, "topup-qr");
+        }), "topup-qr");
         worker.setDaemon(true);
         worker.start();
     }
 
     @Override public void a(Graphics graphics) {
-        a(graphics, cx, cy, width, height, "Nạp Vàng", (byte)2, false);
+        a(graphics, cx, cy, width, height, "Nạp Coin", (byte)2, false);
         if (qr != null) {
             int size = 142;
             float scale = Math.min((float)size / qr.c, (float)size / qr.d);
@@ -142,5 +116,14 @@ public final class GoldTopUpPanel extends LangLa_fo {
         closed = true;
         ++generation;
         if (qr != null) { qr.a(); qr = null; }
+    }
+
+    static boolean validQrPng(byte[] bytes) {
+        if (bytes == null || bytes.length < 24 || bytes[0] != (byte)137 || bytes[1] != 80
+                || bytes[2] != 78 || bytes[3] != 71 || bytes[4] != 13 || bytes[5] != 10
+                || bytes[6] != 26 || bytes[7] != 10) return false;
+        int w = ((bytes[16]&255)<<24)|((bytes[17]&255)<<16)|((bytes[18]&255)<<8)|(bytes[19]&255);
+        int h = ((bytes[20]&255)<<24)|((bytes[21]&255)<<16)|((bytes[22]&255)<<8)|(bytes[23]&255);
+        return w > 0 && h > 0 && w <= 2048 && h <= 2048;
     }
 }
