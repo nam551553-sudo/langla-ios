@@ -35,7 +35,9 @@ final class CostumeCape {
     private CostumeCape() { }
 
     static boolean isNewBody(LangLa_jr part) {
-        return part.a == CostumeTanto.BORUTO_BODY || part.a == CostumeTanto.KAWAKI_BODY || (part.a >= FIRST_FULL_BODY_PART && part.a < FIRST_FULL_BODY_PART + SHOULDER_OFFSETS.length);
+        return part.a == CostumeTanto.BORUTO_BODY || part.a == CostumeTanto.KAWAKI_BODY
+                || part.a == CostumeTanto.MADARA_BODY
+                || (part.a >= FIRST_FULL_BODY_PART && part.a < FIRST_FULL_BODY_PART + SHOULDER_OFFSETS.length);
     }
 
     private static boolean showsBack(int pose) {
@@ -54,12 +56,15 @@ final class CostumeCape {
 
     static void draw(Graphics graphics, Vector parts, LangLa_jr costume, int pose, int x, int y,
                      boolean flip, boolean behindBody, int idleDip) {
-        boolean back = showsBack(pose);
+        boolean back = costume.a == CostumeTanto.MADARA_BODY
+                ? pose >= 16 && pose <= 19 : showsBack(pose);
         if (behindBody && back) return;
         DataCenter data = DataCenter.gI();
         LangLa_ju body = costume.d[pose];
         int bodyHeight = spriteSize(data, body.a).e;
-        int[] shoulder = SHOULDER_OFFSETS[(costume.a == CostumeTanto.BORUTO_BODY || costume.a == CostumeTanto.KAWAKI_BODY) ? 32 : costume.a - FIRST_FULL_BODY_PART];
+        int[] shoulder = SHOULDER_OFFSETS[(costume.a == CostumeTanto.BORUTO_BODY
+                || costume.a == CostumeTanto.KAWAKI_BODY || costume.a == CostumeTanto.MADARA_BODY)
+                ? 32 : costume.a - FIRST_FULL_BODY_PART];
         int shoulderX = body.d + shoulder[0] + SHOULDER_POSE_X[pose];
         int shoulderY = body.e + shoulder[1] - Math.round(bodyHeight * SHOULDER_POSE_HEIGHT[pose] / 100f) + idleDip;
 

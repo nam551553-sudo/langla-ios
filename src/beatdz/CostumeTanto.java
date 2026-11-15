@@ -4,6 +4,16 @@ package beatdz;
 final class CostumeTanto {
     static final int BORUTO_BODY = 974;
     static final int KAWAKI_BODY = 975;
+    static final int MADARA_BODY = 976;
+    private static final int MADARA_FIRST_TEXTURE = 30500;
+    // Palm centers measured from each cel's bottom center, in logical game pixels.
+    private static final int[][] MADARA_HAND = {
+        {-3,-10}, {-3,-10}, {-10,-17}, {-10,-17}, {-10,-16}, {-10,-17},
+        {-10,-16}, {-11,-18}, {8,-17}, {6,-14}, {9,-12}, {8,-17},
+        {5,-14}, {4,-15}, {-13,-17}, {-12,-14}, {-12,-17}, {7,-16},
+        {9,-16}, {13,-22}, {12,-20}, {11,-19}, {-11,-16}, {-12,-18},
+        {-11,-17}, {-6,-23}, {-11,-18}, {-10,-18}, {0,-16}, {-10,-22}, {0,-11}
+    };
     private static final int KAWAKI_FIRST_TEXTURE = 30400;
     private static final int KAWAKI_IDLE_TEXTURE = 30427;
     private static final int[][] KAWAKI_HAND = {
@@ -57,7 +67,8 @@ final class CostumeTanto {
         boolean cuuVi = tanto.a >= FIRST_TANTO_TEXTURE && tanto.a <= LAST_TANTO_TEXTURE;
         boolean boruto = costume.a == BORUTO_BODY;
         boolean kawaki = costume.a == KAWAKI_BODY;
-        if (!cuuVi && !((boruto || kawaki) && weapon.heldWeapon)) return false;
+        boolean madara = costume.a == MADARA_BODY;
+        if (!cuuVi && !((boruto || kawaki || madara) && weapon.heldWeapon)) return false;
 
         DataCenter data = DataCenter.gI();
         LangLa_ju body = costume.d[bodyPose];
@@ -78,7 +89,12 @@ final class CostumeTanto {
                 handY += Math.round(bodySize.e * (palm[1] - HAND[0][1]) / 200f);
             }
         }
-        if (boruto || kawaki) {
+        if (madara) {
+            int cel = body.a - MADARA_FIRST_TEXTURE;
+            if (cel < 0 || cel >= MADARA_HAND.length) return false;
+            handX = body.d + MADARA_HAND[cel][0];
+            handY = body.e + MADARA_HAND[cel][1];
+        } else if (boruto || kawaki) {
             boolean kawakiIdle = kawaki && body.a == KAWAKI_IDLE_TEXTURE;
             int cel = (boruto && body.a == BORUTO_IDLE_TEXTURE) || kawakiIdle ? 0
                     : body.a - (kawaki ? KAWAKI_FIRST_TEXTURE : BORUTO_FIRST_TEXTURE);
