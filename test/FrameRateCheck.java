@@ -1,11 +1,19 @@
 package beatdz;
 
+import com.badlogic.gdx.Application;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.backends.lwjgl.LwjglFiles;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public final class FrameRateCheck {
     public static void main(String[] args) {
+        Gdx.files = new LwjglFiles();
+        Gdx.app = (Application)Proxy.newProxyInstance(Application.class.getClassLoader(),
+                new Class[]{Application.class}, (instance, method, values) ->
+                        method.getName().equals("getType") ? Application.ApplicationType.Desktop : null);
         List<Integer> calls = new ArrayList<>();
         FrameRate.install(calls::add);
         FrameRate.select(0);

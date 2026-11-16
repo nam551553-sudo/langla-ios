@@ -41,7 +41,7 @@ final class MapAssetDownloads {
                 return cached;
             }
             task = IN_FLIGHT.get(url);
-            if (task != null) return task;
+            if (task != null && !task.isDone()) return task;
             task = new Download(url);
             IN_FLIGHT.put(url, task);
         }
@@ -75,7 +75,9 @@ final class MapAssetDownloads {
         }
 
         @Override protected void done() {
-            synchronized (IN_FLIGHT) { IN_FLIGHT.remove(url); }
+            synchronized (IN_FLIGHT) {
+                if (IN_FLIGHT.get(url) == this) IN_FLIGHT.remove(url);
+            }
             List<Ready> callbacks;
             synchronized (this) {
                 callbacks = new ArrayList<>(listeners);
