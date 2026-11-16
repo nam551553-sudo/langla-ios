@@ -2,6 +2,7 @@ package beatdz;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -11,10 +12,16 @@ import java.util.concurrent.Semaphore;
 final class MapAssetDownloads {
     private static final Semaphore NETWORK = new Semaphore(4, true);
     private static final Map<String, FutureTask<byte[]>> IN_FLIGHT = new HashMap<String, FutureTask<byte[]>>();
+    private static final int CACHE_BYTES = 8 * 1024 * 1024;
+    private static final int CACHE_ENTRIES = 512;
+    private static final LinkedHashMap<String, byte[]> READY = new LinkedHashMap<String, byte[]>(64, .75f, true);
+    private static int cachedBytes;
 
     static byte[] load(final String url) throws IOException {
         FutureTask<byte[]> task;
         synchronized (IN_FLIGHT) {
+            byte[] ready = READY.get(url);
+            if (ready != null) return ready.clone();
             task = IN_FLIGHT.get(url);
             if (task == null) {
                 task = new FutureTask<byte[]>(() -> {
@@ -28,6 +35,18 @@ final class MapAssetDownloads {
                             data = HttpDownloads.bytes(url, 6000, 4 * 1024 * 1024);
                         }
                         if (!Binary.isImageData(data)) throw new IOException("Invalid map image: " + url);
+                        synchronized (IN_FLIGHT) {
+                            // The URL includes the artwork version and zoom. Share compressed
+                            // bytes across tabs without sharing mutable Pixmaps or GL textures.
+                            byte[] previous = READY.put(url, data);
+                            if (previous != null) cachedBytes -= previous.length;
+                            cachedBytes += data.length;
+                            while (cachedBytes > CACHE_BYTES || READY.size() > CACHE_ENTRIES) {
+                                Map.Entry<String, byte[]> oldest = READY.entrySet().iterator().next();
+                                cachedBytes -= oldest.getValue().length;
+                                READY.remove(oldest.getKey());
+                            }
+                        }
                         return data;
                     } finally { NETWORK.release(); }
                 });

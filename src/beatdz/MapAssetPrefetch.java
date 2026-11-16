@@ -282,6 +282,12 @@ public final class MapAssetPrefetch {
     private static byte[] download(String url, int ticket) throws Exception {
         MultiSession.PREFETCH_NETWORK.acquire();
         try {
+            // Finish the images already requested by the map renderer before
+            // spending bandwidth on artwork for a neighbouring map.
+            while (LangLa_cz.hasWaitingImageDownloads()) {
+                if (stale(ticket)) return null;
+                Thread.sleep(20);
+            }
             if (stale(ticket)) return null;
             return MapAssetDownloads.load(url);
         } finally { MultiSession.PREFETCH_NETWORK.release(); }

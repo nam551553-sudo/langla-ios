@@ -1,6 +1,18 @@
 package beatdz;import java.util.Vector;
 
 public class LangLa_cz extends XYEntity {
+   // One foreground pool serves every account. Four ready images can load in
+   // parallel without creating two additional network threads for every tab.
+   private static final java.util.concurrent.ThreadPoolExecutor IMAGE_DOWNLOADS =
+         (java.util.concurrent.ThreadPoolExecutor)java.util.concurrent.Executors.newFixedThreadPool(4, action -> {
+            Thread worker = new Thread(action, "map-visible-image");
+            worker.setDaemon(true);
+            return worker;
+         });
+
+   static boolean hasWaitingImageDownloads() {
+      return !IMAGE_DOWNLOADS.getQueue().isEmpty();
+   }
    public short width;
    public short height;
    public int cS = 0;
@@ -49,8 +61,6 @@ public class LangLa_cz extends XYEntity {
       beatdz.LangLa_cz.$state_LangLa_cz().cY = true;
       (new Thread(new LangLa_da())).start();
       (new Thread(new LangLa_db())).start();
-      (new Thread(new LangLa_fg(), "map-assets-1")).start();
-      (new Thread(new LangLa_fg(), "map-assets-2")).start();
    }
 
    public void setSize(int var1, int var2) {
@@ -380,8 +390,11 @@ public class LangLa_cz extends XYEntity {
             return;
          }
 
-         beatdz.LangLa_cz.$state_LangLa_cz().cX.add(var0);
-         synchronized(beatdz.LangLa_cz.$state_LangLa_cz().cU) { beatdz.LangLa_cz.$state_LangLa_cz().cU.notifyAll(); }
+         if (LangLa_ep.a()) {
+            beatdz.LangLa_cz.$state_LangLa_cz().cX.add(var0);
+         } else {
+            IMAGE_DOWNLOADS.execute(MultiSession.bind(() -> b(var0)));
+         }
       } catch (Exception var4) {
          return;
       } finally {

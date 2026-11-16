@@ -9,7 +9,8 @@ final class CostumeCape {
     private static final int HOKAGE_CAPE_COLLAR = 27;
     private static final int CUU_VI_FABRIC = 962;
     private static final int CUU_VI_COLLAR = 963;
-    private static final int FRONT_COLLAR_SCALE = 86;
+    private static final int FRONT_COLLAR_SCALE = 70;
+    private static final int FRONT_COLLAR_CHEST_OFFSET = 4;
 
     // Shoulder offsets in game pixels for full-body parts starting at 926.
     // These account for asymmetry from hair, hats and auras in the full-body images.
@@ -103,17 +104,18 @@ final class CostumeCape {
                 top = Math.max(top, bottom - 12);
             }
 
-            if (collar && !back && part.a != CUU_VI_COLLAR) {
-                // Fit the collar around the narrower front shoulders. The upper
-                // ornament sits behind the hair and the clasp crosses the chest.
-                width = fitCollar(width);
+            if (collar && !back) {
+                // Full-body costumes include the neck and face in the same cel.
+                // Keep every collar style compact and place its upper fold behind
+                // that cel; only the clasp below the neck belongs in front.
+                width = Math.min(fitCollar(width), Math.max(12, Math.round(bodyHeight / 2f)));
                 top = shoulderY + fitCollar(top - shoulderY);
                 bottom = shoulderY + fitCollar(bottom - shoulderY);
             }
             int height = bottom - top;
             if (height <= 0) continue;
             int split = back ? 0 : height;
-            if (collar && !back) split = Math.max(0, Math.min(height, shoulderY + 1 - top));
+            if (collar && !back) split = Math.max(0, Math.min(height, shoulderY + FRONT_COLLAR_CHEST_OFFSET - top));
             int start = behindBody ? 0 : split;
             int end = behindBody ? split : height;
             if (end <= start) continue;
