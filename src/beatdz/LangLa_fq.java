@@ -466,7 +466,7 @@ public class LangLa_fq {
       if (ids.isEmpty() || LangLa_ep.a()
             || (mConfig.gI().readBoolean(18) && DataCenter.gI().currentScreen instanceof GameSrc)) return;
       Hashtable images = $state_LangLa_fq().g;
-      Vector<LangLa_fb> requests = new Vector<LangLa_fb>();
+      java.util.ArrayList<LangLa_fb> requests = new java.util.ArrayList<>();
       synchronized (images) {
          for (short id : ids) {
             if (images.containsKey(id)) continue;
@@ -475,12 +475,15 @@ public class LangLa_fq {
             request.d = "iconChar/" + id + ".png";
             request.e = "char_icon_" + id;
             request.g = images;
+            request.imageCacheEntry = true;
             images.put(id, $state_LangLa_fq().a);
             requests.add(request);
          }
       }
       if (!requests.isEmpty()) {
-         LangLa_cz.$state_LangLa_cz().cW.addAll(0, requests);
+         for (int i = requests.size() - 1; i >= 0; i--) {
+            LangLa_cz.$state_LangLa_cz().cW.addFirst(requests.get(i));
+         }
          LangLa_cz.S();
       }
    }
@@ -496,6 +499,7 @@ public class LangLa_fq {
          LangLa_fb var4;
          (var4 = new LangLa_fb()).g = var2;
          var4.a = (short)var0;
+         var4.imageCacheEntry = true;
          var4.d = "icon" + var1.substring(0, 1).toUpperCase() + var1.substring(1, var1.length()) + "/" + var0 + ".png";
          if (var1.toLowerCase().contains("tree")) {
             var4.e = var1 + "_" + var0;

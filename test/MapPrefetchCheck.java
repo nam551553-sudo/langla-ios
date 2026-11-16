@@ -16,12 +16,15 @@ public final class MapPrefetchCheck {
         volatile int size = PNG.length;
         volatile int delay = 80;
         volatile CountDownLatch gate;
+        volatile String gatedUrl;
         public HttpDownloads.Response open(String url, int timeout, long max, HttpDownloads.Progress progress) throws IOException {
             opens.incrementAndGet();
             int current = active.incrementAndGet(); peak.accumulateAndGet(current, Math::max);
             try {
                 if (failures.getAndDecrement() > 0) throw new IOException("Simulated connection reset");
-                if (gate != null) { if (!gate.await(5,TimeUnit.SECONDS)) throw new IOException("Test gate timeout"); }
+                if (gate != null && (gatedUrl == null || gatedUrl.equals(url))) {
+                    if (!gate.await(5,TimeUnit.SECONDS)) throw new IOException("Test gate timeout");
+                }
                 else Thread.sleep(delay);
                 byte[] data = bad ? "<html>error</html>".getBytes("UTF-8") : Arrays.copyOf(PNG, size);
                 return new HttpDownloads.Response(new ByteArrayInputStream(data),data.length,true);
@@ -62,6 +65,22 @@ public final class MapPrefetchCheck {
             check(fake.opens.get()==0 && cached[0]==PNG[0],"A later account should reuse the completed request");
             cached[0]=0;
             check(MapAssetDownloads.load("test://shared")[0]==PNG[0],"Cached bytes must survive destructive image decoding");
+            fake.gate = new CountDownLatch(1);
+            fake.gatedUrl = "test://slow-shared-tree";
+            CompletableFuture<byte[]> tree = MapAssetDownloads.request(fake.gatedUrl);
+            for (int tab = 1; tab < 6; tab++) {
+                check(MapAssetDownloads.request(fake.gatedUrl) == tree, "duplicate tab requests reuse one network task");
+            }
+            try {
+                CompletableFuture<byte[]> npc = MapAssetDownloads.request("test://next-npc");
+                CompletableFuture<byte[]> mob = MapAssetDownloads.request("test://next-mob");
+                CompletableFuture.allOf(npc, mob).get(2, TimeUnit.SECONDS);
+                check(!tree.isDone(), "distinct NPC/quái images must finish while six tabs await the slow tree");
+            } finally {
+                fake.gate.countDown();
+            }
+            tree.get(5, TimeUnit.SECONDS);
+            System.out.println("Six tabs waiting for one slow tree leave download slots free for NPC and mob images.");
             fake.gate=null;fake.bad=true;
             try{MapAssetDownloads.load("test://bad");throw new AssertionError("Accepted HTML");}catch(IOException expected){}
             fake.bad=false;check(Arrays.equals(MapAssetDownloads.load("test://bad"),PNG),"Failed request retained / permit leaked");

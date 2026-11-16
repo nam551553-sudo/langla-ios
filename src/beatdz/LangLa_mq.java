@@ -20,6 +20,12 @@ public class LangLa_mq extends LangLa_fm {
       this.a.c = this;
       this.setSize(var3.width, var3.height);
       this.s = var3.s;
+      if (this.s instanceof LangLa_kl || var3.b.isTypeTrangBi()) {
+         // Open the existing full details and action buttons on the first tap.
+         this.f = true;
+         this.setXY(var3.cx, var3.cy);
+         return;
+      }
       this.b = var1;
       this.c = var2;
       LangLa_mk var5 = var3;
@@ -114,7 +120,7 @@ public class LangLa_mq extends LangLa_fm {
 
       int var10000 = GameSrc.gI().Task;
       DataCenter.gI();
-      if (var10000 <= 12 && this.s.cL.equals(this)) {
+      if (var10000 <= 12 && this.s.cL == this) {
          Step var2 = GameSrc.gI().B();
          int var3 = this.s.cx + this.cx + this.width;
          int var4 = this.s.cy + this.cy + this.height;

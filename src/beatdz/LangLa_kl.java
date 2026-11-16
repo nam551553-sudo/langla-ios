@@ -391,7 +391,10 @@ public class LangLa_kl extends LangLa_ge implements IKeyboard {
                               var13 = true;
                               LangLa_kl var4;
                               Message var5;
-                              if (!this.d) {
+                              boolean ownEquipment = this.y.isMe() &&
+                                    ((var1.b >= 1010 && var1.b <= 1015) || (var1.b >= 1020 && var1.b <= 1025)
+                                          || var1.b == 5001 || var1.b == 5002);
+                              if (!this.d && !ownEquipment) {
                                  var4 = this;
 
                                  try {

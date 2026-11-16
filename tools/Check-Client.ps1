@@ -16,13 +16,14 @@ $ErrorActionPreference='Stop'
 if($compileExit -ne 0){Get-Content (Join-Path $output 'compile.log') -Tail 25;throw 'Client checks did not compile'}
 $cp=$classes+';'+$cp+';'+(Join-Path $root 'test')
 $checks=@('beatdz.PacketFramingCheck','beatdz.GoldTopUpQrCheck','beatdz.MadaraAttachmentCheck','beatdz.CapeAttachmentCheck','beatdz.AndroidMotionCheck','beatdz.CostumeMovementCheck','CombatSenderCheck','beatdz.MapPrefetchCheck','AutoOptionsCheck','beatdz.BulkItemUseCheck','LauncherUpdateCheck','com.langla.launcher.LauncherRecoveryCheck','com.langla.launcher.SignedUpdateCheck','beatdz.LuckyDialogCheck','beatdz.MobTargetHudCheck')
-if($Graphics){$checks+=@('beatdz.MultiSessionLoadCheck','beatdz.QuestTrackerTabCheck','beatdz.CardArtworkCheck','beatdz.RecoveryAndConsumableCheck')}
+$graphicsChecks=@('beatdz.MultiSessionLoadCheck','beatdz.QuestTrackerTabCheck','beatdz.CardArtworkCheck','beatdz.RecoveryAndConsumableCheck','beatdz.ImageTabIsolationCheck','beatdz.EquipmentTapCheck')
+if($Graphics){$checks+=$graphicsChecks}
 $passed=@()
 foreach($name in $checks){
     $runtime=Join-Path $output $name
     New-Item -ItemType Directory -Force $runtime | Out-Null
     $arguments=@('-cp',$cp,$name)
-    if($name -in @('beatdz.MultiSessionLoadCheck','beatdz.QuestTrackerTabCheck','beatdz.CardArtworkCheck','beatdz.RecoveryAndConsumableCheck')){$arguments+='--software'}
+    if($name -in $graphicsChecks){$arguments+='--software'}
     $stdout=Join-Path $runtime 'stdout.log';$stderr=Join-Path $runtime 'stderr.log'
     # Start-Process joins ArgumentList; quote classpath for workspaces with spaces.
     $arguments[1]='"'+$arguments[1]+'"'

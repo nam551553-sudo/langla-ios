@@ -12,17 +12,59 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class Binary {
 
     public static String a = "LangLaZ/";
+    private static final int MAP_LAYOUT_BUDGET = 2 * 1024 * 1024;
+    private static final LinkedHashMap<String, byte[]> MAP_LAYOUTS = new LinkedHashMap<>(32, .75f, true);
+    private static int mapLayoutBytes;
     private static byte[] b = new byte[]{-119, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 2, 0, 0, 0, 2, 8, 6, 0, 0, 0, 114, -74, 13, 36, 0, 0, 0, 11, 73, 68, 65, 84, 120, 94, 99, 96, 64, 7, 0, 0, 18, 0, 1, 11, -69, 36, -100, 0, 0, 0, 0, 73, 69, 78, 68, -82, 66, 96, -126};
 
     public static Reader createReader(String var0) {
         byte[] var1;
         return (var1 = read(var0)) != null ? new Reader(var1) : null;
+    }
+
+    // Layout bytes are read-only. Each map still gets its own reader and game objects.
+    static byte[] readMapLayout(int mapId) {
+        String name = "arr_map_" + mapId;
+        String key = Binary2.a(name) + ':' + DataCenter.gI().zoomLevel;
+        synchronized (MAP_LAYOUTS) {
+            byte[] ready = MAP_LAYOUTS.get(key);
+            if (ready != null) return ready;
+        }
+        return loadMapLayout(name, key);
+    }
+
+    private static synchronized byte[] loadMapLayout(String name, String key) {
+        synchronized (MAP_LAYOUTS) {
+            byte[] ready = MAP_LAYOUTS.get(key);
+            if (ready != null) return ready;
+        }
+        byte[] layout = read(name);
+        if (layout == null || layout.length > MAP_LAYOUT_BUDGET) return layout;
+        synchronized (MAP_LAYOUTS) {
+            MAP_LAYOUTS.put(key, layout);
+            mapLayoutBytes += layout.length;
+            while (mapLayoutBytes > MAP_LAYOUT_BUDGET || MAP_LAYOUTS.size() > 32) {
+                Map.Entry<String, byte[]> first = MAP_LAYOUTS.entrySet().iterator().next();
+                mapLayoutBytes -= first.getValue().length;
+                MAP_LAYOUTS.remove(first.getKey());
+            }
+        }
+        return layout;
+    }
+
+    private static void clearMapLayouts() {
+        synchronized (MAP_LAYOUTS) {
+            MAP_LAYOUTS.clear();
+            mapLayoutBytes = 0;
+        }
     }
 
     public static short[] a() {
@@ -474,6 +516,7 @@ public class Binary {
     }
 
     public static synchronized void write(String var0, byte[] var1) {
+        if (var0.startsWith("arr_map_")) clearMapLayouts();
         if (var0.contains("arr_map_") || var0.contains("arr_data_game") || beatdz.LangLa_ep.$state_LangLa_ep().g <= 0 || mConfig.isGDL() <= 0) {
             mFileHandle var2 = null;
             boolean var8 = false;
@@ -669,7 +712,8 @@ public class Binary {
 
     }
 
-    public static void delete(String var0) {
+    public static synchronized void delete(String var0) {
+        if (var0.startsWith("arr_map_")) clearMapLayouts();
         try {
             // Classify cache keys before their suffix; arr_check_0.beatdz is core data,
             // not an image-archive marker under images-hd1/zN.
@@ -681,7 +725,8 @@ public class Binary {
         }
     }
 
-    public static void deleteStartsWith(String var0) {
+    public static synchronized void deleteStartsWith(String var0) {
+        if ("arr_map_".startsWith(var0) || var0.startsWith("arr_map_")) clearMapLayouts();
         try {
             FileHandle prefix = Utlis.external(a + MobileAssets.cacheName(MultiSession.storageName(var0)));
             FileHandle[] var1;
@@ -699,7 +744,8 @@ public class Binary {
         }
     }
 
-    public static void deleteAll() {
+    public static synchronized void deleteAll() {
+        clearMapLayouts();
         if (DataCenter.k()) {
             DataCenter.gI().aG = true;
         }

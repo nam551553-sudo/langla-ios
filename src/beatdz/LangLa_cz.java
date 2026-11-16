@@ -1,18 +1,6 @@
 package beatdz;import java.util.Vector;
 
 public class LangLa_cz extends XYEntity {
-   // One foreground pool serves every account. Four ready images can load in
-   // parallel without creating two additional network threads for every tab.
-   private static final java.util.concurrent.ThreadPoolExecutor IMAGE_DOWNLOADS =
-         (java.util.concurrent.ThreadPoolExecutor)java.util.concurrent.Executors.newFixedThreadPool(4, action -> {
-            Thread worker = new Thread(action, "map-visible-image");
-            worker.setDaemon(true);
-            return worker;
-         });
-
-   static boolean hasWaitingImageDownloads() {
-      return !IMAGE_DOWNLOADS.getQueue().isEmpty();
-   }
    public short width;
    public short height;
    public int cS = 0;
@@ -38,7 +26,7 @@ public class LangLa_cz extends XYEntity {
       } else {
          label28:
          while(true) {
-            if (beatdz.LangLa_cz.$state_LangLa_cz().cW.size() <= 0) {
+            if (beatdz.LangLa_cz.$state_LangLa_cz().cW.isEmpty()) {
                while(true) {
                   if (beatdz.LangLa_cz.$state_LangLa_cz().cX.size() <= 0) {
                      break label28;
@@ -48,7 +36,8 @@ public class LangLa_cz extends XYEntity {
                }
             }
 
-            a((LangLa_fb)beatdz.LangLa_cz.$state_LangLa_cz().cW.remove(0));
+            LangLa_fb request = $state_LangLa_cz().cW.pollFirst();
+            if (request != null) a(request);
          }
       }
 
@@ -381,72 +370,96 @@ public class LangLa_cz extends XYEntity {
       }
    }
 
-   public static void a(LangLa_fb var0) {
-      mImage var1 = null;
-
-      try {
-         if ((var1 = Binary.createImage(var0.e)) != null) {
-            var0.g.put(var0.a, var1);
-            return;
-         }
-
-         if (LangLa_ep.a()) {
-            beatdz.LangLa_cz.$state_LangLa_cz().cX.add(var0);
-         } else {
-            IMAGE_DOWNLOADS.execute(MultiSession.bind(() -> b(var0)));
-         }
-      } catch (Exception var4) {
-         return;
-      } finally {
-         if (var1 != null) {
-            GameSrc.gI().cb.add(var1);
-         }
-
-      }
-
+   private static boolean currentImageRequest(LangLa_fb request) {
+      if (!request.imageCacheEntry) return true;
+      LangLa_fq.SessionState images = LangLa_fq.$state_LangLa_fq();
+      return (!request.e.startsWith("tree_") || images.f == request.g)
+            && request.g.get(request.a) == images.a;
    }
 
-   public static void b(LangLa_fb var0) {
-      mImage var1 = null;
-
-      try {
-         DataCenter.gI();
-         if (!DataCenter.a()) {
+   private static void publishImage(LangLa_fb request, mImage image) {
+      synchronized (request.g) {
+         if (!currentImageRequest(request)) {
+            image.a();
             return;
          }
-
-         StringBuilder var10000 = (new StringBuilder()).append(DataCenter.gI().aU).append(DataCenter.gI().aY);
-         DataCenter.gI();
-         byte[] var2;
-         if ((var2 = MapAssetDownloads.load(var10000.append(DataCenter.a(var0.d) + 1).append("/").append(var0.d).toString())) != null) {
-
-            if (var0.e.startsWith("mapscale_")) {
-               Binary.write(var0.e, var2);
-               GameSrc.gI().al.a(GameSrc.gI().mapID);
-               return;
-            }
-
-            if (var0.e.startsWith("mapsmall_") && GameSrc.gI().cE instanceof LangLa_u) {
-               Binary.write(var0.e, var2);
-               ((LangLa_u)((LangLa_u)GameSrc.gI().cE)).f();
-               return;
-            }
-
-            var1 = Binary.createImage(Utlis.a(var2));
-            if (var1 == null) return;
-            Binary.write(var0.e, var2);
-            var0.g.put(var0.a, var1);
-            return;
-         }
-      } catch (Exception var6) {
-         return;
-      } finally {
-         if (var1 != null) {
-            GameSrc.gI().cb.add(var1);
-         }
-
+         request.g.put(request.a, image);
       }
+      GameSrc.gI().cb.add(image);
+   }
 
+   private static String imageUrl(LangLa_fb request) {
+      DataCenter data = DataCenter.gI();
+      return data.aU + data.aY + (DataCenter.a(request.d) + 1) + "/" + request.d;
+   }
+
+   public static void a(LangLa_fb request) {
+      if (!currentImageRequest(request)) return;
+      if (request.download != null) {
+         byte[] bytes = request.download;
+         request.download = null;
+         if (request.downloadUrl.equals(imageUrl(request))) {
+            acceptDownload(request, bytes);
+            return;
+         }
+      }
+      mImage image = Binary.createImage(request.e);
+      if (image != null) {
+         if (isMapPreview(request)) {
+            image.a();
+            refreshMapPreview(request);
+         } else {
+            publishImage(request, image);
+         }
+      } else if (LangLa_ep.a()) {
+         $state_LangLa_cz().cX.add(request);
+      } else if (DataCenter.a()) {
+         SessionState queue = $state_LangLa_cz();
+         MultiSession.Context owner = MultiSession.current();
+         request.downloadUrl = imageUrl(request);
+         MapAssetDownloads.request(request.downloadUrl).thenAccept(bytes -> MultiSession.run(owner, () -> {
+            if (!currentImageRequest(request)) return;
+            request.download = bytes;
+            queue.cW.addLast(request);
+            synchronized (queue.cT) { queue.cT.notifyAll(); }
+         }));
+      }
+   }
+
+   public static void b(LangLa_fb request) {
+      if (!DataCenter.a() || !currentImageRequest(request)) return;
+      try {
+         acceptDownload(request, MapAssetDownloads.load(imageUrl(request)));
+      } catch (java.io.IOException unavailable) {
+         // The normal cache invalidation can request the missing image again.
+      }
+   }
+
+   private static void acceptDownload(LangLa_fb request, byte[] source) {
+      if (isMapPreview(request)) {
+         Binary.write(request.e, source);
+         refreshMapPreview(request);
+         return;
+      }
+      // Shared download bytes remain immutable. Each account decodes its own image.
+      byte[] bytes = Utlis.a(source.clone());
+      mImage image = Binary.createImage(bytes);
+      if (image == null) return;
+      publishImage(request, image);
+      Binary.write(request.e, bytes);
+   }
+
+   private static boolean isMapPreview(LangLa_fb request) {
+      return request.e.startsWith("mapscale_") || request.e.startsWith("mapsmall_");
+   }
+
+   private static void refreshMapPreview(LangLa_fb request) {
+      com.badlogic.gdx.Gdx.app.postRunnable(MultiSession.bind(() -> {
+         GameSrc game = GameSrc.gI();
+         if (game.mapID != request.a) return;
+         if (request.e.startsWith("mapscale_")) game.al.a(request.a);
+         else if (game.cE instanceof LangLa_u) ((LangLa_u)game.cE).f();
+      }));
    }
 
    public static void T() {
@@ -465,7 +478,7 @@ public static final class SessionState implements beatdz.MultiSession.State {
 public Object cT;
 public Object cU;
 public Vector cV;
-public Vector cW;
+public java.util.concurrent.ConcurrentLinkedDeque<LangLa_fb> cW;
 public Vector cX;
 public boolean cY;
 public boolean cZ;
@@ -473,7 +486,7 @@ public void initialize() {
 this.cT = new Object();
 this.cU = new Object();
 this.cV = new Vector();
-this.cW = new Vector();
+this.cW = new java.util.concurrent.ConcurrentLinkedDeque<>();
 this.cX = new Vector();
 {
       a();

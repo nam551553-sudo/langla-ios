@@ -1,28 +1,26 @@
 package beatdz;
  class LangLa_db implements Runnable {
    public void run() {
-      while(!LangLa_ep.a()) {
+      LangLa_cz.SessionState state = LangLa_cz.$state_LangLa_cz();
+      while (!LangLa_ep.a()) {
          try {
-            synchronized(beatdz.LangLa_cz.$state_LangLa_cz().cT) {
-               try {
-                  while (beatdz.LangLa_cz.$state_LangLa_cz().cW.isEmpty()) beatdz.LangLa_cz.$state_LangLa_cz().cT.wait(1000L);
-               } catch (Exception var4) {
-                  Utlis.println(var4);
-               }
+            synchronized (state.cT) {
+               if (state.cW.isEmpty()) state.cT.wait(1000L);
             }
-
-            while(beatdz.LangLa_cz.$state_LangLa_cz().cW.size() > 0) {
-               LangLa_cz.a((LangLa_fb)beatdz.LangLa_cz.$state_LangLa_cz().cW.remove(0));
+            LangLa_fb request;
+            while (!LangLa_ep.a() && (request = state.cW.pollFirst()) != null) {
+               LangLa_cz.a(request);
             }
-
-            synchronized(beatdz.LangLa_cz.$state_LangLa_cz().cU) {
-               beatdz.LangLa_cz.$state_LangLa_cz().cU.notifyAll();
+            synchronized (state.cU) {
+               state.cU.notifyAll();
             }
-         } catch (Exception var6) {
-            Utlis.println(var6);
+         } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            break;
+         } catch (RuntimeException failed) {
+            Utlis.println(failed);
          }
       }
-
-      beatdz.LangLa_cz.$state_LangLa_cz().cY = false;
+      state.cY = false;
    }
 }

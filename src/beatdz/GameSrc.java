@@ -493,7 +493,7 @@ public class GameSrc extends MainScreen {
     public boolean ca;
     private int dz = 1;
     private long dA;
-    public Vector cb = new Vector();
+    final java.util.concurrent.ConcurrentLinkedQueue<mImage> cb = new java.util.concurrent.ConcurrentLinkedQueue<>();
     public boolean cc;
     public int cd = 0;
     
@@ -749,36 +749,42 @@ public class GameSrc extends MainScreen {
     }
 
     private void prefetchNearbyActors() {
+        if (!MultiSession.visible()) return;
         Char player = Char.gI();
         java.util.Set<Short> images = new java.util.LinkedHashSet<Short>();
-        // Load the first visible pose early; the normal renderer still requests later frames.
-        for (Object entity : vNpc.toArray()) {
+        // Warm nearby actors' first poses ahead of the terrain renderer.
+        for (Object entity : vNpc) {
             Npc npc = (Npc) entity;
             if (Math.abs(npc.cx - player.cx) > 420 || Math.abs(npc.cy - player.cy) > 300) continue;
             NpcTemplate template = npc.getNpcTemplate();
-            if (template != null) addFirstActorFrame(images, template.a, template.b, npc.status, 12);
+            if (template != null) addFirstActorFrames(images, template.a, template.b, npc.status, 12);
             if (images.size() >= 12) break;
         }
-        for (Object entity : vMob.toArray()) {
+        for (Object entity : vMob) {
             Mob mob = (Mob) entity;
             if (Math.abs(mob.cx - player.cx) > 420 || Math.abs(mob.cy - player.cy) > 300) continue;
             MobTemplate template = mob.getMobTemplate();
-            if (template != null) addFirstActorFrame(images, template.a, template.b, mob.status, 24);
+            if (template != null) addFirstActorFrames(images, template.a, template.b, mob.status, 24);
             if (images.size() >= 24) break;
         }
         LangLa_fq.prefetchMapActors(images);
     }
 
-    private static void addFirstActorFrame(java.util.Set<Short> images, byte[][] animation, LangLa_hz[] frames, int status, int limit) {
+    private static void addFirstActorFrames(java.util.Set<Short> images, byte[][] animation, LangLa_hz[] frames, int status, int limit) {
         if (frames == null || animation == null || animation.length == 0) return;
         if (status < 0 || status >= animation.length) status = 0;
         byte[] sequence = animation[status];
         if (sequence == null || sequence.length == 0) return;
-        int frame = sequence[0] & 255;
-        if (frame >= frames.length || frames[frame] == null || frames[frame].a == null) return;
-        for (LangLa_ia layer : frames[frame].a) {
-            if (layer != null && layer.a > 0) images.add(layer.a);
-            if (images.size() >= limit) return;
+        int first = sequence[0] & 255;
+        int poses = 0;
+        for (int i = 0; i < sequence.length && poses < 2; i++) {
+            int frame = sequence[i] & 255;
+            if ((i != 0 && frame == first) || frame >= frames.length || frames[frame] == null || frames[frame].a == null) continue;
+            for (LangLa_ia layer : frames[frame].a) {
+                if (layer != null && layer.a > 0) images.add(layer.a);
+                if (images.size() >= limit) return;
+            }
+            poses++;
         }
     }
 
@@ -804,9 +810,11 @@ public class GameSrc extends MainScreen {
             } catch (RuntimeException unavailable) {
                 Utlis.println(unavailable, "Map actor prefetch");
             }
-            if ((var27 = Binary.createReader("arr_map_" + this.mapID)) == null) {
+            byte[] layout = Binary.readMapLayout(this.mapID);
+            if (layout == null) {
                 return;
             }
+            var27 = new Reader(layout);
 
             Vector var2 = new Vector();
             this.cz = 0;
@@ -3210,9 +3218,6 @@ public class GameSrc extends MainScreen {
             GameSrc var3 = this;
 
             int var4;
-            for (var4 = this.cb.size() - 1; var4 >= 0; --var4) {
-                Binary.disposeImage((mImage) var3.cb.remove(var4));
-            }
 
             int var14;
             int var30;
@@ -3312,20 +3317,12 @@ public class GameSrc extends MainScreen {
             }
 
             int var18;
-            short var25;
             if (beatdz.GameSrc.$state_GameSrc().bj) {
                 for (var14 = 0; var14 < DataCenter.gI().ag.size(); ++var14) {
                     short var15 = (Short) DataCenter.gI().ag.elementAt(var14);
                     if (beatdz.LangLa_fq.$state_LangLa_fq().g.get(var15) != null) {
                         Binary.cleanImage((mImage) beatdz.LangLa_fq.$state_LangLa_fq().g.remove(var15));
                     }
-                }
-
-                Iterator var16 = beatdz.LangLa_fq.$state_LangLa_fq().f.keySet().iterator();
-
-                while (var16.hasNext()) {
-                    var25 = (Short) var16.next();
-                    Binary.disposeImage((mImage) beatdz.LangLa_fq.$state_LangLa_fq().f.get(var25));
                 }
 
                 for (var18 = 0; var18 < this.d.size(); ++var18) {
@@ -3544,6 +3541,17 @@ public class GameSrc extends MainScreen {
             Utlis.println(var13);
         } finally {
             var1.motionX = var1.motionY = 0f;
+            prepareTextures();
+        }
+    }
+
+    void prepareTextures() {
+        long deadline = System.nanoTime() + 1_500_000L;
+        // Drawing already uploads visible textures. Bound any extra uploads after it.
+        for (int i = 0; i < 4 && System.nanoTime() < deadline; i++) {
+            mImage image = cb.poll();
+            if (image == null) return;
+            Binary.disposeImage(image);
         }
     }
 

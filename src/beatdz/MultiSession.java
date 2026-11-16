@@ -61,7 +61,6 @@ public final class MultiSession {
     private static final long VISIBLE_PACKET_BUDGET_NANOS = 3_000_000L;
     private static final long HIDDEN_FRAME_BUDGET_NANOS = 2_000_000L;
     private static int nextHiddenSlot;
-    static final java.util.concurrent.Semaphore PREFETCH_NETWORK = new java.util.concurrent.Semaphore(2, true);
     private static Stage bar;
     private static BitmapFont font;
     private static int barCount = -1;

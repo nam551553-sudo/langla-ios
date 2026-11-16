@@ -9,6 +9,9 @@ public class LangLa_fb {
    public String e;
    public volatile boolean f;
    public Hashtable g;
+   boolean imageCacheEntry;
+   byte[] download;
+   String downloadUrl;
 
    public boolean a() {
       return this.d.contains("arr_data_game");

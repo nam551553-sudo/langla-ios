@@ -205,6 +205,8 @@ public class Session {
         }
     }
 
+    int pendingIncomingPackets() { return incoming.size(); }
+
     public int connectionVersion() { return connectionVersion; }
 
     private void readOnGameThread(Message var1) {

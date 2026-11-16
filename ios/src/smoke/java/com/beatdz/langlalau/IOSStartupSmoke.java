@@ -131,12 +131,15 @@ public class IOSStartupSmoke extends IOSLauncher {
                             System.out.println("PASS IOS_NATIVE_TAP_MOVEMENT correct targets across six tabs");
                             CapeAttachmentScenario.verify();
                             System.out.println("PASS IOS_NATIVE_CAPES fourteen capes leave all four measured costume necks clear");
+                            EquipmentTapScenario.verify();
+                            System.out.println("PASS IOS_NATIVE_EQUIPMENT_TAP first tap opens the actions and details");
                         } catch (Throwable error) {
                             finish(13, "FAIL IOS_NATIVE_STARTUP quest tracker", error); return;
                         }
                         finish(0, "PASS IOS_NATIVE_QUEST_TRACKER rendered on tab 2 and restored across six tabs\n"
                                 + "PASS IOS_NATIVE_TAP_MOVEMENT correct targets across six tabs\n"
                                 + "PASS IOS_NATIVE_CAPES fourteen capes leave all four measured costume necks clear\n"
+                                + "PASS IOS_NATIVE_EQUIPMENT_TAP first tap opens the actions and details\n"
                                 + "PASS IOS_NATIVE_STARTUP downloaded data via NSURLSession and reached login", null);
                     }
                     if (System.nanoTime() - started > 300000000000L) {

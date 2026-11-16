@@ -6,6 +6,8 @@ import java.util.Map;
 
 final class BulkItemUse {
     private static final int CHUNK_SIZE = 16;
+    private static final int BACKLOG_SLOW = 32;
+    private static final int BACKLOG_PAUSE = 128;
     private static final int REWARD_DETAIL_LINES = 6;
     private final Map<String, Long> rewards = new LinkedHashMap<>();
     private int remaining, requested, completed, itemId, token, inFlight;
@@ -62,6 +64,8 @@ final class BulkItemUse {
             return;
         }
         if (inFlight != 0 || now < nextAt) return;
+        int pending = session.pendingIncomingPackets();
+        if (pending >= BACKLOG_PAUSE) return;
         Item[] bag = Char.gI().arrItemBag;
         Item item = slot >= 0 && slot < bag.length ? bag[slot] : null;
         if (item == null || item.id != itemId || item.getAmount() <= 0) {
@@ -69,8 +73,9 @@ final class BulkItemUse {
             return;
         }
         try {
-            inFlight = Math.min(item.getItemTemplate().type == 100 ? CHUNK_SIZE : 32,
-                    Math.min(remaining, item.getAmount()));
+            int limit = item.getItemTemplate().type == 100 ? CHUNK_SIZE : 32;
+            if (pending >= BACKLOG_SLOW || !MultiSession.visible()) limit /= 2;
+            inFlight = Math.min(limit, Math.min(remaining, item.getAmount()));
             deadline = now + 30000;
             Message message = new Message((byte) 116);
             message.writeShort(slot);

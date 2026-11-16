@@ -890,7 +890,7 @@ public class LangLa_mk extends LangLa_fm {
 
       int var10000 = GameSrc.gI().Task;
       DataCenter.gI();
-      if (var10000 <= 12 && this.s.cL.equals(this)) {
+      if (var10000 <= 12 && this.s.cL == this) {
          Step var2 = GameSrc.gI().B();
          int var3 = this.s.cx + this.cx + this.width;
          int var4 = this.s.cy + this.cy + this.height;
