@@ -19,8 +19,8 @@ public class IOSLauncher extends IOSApplication.Delegate {
         config.statusBarVisible = false;
         config.hideHomeIndicator = true;
         IOSApplication app = new IOSApplication(GameM.l(), config);
-        beatdz.FrameRate.install(fps -> ((org.robovm.apple.glkit.GLKViewController)
-                app.getUIViewController()).setPreferredFramesPerSecond(fps));
+        beatdz.FrameRate.install(fps -> org.robovm.apple.foundation.NSOperationQueue.getMainQueue().addOperation(
+                () -> ((org.robovm.apple.glkit.GLKViewController)app.getUIViewController()).setPreferredFramesPerSecond(fps)));
         checkForUpdate(app);
         return app;
     }

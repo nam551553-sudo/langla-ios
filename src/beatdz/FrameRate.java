@@ -9,6 +9,7 @@ public final class FrameRate {
     private static final int[] OPTIONS = {60, 70, 90};
     private static volatile int target = 60;
     private static Listener platform = fps -> {};
+    private static boolean applyPlatform;
     private static volatile long displayFrameNanos;
     private static long previousDisplayFrameNanos;
 
@@ -16,7 +17,10 @@ public final class FrameRate {
 
     public static int target() { return target; }
 
-    public static void install(Listener callback) { platform = callback; }
+    public static void install(Listener callback) {
+        platform = callback;
+        applyPlatform = true;
+    }
 
     /** Called by Android on the UI thread before requesting a GL frame. Zero clears the clock. */
     public static void displayFrame(long frameTimeNanos) { displayFrameNanos = frameTimeNanos; }
@@ -37,7 +41,7 @@ public final class FrameRate {
     }
 
     static void select(int option) {
-        mConfig.gI().writeByte(26, option);
+        mConfig.gI().writeByte(26, option >= 0 && option < OPTIONS.length ? option : 0);
         apply();
     }
 
@@ -45,8 +49,9 @@ public final class FrameRate {
 
     static void apply() {
         int fps = OPTIONS[selection()];
-        if (target != fps) {
+        if (target != fps || applyPlatform) {
             target = fps;
+            applyPlatform = false;
             platform.apply(fps);
         }
     }

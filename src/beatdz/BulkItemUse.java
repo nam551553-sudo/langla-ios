@@ -47,7 +47,8 @@ final class BulkItemUse {
 
     boolean recordReward(String name, int amount) {
         if (inFlight == 0 || amount <= 0) return false;
-        rewards.merge(name, (long) amount, Long::sum);
+        Long previous = rewards.get(name);
+        rewards.put(name, (previous == null ? 0L : previous) + amount);
         received += amount;
         return true;
     }

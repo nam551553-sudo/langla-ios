@@ -57,7 +57,8 @@ public final class MapAssetPrefetch {
     }
 
     private static Set<Short> hintedTrees(int map) {
-        return LayoutHints.TREES.getOrDefault(map, Collections.emptySet());
+        Set<Short> trees = LayoutHints.TREES.get(map);
+        return trees == null ? Collections.emptySet() : trees;
     }
 
     static Set<Short> treeIds(byte[] data) throws IOException {

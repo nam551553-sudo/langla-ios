@@ -417,7 +417,7 @@ public class LangLa_cz extends XYEntity {
          SessionState queue = $state_LangLa_cz();
          MultiSession.Context owner = MultiSession.current();
          request.downloadUrl = imageUrl(request);
-         MapAssetDownloads.request(request.downloadUrl).thenAccept(bytes -> MultiSession.run(owner, () -> {
+         MapAssetDownloads.request(request.downloadUrl, bytes -> MultiSession.run(owner, () -> {
             if (!currentImageRequest(request)) return;
             request.download = bytes;
             queue.cW.addLast(request);

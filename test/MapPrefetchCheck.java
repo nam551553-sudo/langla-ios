@@ -67,14 +67,15 @@ public final class MapPrefetchCheck {
             check(MapAssetDownloads.load("test://shared")[0]==PNG[0],"Cached bytes must survive destructive image decoding");
             fake.gate = new CountDownLatch(1);
             fake.gatedUrl = "test://slow-shared-tree";
-            CompletableFuture<byte[]> tree = MapAssetDownloads.request(fake.gatedUrl);
+            FutureTask<byte[]> tree = MapAssetDownloads.request(fake.gatedUrl);
             for (int tab = 1; tab < 6; tab++) {
                 check(MapAssetDownloads.request(fake.gatedUrl) == tree, "duplicate tab requests reuse one network task");
             }
             try {
-                CompletableFuture<byte[]> npc = MapAssetDownloads.request("test://next-npc");
-                CompletableFuture<byte[]> mob = MapAssetDownloads.request("test://next-mob");
-                CompletableFuture.allOf(npc, mob).get(2, TimeUnit.SECONDS);
+                FutureTask<byte[]> npc = MapAssetDownloads.request("test://next-npc");
+                FutureTask<byte[]> mob = MapAssetDownloads.request("test://next-mob");
+                npc.get(2, TimeUnit.SECONDS);
+                mob.get(2, TimeUnit.SECONDS);
                 check(!tree.isDone(), "distinct NPC/quái images must finish while six tabs await the slow tree");
             } finally {
                 fake.gate.countDown();

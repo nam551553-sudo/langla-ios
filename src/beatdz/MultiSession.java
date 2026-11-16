@@ -66,6 +66,8 @@ public final class MultiSession {
     private static int barCount = -1;
     private static float lastWidth;
     private static com.badlogic.gdx.graphics.Texture skin;
+    private static long nextFpsUpdate;
+    private static String fpsText = "FPS 0";
     static { ROOT.initialized = true; TABS.add(ROOT); }
 
     public static Context current() { Context value = OWNER.get(); return value == null ? ROOT : value; }
@@ -237,6 +239,16 @@ public final class MultiSession {
         skin = nextSkin;
         bar.getViewport().apply();
         bar.act(Math.min(Gdx.graphics.getDeltaTime(), .033f)); bar.draw();
+        long now = System.nanoTime();
+        if (now >= nextFpsUpdate) {
+            fpsText = "FPS " + Gdx.graphics.getFramesPerSecond();
+            nextFpsUpdate = now + 500_000_000L;
+        }
+        font.setColor(Color.WHITE);
+        com.badlogic.gdx.graphics.g2d.Batch batch = bar.getBatch();
+        batch.begin();
+        font.draw(batch, fpsText, 6 * scale, Gdx.graphics.getHeight() - 6 * scale);
+        batch.end();
     }
 
     static float tabStartX(float width, int accounts, float scale) {
