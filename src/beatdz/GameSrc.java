@@ -5899,10 +5899,10 @@ public class GameSrc extends MainScreen {
             if (var2 == -1) {
                 int request = var1.reader.dis.readInt();
                 short used = var1.readShort();
-                if (used > 0) refreshItemUseInventory = true;
                 bulkItemUse.acknowledge(this, request, used);
                 return;
             }
+            if (var2 < 0 || var2 >= Char.gI().arrItemBag.length || Char.gI().arrItemBag[var2] == null) return;
             Item var3;
             (var3 = Char.gI().arrItemBag[var2]).isLock = var1.reader.dis.readBoolean();
             Char.gI().arrItemBag[var2] = null;
@@ -5937,11 +5937,14 @@ public class GameSrc extends MainScreen {
                     }
                 }
             } else {
-                var3.setAmount(var1.reader.dis.readInt());
-                Char.gI().arrItemBag[var2] = var3;
+                int remaining = var1.reader.dis.readInt();
+                if (remaining > 0) {
+                    var3.setAmount(remaining);
+                    Char.gI().arrItemBag[var2] = var3;
+                }
             }
 
-            refreshItemUseInventory = true;
+            if (var3.isTypeTrangBi() || var3.getItemTemplate().type == 28) refreshItemUseInventory = true;
 
             if (var3.z()) {
                 this.g();

@@ -74,7 +74,8 @@ final class BulkItemUse {
             return;
         }
         try {
-            int limit = item.getItemTemplate().type == 100 ? CHUNK_SIZE : 32;
+            int limit = itemId == 161 || itemId == 277 ? 128
+                    : item.getItemTemplate().type == 100 ? CHUNK_SIZE : 32;
             if (pending >= BACKLOG_SLOW || !MultiSession.visible()) limit /= 2;
             inFlight = Math.min(limit, Math.min(remaining, item.getAmount()));
             deadline = now + 30000;

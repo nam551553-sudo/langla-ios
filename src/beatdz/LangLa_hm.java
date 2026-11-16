@@ -4,6 +4,8 @@ public class LangLa_hm extends Entity {
    private byte m = -1;
    private byte n = -1;
    private byte o = 0;
+   private int previousRotation;
+   private boolean rotationReady;
    public byte k;
    public boolean l;
 
@@ -44,6 +46,8 @@ public class LangLa_hm extends Entity {
    }
 
    public void q() {
+      previousRotation = o;
+      rotationReady = true;
       this.o = (byte)(this.o + 30);
       if (this.o >= 90) {
          this.o = 0;
@@ -57,6 +61,12 @@ public class LangLa_hm extends Entity {
          }
       }
 
+   }
+
+   int rotationAt(float alpha) {
+      if (!rotationReady) return o;
+      int distance = (o - previousRotation + 90) % 90;
+      return previousRotation + Math.round(distance * Math.max(0f, Math.min(1f, alpha)));
    }
 
    public void a(Graphics var1) {
@@ -90,7 +100,9 @@ public class LangLa_hm extends Entity {
                if (this.o().b[this.n].a == 5672) {
                   boolean var5 = true;
                   var1.k = var5;
-                  var7 = LangLa_fq.b(var1, this.o().b[this.n].a, this.o, var2 + this.cx + this.o().b[this.n].c, var3 + this.cy + this.o().b[this.n].d, 3);
+                  Canvas canvas = AppListener.gI().canvas;
+                  int rotation = canvas == null ? this.o : rotationAt(canvas.renderAlpha);
+                  var7 = LangLa_fq.b(var1, this.o().b[this.n].a, rotation, var2 + this.cx + this.o().b[this.n].c, var3 + this.cy + this.o().b[this.n].d, 3);
                   var5 = false;
                   var1.k = var5;
                } else if (this.l) {
