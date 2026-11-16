@@ -17,6 +17,9 @@ public final class FrameRate {
 
     public static int target() { return target; }
 
+    // Read the account's setting: background tabs retain their own movement mode.
+    static int movementFps() { return OPTIONS[selection()]; }
+
     public static void install(Listener callback) {
         platform = callback;
         applyPlatform = true;

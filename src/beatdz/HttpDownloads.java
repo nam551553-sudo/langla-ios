@@ -40,25 +40,41 @@ public final class HttpDownloads {
             connection.setReadTimeout(Math.min(30000, timeoutMillis));
             connection.setUseCaches(false);
             connection.setRequestProperty("User-Agent", "LangLaTest");
+            connection.setRequestProperty("Accept-Encoding", "identity");
             try {
                 if (connection.getResponseCode() != 200) throw new IOException("HTTP " + connection.getResponseCode());
                 long length = connection.getContentLengthLong();
                 if (length > maxBytes) throw new IOException("HTTP response is too large");
                 return new Response(new FilterInputStream(connection.getInputStream()) {
                     long count;
+                    boolean complete;
                     public int read(byte[] bytes, int offset, int length) throws IOException {
                         int read = super.read(bytes, offset, length);
                         if (read > 0 && (count += read) > maxBytes) throw new IOException("HTTP response is too large");
+                        if (read == -1) complete = true;
                         return read;
                     }
-                    public void close() throws IOException { try { super.close(); } finally { connection.disconnect(); } }
+                    public int read() throws IOException {
+                        int value = in.read();
+                        if (value < 0) complete = true;
+                        else if (++count > maxBytes) throw new IOException("HTTP response is too large");
+                        return value;
+                    }
+                    public void close() throws IOException {
+                        try { super.close(); }
+                        finally {
+                            // Closing a drained response returns its socket to the HTTP/TLS pool.
+                            if (!complete && (length < 0 || count < length)) connection.disconnect();
+                        }
+                    }
                 }, length, false);
             } catch (IOException | RuntimeException failure) { connection.disconnect(); throw failure; }
         } catch (IOException failure) { ERROR.set(failure.getMessage()); throw failure; }
     }
     public static byte[] bytes(String url, int timeoutMillis, int maxBytes) throws IOException {
         try (Response response = open(url, timeoutMillis, maxBytes)) {
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            int capacity = response.length > 0 ? (int)Math.min(response.length, maxBytes) : 16384;
+            ByteArrayOutputStream output = new ByteArrayOutputStream(capacity);
             byte[] buffer = new byte[16384];
             int read;
             while ((read = response.input.read(buffer)) != -1) {

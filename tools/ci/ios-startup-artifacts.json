@@ -1,0 +1,20 @@
+[
+    {
+        "density":  3,
+        "sourceSize":  111457702,
+        "sourceSha256":  "92cd3dcc4b3ae3e5a3fd6f285dd5fa3bd68224737615cec54d31250a656775b1",
+        "size":  15171213,
+        "sha256":  "180e05487068daa68713e8eec2fd5554417d628a80dabeb823fe5e9951b1bd91",
+        "url":  "https://langlablue.com/langlaapp/downloads/startup-20261116/zoom3-iconClient.zip",
+        "entries":  1329
+    },
+    {
+        "density":  4,
+        "sourceSize":  99900531,
+        "sourceSha256":  "dcb29a88c0246b6ebe484b76cbd693a74c2adfff17bffb4fd23d6c2e14bd0f39",
+        "size":  20973831,
+        "sha256":  "151b2072002ae8468f5091ba42646e5fdafb8a3a92e3ce13157f683e032e3715",
+        "url":  "https://langlablue.com/langlaapp/downloads/startup-20261116/zoom4-iconClient.zip",
+        "entries":  1329
+    }
+]

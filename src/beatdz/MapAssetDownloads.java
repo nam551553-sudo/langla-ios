@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 /** Shared limits and in-flight deduplication for foreground and speculative image downloads. */
 final class MapAssetDownloads {
     interface Ready { void accept(byte[] source); }
-    private static final int PARALLELISM = 4;
+    private static final int PARALLELISM = 6;
     private static final Semaphore NETWORK = new Semaphore(PARALLELISM, true);
     private static final ThreadPoolExecutor DOWNLOADS = new ThreadPoolExecutor(PARALLELISM, PARALLELISM,
             0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(192), action -> {

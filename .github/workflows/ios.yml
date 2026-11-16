@@ -46,36 +46,8 @@ jobs:
           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
               output.write('build_number=' + number + '\n')
           PY
-      - uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: ios-hd-assets
-          path: ios/bootstrap/data/ios-hd/
-          run-id: 43112524199
-          github-token: ${{ github.token }}
-      - name: Verify or fetch source HD archives
-        run: |
-          root=ios/bootstrap/data/ios-hd
-          verify() {
-            (cd "$root" && sha256sum -c <<'SHA256'
-          3dba78831aaec114912d7cddc601c111bc4874b137fdaabc6650ac1addac0015  zoom3/iconClient.zip
-          696edf3c0ba4f34e8b17a3a83a78a0663c0dc038fc9b670b1915f835e4bed6a3  zoom4/iconClient.zip
-          SHA256
-            )
-          }
-          if ! verify; then
-            python3 tools/ci/prepare-ios-hd.py
-            verify
-          fi
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ios-hd-assets
-          path: ios/bootstrap/data/ios-hd/
-          compression-level: 0
-          if-no-files-found: error
-          retention-days: 7
-      - name: Pack the UI icons needed on startup
-        run: python3 tools/ci/compact-ios-icons.py
+      - name: Verify current startup artwork against pinned VPS hashes
+        run: python3 tools/ci/prepare-ios-startup.py
       - uses: actions/upload-artifact@v4
         with:
           name: ios-startup-icons

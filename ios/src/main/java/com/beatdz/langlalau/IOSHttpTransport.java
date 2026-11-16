@@ -8,6 +8,18 @@ import org.robovm.apple.foundation.*;
 
 /** NSURLSession downloads to disk, with a caller deadline independent of socket timeouts. */
 public final class IOSHttpTransport implements HttpDownloads.Transport {
+    private NSURLSession shared;
+
+    private synchronized NSURLSession session() {
+        if (shared == null) {
+            NSURLSessionConfiguration configuration = NSURLSessionConfiguration.getEphemeralSessionConfiguration();
+            configuration.setTimeoutIntervalForRequest(30.0);
+            configuration.setTimeoutIntervalForResource(1200.0);
+            configuration.setWaitsForConnectivity(false);
+            shared = new NSURLSession(configuration);
+        }
+        return shared;
+    }
     private static final class Result {
         final CountDownLatch done = new CountDownLatch(1);
         IOException error;
@@ -19,15 +31,12 @@ public final class IOSHttpTransport implements HttpDownloads.Transport {
         final Result result = new Result();
         boolean success = false;
         try (NSAutoreleasePool pool = new NSAutoreleasePool()) {
-            NSURLSessionConfiguration configuration = NSURLSessionConfiguration.getEphemeralSessionConfiguration();
-            configuration.setTimeoutIntervalForRequest(Math.min(30.0, timeoutMillis / 1000.0));
-            configuration.setTimeoutIntervalForResource(timeoutMillis / 1000.0);
-            configuration.setWaitsForConnectivity(false);
             NSURLRequest request = new NSURLRequest(new NSURL(url), NSURLRequestCachePolicy.ReloadIgnoringLocalCacheData,
                     Math.min(30.0, timeoutMillis / 1000.0));
-            NSURLSession session = new NSURLSession(configuration);
+            NSURLSession session = session();
+            NSURLSessionDownloadTask task = null;
             try {
-                NSURLSessionDownloadTask task = session.newDownloadTask(request, (location, response, error) -> {
+                task = session.newDownloadTask(request, (location, response, error) -> {
                     try (NSAutoreleasePool callbackPool = new NSAutoreleasePool()) {
                         synchronized (result) {
                             if (result.closed) return;
@@ -73,7 +82,7 @@ public final class IOSHttpTransport implements HttpDownloads.Transport {
                 };
                 success = true;
                 return new HttpDownloads.Response(input, length, true);
-            } finally { session.invalidateAndCancel(); }
+            } finally { if (!success && task != null) task.cancel(); }
         } finally {
             synchronized (result) { result.closed = true; if (!success) downloaded.delete(); }
         }
