@@ -1923,9 +1923,25 @@ public class Controller implements IMessageHandler {
                         var1.reader.dis.reset();
                         Gdx.files.local("support/logs/player-info.bin").writeBytes(packet, false);
                     }
-                    Char.gI().readMe(var1);
-                    GameSrc.gI().g();
-                    SettingsTab.a((SettingsTab) null);
+                    String diagnostic;
+                    try {
+                        Char.gI().readMe(var1);
+                        GameSrc.gI().g();
+                        SettingsTab.a((SettingsTab) null);
+                        diagnostic = "Đã đọc nhân vật. Skills="
+                                + (GameSrc.gI().p == null ? -1 : GameSrc.gI().p.length)
+                                + ", hotbar=" + GameSrc.gI().aE.size()
+                                + ", remaining=" + var1.reader.dis.available();
+                    } catch (Exception failure) {
+                        diagnostic = failure.getMessage();
+                        Gdx.app.error("PlayerProtocol", diagnostic, failure);
+                    }
+                    final String report = diagnostic;
+                    Gdx.app.postRunnable(MultiSession.bind(() -> {
+                        MainScreen screen = DataCenter.gI().currentScreen;
+                        screen.a(new ReleaseNotesDialog(screen, "Chẩn đoán iOS 416",
+                                report + "\nChụp thông báo này để kiểm tra skill và Treo."));
+                    }));
                     return;
                 case -126:
                     Gdx.net.openURI(var1.readUTF());

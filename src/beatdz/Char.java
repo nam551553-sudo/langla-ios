@@ -413,6 +413,9 @@ public class Char extends Entity {
     }
 
     public void readMe(Message var1) throws java.io.IOException {
+        String stage = "header";
+        int total = var1.reader.dis.available();
+        try {
         DataCenter.gI().equipmentBalanceRevision = 0;
         this.vEffect.clear();
         this.username = var1.reader.readUTF();
@@ -442,6 +445,7 @@ public class Char extends Entity {
         this.hoatLuc = var1.readInt();
         GameSrc.gI().pointNAP = var1.readInt();
         GameSrc.gI().loadAfterNextMap();
+        stage = "inventory-size";
         this.arrItemBag = new Item[var1.readShort()];
         Item[] var3 = this.arrItemExtend;
         Message var2 = var1;
@@ -460,15 +464,20 @@ public class Char extends Entity {
             var3[var5.index] = var5;
         }
 
+        stage = "equipment";
         this.arrItemBody = readItemBody(var1, this.arrItemBody);
         this.arrItemBody2 = readItemBody(var1, this.arrItemBody2);
+        stage = "wing-extension";
         readWingRenderInfo(var1);
+        stage = "wing-extension";
         readWingRenderInfo(var1);
+        stage = "inventory";
         readItemBag(var1, this.arrItemBag);
         if (this.arrItemBody[10] != null) {
             this.aa = 50;
         }
 
+        stage = "effects";
         byte var8 = var1.readByte();
 
         int var10;
@@ -477,6 +486,7 @@ public class Char extends Entity {
             this.addEffect(var12);
         }
 
+        stage = "mail";
         GameSrc.gI().vThu.clear();
         short var9 = var1.readShort();
 
@@ -486,6 +496,7 @@ public class Char extends Entity {
             GameSrc.gI().vThu.add(var13);
         }
 
+        stage = "friends";
         GameSrc.gI().vFriend.clear();
         var9 = var1.readShort();
 
@@ -498,6 +509,7 @@ public class Char extends Entity {
         }
 
         GameSrc.gI().u();
+        stage = "enemies";
         GameSrc.gI().vEnemy.clear();
         var9 = var1.readShort();
 
@@ -508,11 +520,14 @@ public class Char extends Entity {
             GameSrc.gI().vEnemy.add(var15);
         }
 
+        stage = "skills";
         this.readSkill(var1);
+        stage = "titles";
         this.readDanhHieu(var1);
         this.selectDanhHieu = (byte) (var1.readByte() + 1);
         this.rank = var1.readByte();
         this.selectCaiTrang = var1.readByte();
+        stage = "profession";
         this.readProfession(var1);
 
         try {
@@ -531,6 +546,11 @@ public class Char extends Entity {
         this.aE.clear();
         this.U();
         this.bh = null;
+        } catch (Exception failure) {
+            throw new java.io.IOException("PLAYER " + stage + " offset="
+                    + (total - var1.reader.dis.available()) + "/" + total + " "
+                    + failure.getClass().getSimpleName() + ": " + failure.getMessage(), failure);
+        }
     }
 
     private void readProfession(Message message) throws java.io.IOException {
