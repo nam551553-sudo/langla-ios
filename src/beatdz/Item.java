@@ -1,6 +1,7 @@
 package beatdz;
 
 import com.tgame.model.Caption;
+import com.langla.balance.EquipmentActivation;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.Random;
@@ -484,28 +485,41 @@ public class Item implements Cloneable {
     }
 
     public int a(int var1, Char var2) {
-        int var3 = 0;
-        if (this.getItemTemplate().type == 1) {
-            if (var2.idhe == this.he || var2.arrItemBody[15] != null && var1 == 0 && (var2.arrItemBody[15].he == this.he || var2.arrItemBody[15].id == 881)) {
-                var3 = 3;
-            }
-        } else if (this.getItemTemplate().type == 15) {
-            if (var2.arrItemBody[1] != null && var2.arrItemBody[1].he == this.he) {
-                var3 = 3;
-            }
-        } else {
-            this.w = this.ad();
-            if (this.w != null) {
-                for (int var4 = 0; var4 < this.w.length; ++var4) {
-                    Item var5;
-                    if ((var5 = a(this.w[var4], var1, var2)) != null && (var5.he == this.he || var5.id == 881)) {
-                        ++var3;
-                    }
-                }
-            }
-        }
+        int count = hiddenOptionCount(var1, var2);
+        return count == Integer.MAX_VALUE ? 0 : count;
+    }
 
-        return var3;
+    public int hiddenOptionCount(int equipmentSet, Char wearer) {
+        if (wearer == null || !usableForActivation(this, wearer)) return 0;
+        int type = getItemTemplate().type;
+        Item weapon = activationItem(1, equipmentSet, wearer);
+        Item tanto = activationItem(15, equipmentSet, wearer);
+        Item first = activationItem(EquipmentActivation.supportType(type, 0), equipmentSet, wearer);
+        Item second = activationItem(EquipmentActivation.supportType(type, 1), equipmentSet, wearer);
+        return EquipmentActivation.hiddenLineCount(type, he, wearer.idhe,
+                weapon == null ? 0 : weapon.he, tanto == null ? 0 : tanto.he,
+                tanto != null && tanto.id == 881 || type == 15 && id == 881,
+                first == null ? 0 : first.he, second == null ? 0 : second.he);
+    }
+
+    private static boolean usableForActivation(Item item, Char wearer) {
+        if (item == null || item.getItemTemplate() == null) return false;
+        ItemTemplate template = item.getItemTemplate();
+        return (item.expiry == -1L || item.expiry > Utlis.time())
+                && template.levelNeed <= wearer.level()
+                && (template.gioiTinh == 2 || template.gioiTinh == wearer.gioiTinh)
+                && (template.idClass == 0 || template.idClass == wearer.idClass);
+    }
+
+    private static Item activationItem(int type, int equipmentSet, Char wearer) {
+        if (type < 0) return null;
+        Item[] items = equipmentSet == 0 ? wearer.arrItemBody : wearer.arrItemBody2;
+        if (items == null) return null;
+        for (Item item : items) {
+            if (item != null && item.getItemTemplate() != null && item.getItemTemplate().type == type
+                    && usableForActivation(item, wearer)) return item;
+        }
+        return null;
     }
 
     public boolean x() {

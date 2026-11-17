@@ -543,7 +543,7 @@ public class LangLa_mk extends LangLa_fm {
                var3 = 0;
                LangLa_kl var19;
                if (this.s instanceof LangLa_kl && (var19 = (LangLa_kl)this.s).m() == 0) {
-                  var3 = var5.a(var19.n(), var19.y);
+                  var3 = var5.hiddenOptionCount(var19.n(), var19.y);
                }
 
                boolean var21 = false;
@@ -557,11 +557,12 @@ public class LangLa_mk extends LangLa_fm {
                            this.h.addElement(new LangLa_gp(Caption.fM + a(var5.getItemTemplate().type, var5.he), -1, -11184811));
                         }
 
-                        if (var3 > 0) {
+                        if (var3 > 0 && var5.isOptionActive(var45[var7])) {
                            this.h.addElement(new LangLa_gp(var45[var7].b(), -7812062, -16777216));
                            --var3;
                         } else {
                            this.h.addElement(new LangLa_gp(var45[var7].b(), -7631732, -16777216));
+                           if (var3 > 0) --var3;
                         }
                      } else if (var45[var7].getItemOptionTemplate().type == 8) {
                         this.h.addElement(new LangLa_gp("(" + DataCenter.gI().ItemTemplate[var45[var7].h()].name + " " + Caption.dn + " " + var45[var7].i() + ") " + var45[var7].b(), -7340813, -16777216));
