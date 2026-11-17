@@ -1229,6 +1229,13 @@ public class DataCenter {
         this.ItemOptionTemplate = source.ItemOptionTemplate;
         this.SkillTemplate = source.SkillTemplate;
         this.SkillClan = source.SkillClan;
+        // Pet definitions were omitted from account views, so later tabs silently
+        // discarded every learned pet skill while decoding login/update packets.
+        Vector petDefinitions = source.vSkillClan;
+        this.vSkillClan = new Vector();
+        if (petDefinitions != null) for (int i = 0; i < petDefinitions.size(); i++) {
+            this.vSkillClan.add(((SkillClan) petDefinitions.elementAt(i)).a());
+        }
         this.EffectTemplate = source.EffectTemplate;
         this.Skill = source.Skill;
         this.DataTypeItemBody = source.DataTypeItemBody;
