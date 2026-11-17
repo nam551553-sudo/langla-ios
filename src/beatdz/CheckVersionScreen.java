@@ -169,6 +169,11 @@ public class CheckVersionScreen extends ScreenLogin {
         mFont.a(var1, Caption.eP + Session.gI().d(), 8 + AppListener.gI().o, 8, 0, -1);
         String buildLabel = Gdx.app.getType() == ApplicationType.iOS ? " [iOS " + System.getProperty("langla.ios.build", "125") + "]" : "";
         mFont.a(var1, Caption.eQ + Utlis.e(DataCenter.gI().VER2) + buildLabel, this.width - 8 - AppListener.gI().o, 8, 1, -1);
+        if (Gdx.app.getType() == ApplicationType.iOS && this.a != null) {
+            mFont.a(var1, DataCenter.gI().startupPhase, this.width / 2, this.height - 48, 2, -1);
+            if (DataCenter.gI().startupFailure != null)
+                mFont.a(var1, DataCenter.gI().startupFailure, this.width / 2, this.height - 68, 2, -1);
+        }
         if (AppListener.d != null && AppListener.e != null && this.a != null) {
             this.a.a(var1);
         } else if (Gdx.app.getType() == ApplicationType.iOS) {
@@ -371,7 +376,15 @@ public class CheckVersionScreen extends ScreenLogin {
 
             for (var16 = 0; var16 < var0.g.size(); ++var16) {
                 LangLa_fb var18;
-                if ((var18 = (LangLa_fb) var0.g.get(var16)).a() && DataCenter.gI().VER2 > var3 && Gdx.app.getType() != ApplicationType.iOS) {
+                var18 = (LangLa_fb) var0.g.get(var16);
+                if (Gdx.app.getType() == ApplicationType.iOS
+                        && (var18.d.equals("iconChar.zip") || var18.d.equals("iconTree.zip"))) {
+                    // Character and tree images already have an individual on-demand loader.
+                    // Do not mark an archive revision until its full archive has been installed.
+                    var18.f = true;
+                    continue;
+                }
+                if (var18.a() && DataCenter.gI().VER2 > var3 && Gdx.app.getType() != ApplicationType.iOS) {
                     var0.h += (long) var18.b;
                     DataCenter.gI().ba = false;
                 } else if (var18.b != 0 && var18.b != var18.c) {
