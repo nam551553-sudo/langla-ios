@@ -30,7 +30,7 @@ final class AssetArchives {
             }
         }
         int timeoutMillis = HttpDownloads.isNative() ? 1200000 : 300000;
-        try (HttpDownloads.Response response = HttpDownloads.open(Utlis.i(url), timeoutMillis, 192L * 1024 * 1024)) {
+        try (HttpDownloads.Response response = HttpDownloads.open(Utlis.i(url), timeoutMillis, 512L * 1024 * 1024)) {
             return extract(response.input, response.length, !response.progressCounted, refreshImages);
         }
     }
