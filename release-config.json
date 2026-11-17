@@ -2,7 +2,7 @@
   "mode": "ssh",
   "localWebRoot": "C:/xampp/htdocs/langlaapp",
   "publicBaseUrl": "https://langlablue.com/langlaapp/",
-  "dataUrl": "http://180.93.50.51/",
+  "dataUrl": "http://180.93.50.51:2908/static/",
   "serverIp": "180.93.50.51",
   "javaHome": "C:/Program Files/Java/jdk-21.0.12.1",
   "sshConfig": "update-ssh.json",
