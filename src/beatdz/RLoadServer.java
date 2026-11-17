@@ -28,7 +28,7 @@ public class RLoadServer implements Runnable {
                 Vector var1 = new Vector();
                 String var2;
 
-                var2 = Binary.a(Utlis.ipsv, 2);
+                var2 = ClientConfig.DEFAULT_SERVER_LIST;
                 if (var2 == null || var2.trim().isEmpty()) {
                     var2 = ClientConfig.DEFAULT_SERVER_LIST;
                 }
