@@ -3556,6 +3556,7 @@ public class GameSrc extends MainScreen {
     }
 
     private long lastHudErrorLog;
+    private final DungeonTimerHud dungeonTimerHud = new DungeonTimerHud();
 
     private void rebuildHudBackground() {
         // Character data can open this screen before the map packet creates its controls.
@@ -3650,7 +3651,10 @@ public class GameSrc extends MainScreen {
         graphics.setClip(0, 0, this.width, this.height);
         graphics.m = 1.0F;
         try {
-            if (group != null) group.a(graphics);
+            if (group != null) {
+                group.a(graphics);
+                if (group == this.Q) dungeonTimerHud.paint(graphics, this, Utlis.time());
+            }
         } catch (Exception error) {
             long now = System.currentTimeMillis();
             if (now - this.lastHudErrorLog >= 5000L) {
@@ -10906,6 +10910,7 @@ public class GameSrc extends MainScreen {
     private void layoutShortcutDock(boolean expanded) {
         if (U == null) return;
         int left = Math.max(0, width - 128);
+        int timerOffset = DungeonTimerHud.isTimedMap(this) ? DungeonTimerHud.HEIGHT : 0;
         for (Object value : U.a) {
             LangLa_dz button = (LangLa_dz)value;
             int action = button.b;
@@ -10923,12 +10928,12 @@ public class GameSrc extends MainScreen {
                 case 1035: column = 3; row = 1; break;
                 case 1034: column = 4; row = 1; break;
                 case 1100:
-                    button.setXY(width - button.width - 4, expanded ? 72 : 20);
+                    button.setXY(width - button.width - 4, (expanded ? 72 : 20) + timerOffset);
                     button.e = (short)(expanded ? 0 : 180);
                     break;
                 default: break;
             }
-            if (column >= 0) button.setXY(left + column * 25, 20 + row * 25);
+            if (column >= 0) button.setXY(left + column * 25, 20 + row * 25 + timerOffset);
         }
         U.relayout(expanded);
     }

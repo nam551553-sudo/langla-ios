@@ -16,7 +16,7 @@ $ErrorActionPreference='Stop'
 if($compileExit -ne 0){Get-Content (Join-Path $output 'compile.log') -Tail 25;throw 'Client checks did not compile'}
 $cp=$classes+';'+$cp+';'+(Join-Path $root 'test')
 $checks=@('beatdz.PacketFramingCheck','beatdz.GoldTopUpQrCheck','beatdz.MadaraAttachmentCheck','beatdz.CapeAttachmentCheck','beatdz.AndroidMotionCheck','beatdz.CostumeMovementCheck','CombatSenderCheck','beatdz.MapPrefetchCheck','AutoOptionsCheck','beatdz.BulkItemUseCheck','LauncherUpdateCheck','com.langla.launcher.LauncherRecoveryCheck','com.langla.launcher.SignedUpdateCheck','beatdz.LuckyDialogCheck','beatdz.MobTargetHudCheck')
-$graphicsChecks=@('beatdz.HiddenEquipmentActivationCheck','beatdz.PetSkillTabCheck','beatdz.MultiSessionLoadCheck','beatdz.QuestTrackerTabCheck','beatdz.CardArtworkCheck','beatdz.RecoveryAndConsumableCheck','beatdz.ImageTabIsolationCheck','beatdz.EquipmentTapCheck')
+$graphicsChecks=@('beatdz.DungeonTimerHudCheck','beatdz.HiddenEquipmentActivationCheck','beatdz.PetSkillTabCheck','beatdz.MultiSessionLoadCheck','beatdz.QuestTrackerTabCheck','beatdz.CardArtworkCheck','beatdz.RecoveryAndConsumableCheck','beatdz.ImageTabIsolationCheck','beatdz.EquipmentTapCheck')
 $checks+='beatdz.FrameRateCheck'
 $checks+='beatdz.HighFrameEffectCheck'
 $checks+='beatdz.MaterialChestWireCheck'
