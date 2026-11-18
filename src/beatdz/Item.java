@@ -1075,6 +1075,10 @@ public static SessionState $state_Item() { return beatdz.MultiSession.state($SES
 
     private int getBaseMaxCuongHoaLevel() {
         int levelNeed = this.getItemTemplate().levelNeed;
+        if (this.getItemTemplate().type >= 0 && this.getItemTemplate().type <= 9
+                && levelNeed >= 70 && levelNeed <= 79) {
+            return 19;
+        }
         if (this.X() || this.WLD()) {
             if (levelNeed >= 60) {
                 return 19;
