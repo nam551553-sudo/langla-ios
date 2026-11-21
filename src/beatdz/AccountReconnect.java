@@ -9,6 +9,7 @@ final class AccountReconnect {
     private boolean selectedCharacter;
     private boolean resumeTraining;
     private int characterId;
+    private String characterName;
     private int failures;
     private String username;
     private String password;
@@ -38,7 +39,7 @@ final class AccountReconnect {
         }
         long now = Utlis.time();
         if (attemptStarted && session.isConnected() && data.currentScreen instanceof GameSrc
-                && !data.aH && GameSrc.gI().V == null && Char.gI().idEntity == characterId) {
+                && !data.aH && GameSrc.gI().V == null && matchesCharacter(Char.gI())) {
             SettingsTab.gI().a(resumeTraining);
             restoring = false;
             attemptStarted = false;
@@ -46,8 +47,9 @@ final class AccountReconnect {
             remember();
             return;
         }
-        if (attemptStarted && session.isConnected() && data.currentScreen instanceof SelectCharScreen && !selectedCharacter) {
-            selectedCharacter = ((SelectCharScreen)data.currentScreen).reselectCharacter(characterId);
+        if (attemptStarted && session.isConnected() && data.currentScreen instanceof SelectCharScreen && !selectedCharacter && now < attemptDeadline) {
+            if (!DataCenter.a()) return;
+            selectedCharacter = ((SelectCharScreen)data.currentScreen).reselectCharacter(characterId, characterName);
             if (!selectedCharacter) {
                 cancel();
                 data.currentScreen.showMessage("Không tìm thấy nhân vật trước khi mất kết nối.", -65536);
@@ -58,9 +60,15 @@ final class AccountReconnect {
         if (attemptStarted) {
             attemptStarted = false;
             session.close();
+            if (!restoring || now < nextAttemptAt) return;
         }
         if (now < nextAttemptAt || session.isConnecting) return;
         startAttempt(now);
+    }
+
+    private boolean matchesCharacter(Char player) {
+        return characterName == null || characterName.isEmpty()
+                ? player.idEntity == characterId : characterName.equals(player.name);
     }
 
     private void remember() {
@@ -71,8 +79,19 @@ final class AccountReconnect {
         password = secret;
         server = DataCenter.gI().aP;
         characterId = Char.gI().idEntity;
+        characterName = Char.gI().name;
         resumeTraining = SettingsTab.gI().autoTrain;
         armed = server != null;
+    }
+
+    void returnToLogin() {
+        Session session = Session.gI();
+        if (!restoring && session.isConnected()
+                && DataCenter.gI().currentScreen instanceof GameSrc && Char.gI().idEntity > 0) {
+            remember();
+        }
+        session.close();
+        if (!restoring) DataCenter.gI().setScreen(LoginPCScreen.getScreenLogin());
     }
 
     boolean disconnected() {

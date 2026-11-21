@@ -650,11 +650,13 @@ public class SelectCharScreen extends MainScreen {
         var2.close();
     }
 
-    boolean reselectCharacter(int characterId) {
+    boolean reselectCharacter(int characterId, String characterName) {
         LangLa_me[] characters = $state_SelectCharScreen().v;
         if (characters == null) return false;
         for (int index = 0; index < characters.length; index++) {
-            if (characters[index] != null && characters[index].a.idEntity == characterId) {
+            Char character = characters[index] == null ? null : characters[index].a;
+            if (character != null && (characterName == null || characterName.isEmpty()
+                    ? character.idEntity == characterId : characterName.equals(character.name))) {
                 b(index);
                 return true;
             }

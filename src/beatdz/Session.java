@@ -131,10 +131,7 @@ public class Session {
                 var4 = var1.dis.readInt();
                 break;
             case -86:
-                dispatch(() -> {
-                    close();
-                    DataCenter.gI().setScreen(LoginPCScreen.getScreenLogin());
-                });
+                dispatch(() -> AccountReconnect.gI().returnToLogin());
                 return;
             case -84:
             case 123:

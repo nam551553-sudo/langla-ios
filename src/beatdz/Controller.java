@@ -1666,9 +1666,7 @@ public class Controller implements IMessageHandler {
                 default:
                     break;
                 case -126:
-                    ScreenLogin screeLogin;
-                    (screeLogin = LoginPCScreen.getScreenLogin()).k(1000);
-                    DataCenter.gI().setScreen((MainScreen) screeLogin);
+                    AccountReconnect.gI().returnToLogin();
                     return;
                 case -124:
                     ((LoginPCScreen) DataCenter.gI().currentScreen).a(LangLa_kg.e().a, LangLa_kg.e().b, true);
