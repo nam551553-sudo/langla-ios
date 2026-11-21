@@ -140,10 +140,9 @@ public class Char extends Entity {
     }
 
     private int groundStep(int base) {
-        groundSpeedCarry += (horizontalSpeed(base) * 10_000 + movementSpeedRemainder * 130)
-                * FrameRate.movementFps();
-        int distance = groundSpeedCarry / 600_000;
-        groundSpeedCarry %= 600_000;
+        groundSpeedCarry += horizontalSpeed(base) * 10_000 + movementSpeedRemainder * 130;
+        int distance = groundSpeedCarry / 10_000;
+        groundSpeedCarry %= 10_000;
         return distance;
     }
 
@@ -1984,8 +1983,7 @@ public class Char extends Entity {
 
     private boolean walkGround(int direction) {
         // Let the movement tick consume the fractional part once as it approaches this target.
-        int distance = (int)Math.ceil((horizontalSpeed(speedMove) + movementSpeedRemainder * .013f)
-                * FrameRate.movementFps() / 60f) + 1;
+        int distance = (int)Math.ceil(horizontalSpeed(speedMove) + movementSpeedRemainder * .013f) + 1;
         return this.a(this.cx + (direction == 3 ? -distance : distance), this.cy, (byte) direction);
     }
 
