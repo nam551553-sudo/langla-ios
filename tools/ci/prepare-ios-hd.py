@@ -6,8 +6,8 @@ from tempfile import TemporaryDirectory
 from urllib.request import Request, urlopen
 
 ARCHIVES = {
-    3: (111692775, "3dba78831aaec114912d7cddc601c111bc4874b137fdaabc6650ac1addac0015"),
-    4: (100307989, "696edf3c0ba4f34e8b17a3a83a78a0663c0dc038fc9b670b1915f835e4bed6a3"),
+    3: (111457702, "92cd3dcc4b3ae3e5a3fd6f285dd5fa3bd68224737615cec54d31250a656775b1"),
+    4: (99900531, "dcb29a88c0246b6ebe484b76cbd693a74c2adfff17bffb4fd23d6c2e14bd0f39"),
 }
 PART_BYTES = 4 * 1024 * 1024
 
