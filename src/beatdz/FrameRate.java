@@ -47,6 +47,10 @@ public final class FrameRate {
 
     static String label(int option) { return OPTIONS[option] + " FPS"; }
 
+    static float simulationElapsed(float elapsed) {
+        return Math.min(elapsed, 0.1f) * (OPTIONS[selection()] / 60f);
+    }
+
     static void apply() {
         int fps = OPTIONS[selection()];
         if (target != fps || applyPlatform) {

@@ -286,7 +286,7 @@ public abstract class Canvas implements Screen {
         FrameRate.apply();
         float frameDelta = FrameRate.frameDelta(var1);
         // Scale client simulation by the selected mode, independently of dropped frames.
-        float logicElapsed = Math.min(frameDelta, 0.1F) * simulationSpeed();
+        float logicElapsed = FrameRate.simulationElapsed(frameDelta);
         this.logicAccumulator += logicElapsed;
         float logicInterval = RenderMotion.STEP;
         int logicSteps = (int) (this.logicAccumulator / logicInterval);
@@ -298,10 +298,6 @@ public abstract class Canvas implements Screen {
         this.stage.draw();
         MultiSession.drawBar();
         MultiSession.updateHidden(this, Math.min(frameDelta, 0.1f), true);
-    }
-
-    private float simulationSpeed() {
-        return 1f;
     }
 
     public int getWidth() {
