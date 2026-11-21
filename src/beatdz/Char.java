@@ -233,6 +233,7 @@ public class Char extends Entity {
     public boolean aT;
     public int aU;
     public int selectCaiTrang;
+    private static final int HIDE_TANTO = 4;
     public int aW;
     public int aX;
     public int aY;
@@ -1288,11 +1289,14 @@ public class Char extends Entity {
         a(var4, var5);
         int var10 = Integer.MIN_VALUE;
         boolean var9 = false;
+        LangLa_jr customCostume = null;
+        boolean hasCape = false;
 
-        LangLa_jr var8;
-        int var11;
-        for (var11 = 0; var11 < var4.size(); ++var11) {
-            if ((var8 = (LangLa_jr) var4.elementAt(var11)).b()) {
+        for (int var11 = 0; var11 < var4.size(); ++var11) {
+            LangLa_jr var8 = (LangLa_jr) var4.elementAt(var11);
+            if (CostumeCape.isNewBody(var8)) customCostume = var8;
+            hasCape |= var8.equippedCape;
+            if (var8.b()) {
                 if (this.idClass == 3 && this.gioiTinh == 1) {
                     var10 = 34;
                 } else {
@@ -1317,8 +1321,24 @@ public class Char extends Entity {
             var10 = Integer.MIN_VALUE;
         }
 
-        for (var11 = 0; var11 < var4.size(); ++var11) {
-            var8 = (LangLa_jr) var4.elementAt(var11);
+        int idleDip = 0;
+        if (customCostume != null && isStandingPose(var5) && isStandingPose(var6)) {
+            // Use the stock standing cycle. Its upper layers dip one pixel on poses 1 and 32.
+            // Draw the same full-body cel so the eyes and grip stay aligned.
+            idleDip = var5 == 1 || var5 == 32 ? 1 : 0;
+            if (var5 != 0) {
+                var5 = 0;
+                a(var4, var5);
+            }
+            var6 = 0;
+        }
+
+        boolean fitCape = hasCape && CostumeCape.canFit(customCostume, var5);
+        if (fitCape) CostumeCape.draw(var1, var4, customCostume, var5, var2, var3, var7, true, idleDip);
+
+        for (int var11 = 0; var11 < var4.size(); ++var11) {
+            LangLa_jr var8 = (LangLa_jr) var4.elementAt(var11);
+            if (fitCape && var8.equippedCape) continue;
             int var15 = var5;
             if (var8.e()) {
                 var15 = var6;
@@ -1334,10 +1354,15 @@ public class Char extends Entity {
                 var1.d((float) var8.c);
             }
 
-            if (var7) {
-                LangLa_fq.b(var1, var8.d[var15].a, Utlis.b(var8.d[var15].b), var2 - var8.d[var15].d, var3 + var8.d[var15].e, 33);
-            } else {
-                LangLa_fq.b(var1, var8.d[var15].a, Utlis.a(var8.d[var15].b), var2 + var8.d[var15].d, var3 + var8.d[var15].e, 33);
+            LangLa_ju frame = var8.d[var15];
+            int transform = var7 ? Utlis.b(frame.b) : Utlis.a(frame.b);
+            int layerX = var2 + (var7 ? -frame.d : frame.d);
+            int layerY = var3 + frame.e;
+            if (idleDip != 0 && var8 == customCostume) {
+                LangLa_fq.drawStandingCostume(var1, frame.a, transform, layerX, layerY, idleDip);
+            } else if (!CostumeTanto.draw(var1, customCostume, var5, var8, frame, var2, var3 + idleDip, var7)) {
+                int attachmentDip = var8.heldWeapon || var8.equippedCape ? idleDip : 0;
+                LangLa_fq.b(var1, frame.a, transform, layerX, layerY + attachmentDip, 33);
             }
 
             if (var8.c != 0) {
@@ -1350,8 +1375,15 @@ public class Char extends Entity {
                 var1.setClip(0, 0, DataCenter.gI().widthScreen, DataCenter.gI().heightScreen);
                 var1.a(var12, var13);
             }
+            if (fitCape && var8 == customCostume) {
+                CostumeCape.draw(var1, var4, customCostume, var5, var2, var3, var7, false, idleDip);
+            }
         }
 
+    }
+
+    private static boolean isStandingPose(int pose) {
+        return pose == 0 || pose == 1 || pose == 31 || pose == 32;
     }
 
     private void X() {
@@ -2827,22 +2859,23 @@ public class Char extends Entity {
                 this.a(var3, var1[10].getItemTemplate().idChar, 0);
             }
 
+            int firstWeaponPart = var3.size();
+            Item tanto = this.selectCaiTrang == HIDE_TANTO ? null : var1[15];
+            Item reserveTanto = this.selectCaiTrang == HIDE_TANTO ? null : this.arrItemBody2[15];
             if (this.aP >= 0 && DataCenter.gI().ItemTemplate[this.aP].idChar > 0) {
                 this.a(var3, DataCenter.gI().ItemTemplate[this.aP].idChar, 0);
-            } else if (var1[15] != null && var1[15].id >= 908 && var1[15].id <= 911) {
-                this.a(var3, var1[15].getItemTemplate().idMob, 0);
-            } else if (this.arrItemBody2[15] != null && this.arrItemBody2[15].id >= 908 && this.arrItemBody2[15].id <= 911) {
-                this.a(var3, this.arrItemBody2[15].getItemTemplate().idMob, 0);
-            } else if (var1[15] != null && var1[15].getItemTemplate().idMob > 0) {
+            } else if (tanto != null && tanto.id >= 908 && tanto.id <= 911) {
+                this.a(var3, tanto.getItemTemplate().idMob, 0);
+            } else if (reserveTanto != null && reserveTanto.id >= 908 && reserveTanto.id <= 911) {
+                this.a(var3, reserveTanto.getItemTemplate().idMob, 0);
+            } else if (tanto != null && tanto.getItemTemplate().idMob > 0) {
                 if (var1[16] != null && var1[16].getItemTemplate().idChar > 0) {
-                    this.a(var3, var1[15].getItemTemplate().idMob, 9);
+                    this.a(var3, tanto.getItemTemplate().idMob, 9);
                 } else if (!this.aQ && var1[14] != null && var1[14].getItemTemplate().idChar > 0) {
-                    this.a(var3, var1[15].getItemTemplate().idMob, 9);
+                    this.a(var3, tanto.getItemTemplate().idMob, 9);
                 } else {
-                    this.a(var3, var1[15].getItemTemplate().idMob, 0);
+                    this.a(var3, tanto.getItemTemplate().idMob, 0);
                 }
-            } else if (var1[15] != null && var1[15].id >= 908 && var1[15].id <= 911) {
-                this.a(var3, var1[15].getItemTemplate().idMob, 0);
             } else if (var1[1] != null) {
                 if (var1[16] != null && var1[16].getItemTemplate().idChar > 0) {
                     this.a(var3, var1[1].getItemTemplate().idChar, var1[1].level, 9, var1[1].getItemTemplate().levelNeed);
@@ -2853,13 +2886,27 @@ public class Char extends Entity {
                 }
             }
 
+            if (this.aP < 0 || DataCenter.gI().ItemTemplate[this.aP].idChar <= 0) {
+                for (int i = firstWeaponPart; i < var3.size(); i++) {
+                    ((LangLa_jr) var3.elementAt(i)).heldWeapon = true;
+                }
+            }
+
             if (this.arrItemBody2[12] != null && this.arrItemBody2[12].id == 127) {
-                this.a(var3, this.arrItemBody2[12].getItemTemplate().idChar, 0);
+                this.addEquippedCape(var3, this.arrItemBody2[12]);
             } else if (var1[12] != null && (this.aS || var1[16] == null || var1[16].id != 861)) {
-                this.a(var3, var1[12].getItemTemplate().idChar, 0);
+                this.addEquippedCape(var3, var1[12]);
             }
 
             return var3;
+        }
+    }
+
+    private void addEquippedCape(Vector parts, Item cape) {
+        int first = parts.size();
+        this.a(parts, cape.getItemTemplate().idChar, 0);
+        for (int i = first; i < parts.size(); i++) {
+            ((LangLa_jr) parts.elementAt(i)).equippedCape = true;
         }
     }
 

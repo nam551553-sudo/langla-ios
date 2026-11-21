@@ -1,0 +1,212 @@
+package beatdz;
+
+/** Positions the Cuu Vi Tanto grip on full-body costume sprites. */
+final class CostumeTanto {
+    static final int BORUTO_BODY = 974;
+    static final int KAWAKI_BODY = 975;
+    static final int MADARA_BODY = 976;
+    static final int RED_MOON_BODY = 1084;
+    static final int OBITO_BODY = 1085;
+    static final int MOMOSOKI_BODY = 1086;
+    private static final int MADARA_FIRST_TEXTURE = 30500;
+    // Palm centers measured from each cel's bottom center, in logical game pixels.
+    private static final int[][] MADARA_HAND = {
+        {-3,-10}, {-3,-10}, {-10,-17}, {-10,-17}, {-10,-16}, {-10,-17},
+        {-10,-16}, {-11,-18}, {8,-17}, {6,-14}, {9,-12}, {8,-17},
+        {5,-14}, {4,-15}, {-13,-17}, {-12,-14}, {-12,-17}, {7,-16},
+        {9,-16}, {13,-22}, {12,-20}, {11,-19}, {-11,-16}, {-12,-18},
+        {-11,-17}, {-6,-23}, {-11,-18}, {-10,-18}, {0,-16}, {-10,-22}, {0,-11}
+    };
+    private static final int[][] RED_MOON_HAND = {
+        {-6,-11}, {-6,-11}, {-10,-14}, {-10,-14}, {-10,-14}, {-10,-14},
+        {-10,-14}, {-10,-14}, {-7,-14}, {-12,-15}, {8,-15}, {-11,-17},
+        {8,-17}, {7,-16}, {-13,-16}, {-12,-16}, {-12,-14}, {-12,-14},
+        {10,-12}, {11,-17}, {11,-16}, {-10,-17}, {-11,-16}, {-12,-17},
+        {-13,-23}, {-13,-22}, {-11,-19}, {-10,-18}, {-6,-18}, {-3,-9}
+    };
+    private static final int[][] OBITO_HAND = {
+        {-7,-10}, {-7,-10}, {-12,-16}, {-14,-17}, {-13,-16}, {-13,-16},
+        {-12,-17}, {-13,-20}, {-14,-20}, {-6,-15}, {-13,-19}, {6,-10},
+        {-12,-18}, {-12,-24}, {-12,-20}, {-10,-17}, {-10,-18}, {13,-23},
+        {9,-16}, {-13,-24}, {-11,-23}, {-15,-25}, {-11,-19}, {-11,-21},
+        {-11,-21}, {7,-20}, {-4,-8}
+    };
+    private static final int[][] MOMOSOKI_HAND = {
+        {-8,-12}, {-8,-12}, {-10,-15}, {-12,-16}, {-11,-15}, {-12,-16},
+        {-9,-16}, {-9,-18}, {-13,-19}, {8,-13}, {-12,-18}, {-9,-17},
+        {-12,-18}, {-8,-24}, {-11,-19}, {-10,-17}, {-10,-16}, {12,-23},
+        {10,-18}, {-11,-20}, {-11,-21}, {-10,-20}, {-11,-19}, {-11,-21},
+        {-10,-22}, {-7,-17}, {-4,-8}
+    };
+    private static final int KAWAKI_FIRST_TEXTURE = 30400;
+    private static final int KAWAKI_IDLE_TEXTURE = 30427;
+    private static final int[][] KAWAKI_HAND = {
+        {-10,-11}, {-10,-11}, {-12,-18}, {-13,-17}, {-13,-17}, {-13,-17},
+        {-13,-18}, {-12,-17}, {-14,-23}, {7,-12}, {-15,-19}, {7,-18},
+        {-13,-17}, {-10,-11}, {1,-7}, {1,-8}, {10,-11}, {-10,-16},
+        {-8,-13}, {-15,-21}, {-16,-22}, {-1,-12}, {1,-19}, {-14,-22},
+        {-14,-22}, {-9,-15}, {-1,-8}
+    };
+    private static final int BORUTO_FIRST_TEXTURE = 30300;
+    private static final int BORUTO_IDLE_TEXTURE = 30327;
+    private static final int[][] BORUTO_HAND = {
+        {-10,-10}, {-11,-11}, {-12,-17}, {-12,-16}, {-13,-16}, {-13,-16},
+        {-13,-16}, {-13,-17}, {-15,-22}, {7,-11}, {-15,-19}, {6,-17},
+        {-13,-18}, {3,-13}, {-3,-6}, {-10,-9}, {8,-10}, {-10,-18},
+        {-7,-13}, {-16,-23}, {-16,-24}, {-11,-18}, {-12,-21}, {-15,-21},
+        {-14,-22}, {-8,-15}, {0,-9}
+    };
+
+    private static final int FIRST_TANTO_TEXTURE = 30100;
+    private static final int LAST_TANTO_TEXTURE = 30159;
+
+    // Hand coordinates for the shared full-body poses, measured from the
+    // sprite's bottom center in percent of its height.
+    private static final int[][] HAND = {
+        {-5,-24}, {-5,-24}, {-15,-42}, {-16,-41}, {-16,-41}, {-14,-41},
+        {-16,-41}, {-22,-40}, {-16,-40}, {-16,-40}, {-16,-40}, {-12,-40},
+        {-14,-40}, {-14,-40}, {-13,-35}, {13,-43}, {-22,-38}, {-15,-38},
+        {-21,-29}, {-21,-29}, {-11,-38}, {19,-37}, {15,-42}, {-21,-43},
+        {-20,-41}, {12,-36}, {-13,-42}, {-12,-41}, {-15,-42}, {-14,-42},
+        {-2,-23}, {-5,-25}, {-5,-25}
+    };
+
+    private static final int FIRST_COSTUME_PART = 926;
+    // Palm centers measured on the standing sprite of each legacy full-body costume.
+    private static final int[][] IDLE_PALM = {
+        {-12,-34}, {-12,-32}, {-15,-31}, {-15,-31}, {-9,-34}, {-13,-31},
+        {-15,-27}, {-9,-29}, {-12,-29}, {-12,-28}, {-9,-33}, {-12,-29},
+        {-12,-31}, {-15,-37}, {-12,-34}, {-16,-34}, {-11,-31}, {-16,-30},
+        {-12,-35}, {-16,-30}, {-10,-29}, {-13,-31}, {-14,-27}, {-13,-24},
+        {-12,-21}, {-12,-26}, {-13,-24}, {-12,-25}, {-11,-24}, {-9,-26},
+        {-13,-24}, {-13,-24}, {-19,-25}, {-7,-18}, {-14,-23}, {-5,-24}
+    };
+
+    private CostumeTanto() {}
+
+    static boolean isRecentFullBody(int body) {
+        return body >= RED_MOON_BODY && body <= MOMOSOKI_BODY;
+    }
+
+    static int[] recentPalm(int body, short texture) {
+        int firstTexture;
+        int[][] palms;
+        switch (body) {
+            case RED_MOON_BODY: firstTexture = 30600; palms = RED_MOON_HAND; break;
+            case OBITO_BODY: firstTexture = 30640; palms = OBITO_HAND; break;
+            case MOMOSOKI_BODY: firstTexture = 30680; palms = MOMOSOKI_HAND; break;
+            default: return null;
+        }
+        int cel = texture - firstTexture;
+        return cel >= 0 && cel < palms.length ? palms[cel] : null;
+    }
+
+    static boolean draw(Graphics graphics, LangLa_jr costume, int bodyPose,
+                        LangLa_jr weapon, LangLa_ju tanto, int x, int y, boolean flip) {
+        if (costume == null || bodyPose < 0 || bodyPose >= HAND.length
+                || bodyPose >= costume.d.length || tanto.a == 0) return false;
+        boolean cuuVi = tanto.a >= FIRST_TANTO_TEXTURE && tanto.a <= LAST_TANTO_TEXTURE;
+        boolean boruto = costume.a == BORUTO_BODY;
+        boolean kawaki = costume.a == KAWAKI_BODY;
+        boolean madara = costume.a == MADARA_BODY;
+        boolean recent = isRecentFullBody(costume.a);
+        if (!cuuVi && !((boruto || kawaki || madara || recent) && weapon.heldWeapon)) return false;
+
+        DataCenter data = DataCenter.gI();
+        LangLa_ju body = costume.d[bodyPose];
+        LangLa_et bodySize = CostumeCape.spriteSize(data, body.a);
+        if (bodySize == null) return false;
+
+        int handX = body.d + Math.round(bodySize.e * HAND[bodyPose][0] / 100f);
+        int handY = body.e + Math.round(bodySize.e * HAND[bodyPose][1] / 100f);
+        int costumeIndex = costume.a - FIRST_COSTUME_PART;
+        if (costumeIndex >= 0 && costumeIndex < IDLE_PALM.length) {
+            int[] palm = IDLE_PALM[costumeIndex];
+            boolean standing = bodyPose <= 1 || bodyPose >= 31;
+            if (standing) {
+                handX = body.d + Math.round(bodySize.e * palm[0] / 100f);
+                handY = body.e + Math.round(bodySize.e * palm[1] / 100f);
+            } else {
+                handX += Math.round(bodySize.e * (palm[0] - HAND[0][0]) / 200f);
+                handY += Math.round(bodySize.e * (palm[1] - HAND[0][1]) / 200f);
+            }
+        }
+        if (recent) {
+            int[] palm = recentPalm(costume.a, body.a);
+            if (palm == null) return false;
+            handX = body.d + palm[0];
+            handY = body.e + palm[1];
+        } else if (madara) {
+            int cel = body.a - MADARA_FIRST_TEXTURE;
+            if (cel < 0 || cel >= MADARA_HAND.length) return false;
+            handX = body.d + MADARA_HAND[cel][0];
+            handY = body.e + MADARA_HAND[cel][1];
+        } else if (boruto || kawaki) {
+            boolean kawakiIdle = kawaki && body.a == KAWAKI_IDLE_TEXTURE;
+            int cel = (boruto && body.a == BORUTO_IDLE_TEXTURE) || kawakiIdle ? 0
+                    : body.a - (kawaki ? KAWAKI_FIRST_TEXTURE : BORUTO_FIRST_TEXTURE);
+            int[][] hand = kawaki ? KAWAKI_HAND : BORUTO_HAND;
+            if (cel < 0 || cel >= hand.length) return false;
+            handX = body.d + hand[cel][0];
+            handY = body.e + hand[cel][1] - (kawakiIdle ? 1 : 0);
+        }
+
+        if (!cuuVi) {
+            // Preserve the weapon frame's native grip, rotation and layering.
+            LangLa_ju reference = data.F[961].d[bodyPose];
+            LangLa_et referenceSize = CostumeCape.spriteSize(data, reference.a);
+            if (referenceSize == null) return false;
+            int dx = handX - reference.d - Math.round(referenceSize.e * HAND[bodyPose][0] / 100f);
+            int dy = handY - reference.e - Math.round(referenceSize.e * HAND[bodyPose][1] / 100f);
+            // On rear-facing Kawaki frames, the exposed fist sits nearer the
+            // body than the stock weapon pivot for the same pose.
+            if (kawaki && (bodyPose == 18 || bodyPose == 19 || bodyPose == 21
+                    || bodyPose == 22 || bodyPose == 25 || bodyPose == 26 || bodyPose == 29)) {
+                dx -= 10;
+                dy += 1;
+            }
+            int center = tanto.d + dx;
+            LangLa_fq.b(graphics, tanto.a, flip ? Utlis.b(tanto.b) : Utlis.a(tanto.b),
+                    x + (flip ? -center : center), y + tanto.e + dy, 33);
+            return true;
+        }
+
+        LangLa_et tantoSize = CostumeCape.spriteSize(data, tanto.a);
+        if (tantoSize == null) return false;
+        int width = tantoSize.d;
+        int height = tantoSize.e;
+        boolean vertical = width < height;
+        // The grip sits on the narrow flame stem. Vertical sprites rotate that point with the artwork.
+        int gripX = Math.round(width * (vertical ? -.19f : -.24f));
+        int gripY = Math.round(height * (vertical ? .24f : -.19f));
+        int angle = Utlis.a(tanto.b);
+        if (angle < 0) gripX = -gripX;
+        switch ((angle + 360) % 360) {
+            case 90: {
+                int originalX = gripX;
+                gripX = -gripY;
+                gripY = originalX;
+                break;
+            }
+            case 180:
+                gripX = -gripX;
+                gripY = -gripY;
+                break;
+            case 270: {
+                int originalX = gripX;
+                gripX = gripY;
+                gripY = -originalX;
+                break;
+            }
+            default:
+                break;
+        }
+        int drawnHeight = angle % 180 == 0 || graphics.k ? height : width;
+        gripY -= drawnHeight / 2;
+        int center = handX - gripX;
+        int transform = flip ? Utlis.b(tanto.b) : angle;
+        LangLa_fq.b(graphics, tanto.a, transform, x + (flip ? -center : center),
+                y + handY - gripY, 33);
+        return true;
+    }
+}

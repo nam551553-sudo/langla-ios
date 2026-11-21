@@ -5,6 +5,8 @@ public class LangLa_jr {
    public int b;
    public int c = 0;
    public LangLa_ju[] d;
+   boolean equippedCape;
+   boolean heldWeapon;
 
    public LangLa_jr a() {
       LangLa_jr var1;
@@ -12,6 +14,8 @@ public class LangLa_jr {
       var1.b = this.b;
       var1.c = this.c;
       var1.d = this.d;
+      var1.equippedCape = this.equippedCape;
+      var1.heldWeapon = this.heldWeapon;
       return var1;
    }
 
