@@ -67,6 +67,21 @@ public class Skill implements Cloneable {
       this.time = Utlis.time() + (long)this.coolDown;
    }
 
+   public void startAttackCooldown(Char attacker) {
+      int bonus = 0;
+      Item costume = attacker.isMe() ? attacker.arrItemBody[14] : null;
+      ItemOption[] options = costume == null ? null : costume.L();
+      if (options != null) {
+         for (ItemOption option : options) {
+            if (option.a[0] == 420) {
+               bonus = Math.max(0, Math.min(100, option.i()));
+               break;
+            }
+         }
+      }
+      this.time = Utlis.time() + (this.coolDown * 100L + 99 + bonus) / (100 + bonus);
+   }
+
    public float f() {
       return (float)(this.time - Utlis.time());
    }

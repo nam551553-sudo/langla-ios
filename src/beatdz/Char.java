@@ -2652,7 +2652,7 @@ public class Char extends Entity {
 
                         this.status = 3;
                         this.aa();
-                        var1.e();
+                        var1.startAttackCooldown(this);
                         this.aa = -1;
                         if (var1.idTemplate != 36) {
                             this.a(var1);

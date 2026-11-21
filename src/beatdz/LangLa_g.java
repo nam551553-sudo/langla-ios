@@ -9,10 +9,14 @@ public class LangLa_g extends LangLa_fo {
    private int e = -1;
    private int f = 0;
 
+   Item itemAt(int index) {
+      return this.a != null && index >= 0 && index < this.a.length ? this.a[index] : null;
+   }
+
    public LangLa_g(MainScreen var1, Message var2) {
       try {
          this.p = var1;
-         this.a(208, 200);
+         this.a(208, 232);
          this.r = false;
          this.c = this.c(Caption.od, 100);
          this.d = this.b(Caption.oS, 101);
@@ -26,7 +30,7 @@ public class LangLa_g extends LangLa_fo {
             this.a[var5.index] = var5;
          }
 
-         this.b = new LangLa_ij((byte)1, 9, this.a_() + 5, 192, 128, 32, 6, 4);
+         this.b = new LangLa_ij((byte)1, 9, this.a_() + 5, 192, 160, 32, 6, 5);
       } catch (Exception var4) {
       }
    }
@@ -52,13 +56,10 @@ public class LangLa_g extends LangLa_fo {
 
       for(int var4 = 0; var4 < this.b.r; ++var4) {
          for(int var5 = 0; var5 < this.b.i; ++var5) {
-            if (var2 < this.a.length) {
-               a(var1, var5 * this.b.h, var4 * this.b.h, this.a[var2], var4 * this.b.i + var5 == this.b.k, 0);
-            } else {
-               a(var1, var5 * this.b.h, var4 * this.b.h, (Item)null, var4 * this.b.i + var5 == this.b.k, 0);
-            }
+            Item displayed = itemAt(var2);
+            a(var1, var5 * this.b.h, var4 * this.b.h, displayed, var4 * this.b.i + var5 == this.b.k, 0);
 
-            if (!var3 && this.a[var2].id == this.e && this.a[var2].getAmount() == this.f && DataCenter.gI().i % 10 > 5) {
+            if (!var3 && displayed != null && displayed.id == this.e && displayed.getAmount() == this.f && DataCenter.gI().i % 10 > 5) {
                var3 = true;
                var1.f(-2560);
                var1.b(var5 * this.b.h, var4 * this.b.h, 28, 28);
@@ -96,7 +97,7 @@ public class LangLa_g extends LangLa_fo {
          this.b.k = -1;
          var8.k = var4;
          if (var1.j.k >= 0) {
-            Item var9 = this.a[var1.j.k];
+            Item var9 = itemAt(var1.j.k);
             LangLa_mq var10001;
             LangLa_ij var7;
             if (var9 != null && (var7 = (LangLa_ij)var1.j).k >= 0 && var7.k < var7.i * var7.r) {
