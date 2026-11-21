@@ -17,8 +17,14 @@ final class RankWheelPanel {
     private static final int DISK_SIZE = 108;
     private static final int BUTTON_SIZE = 28;
     private static final int WHEEL_CENTER_Y = 55;
+    private static final int POINTER_WIDTH = 24;
+    private static final int POINTER_HEIGHT = 16;
+    // The hole in the 600 px disk is slightly off the rim's center.
+    private static final float HOLE_X = 4.5f * DISK_SIZE / 600;
+    private static final float HOLE_Y = -6.5f * DISK_SIZE / 600;
     private static mImage disk;
     private static mImage button;
+    private static mImage pointer;
     private static int nextRequest;
     private boolean selected;
     private int requestId;
@@ -84,6 +90,9 @@ final class RankWheelPanel {
         int center = (left + width - 8) / 2;
         int middle = top + WHEEL_CENTER_Y;
         int radius = BUTTON_SIZE / 2;
+        double angle = Math.toRadians(rotationAt(System.currentTimeMillis()));
+        center += Math.round(buttonOffsetX(angle));
+        middle += Math.round(buttonOffsetY(angle));
         controls.addElement(new LangLa_jz(1205, center - radius, middle - radius,
                 center + radius, middle + radius, null, panel));
         controls.addElement(new LangLa_jz(1207, left, height - 29, left + 65, height - 10, null, panel));
@@ -92,32 +101,28 @@ final class RankWheelPanel {
     void draw(Graphics graphics, int left, int top, int width, int height) {
         int center = (left + width - 8) / 2;
         int middle = top + WHEEL_CENTER_Y;
-        long elapsed = System.currentTimeMillis() - animationAt;
-        boolean spinning = elapsed < 1200;
-        int rotation = segment < 0 ? 0 : 330 - segment * 60;
-        if (spinning) {
-            double remaining = (1200 - elapsed) / 1200.0;
-            rotation -= 720 * remaining * remaining;
-        }
-        rotation = (rotation % 360 + 360) % 360;
-        rotation -= rotation % 5;
+        long now = System.currentTimeMillis();
+        boolean spinning = now - animationAt < 1200;
+        int rotation = rotationAt(now);
         if (disk == null) {
             disk = loadImage("rank-wheel-disk.png");
             button = loadImage("rank-wheel-button.png");
+            pointer = loadImage("rank-wheel-pointer.png");
         }
+        double angle = Math.toRadians(rotation);
         boolean previousRotation = graphics.k;
         graphics.k = true;
         try {
-            drawCentered(graphics, disk, DISK_SIZE, rotation, center, middle);
-            drawCentered(graphics, button, BUTTON_SIZE, 0, center, middle);
+            drawCentered(graphics, disk, DISK_SIZE, DISK_SIZE, rotation, center, middle, 0, 0);
+            drawCentered(graphics, button, BUTTON_SIZE, BUTTON_SIZE, 0, center, middle,
+                    buttonOffsetX(angle), buttonOffsetY(angle));
+            int rim = middle - DISK_SIZE / 2;
+            drawCentered(graphics, pointer, POINTER_WIDTH, POINTER_HEIGHT, 0,
+                    center, rim + 7 - POINTER_HEIGHT / 2, 0, 0);
         } finally {
             graphics.k = previousRotation;
         }
 
-        int rim = middle - DISK_SIZE / 2;
-        graphics.f(0xD64C23);
-        graphics.c(center - 5, rim - 2, 11, 3);
-        graphics.c(center - 2, rim + 1, 5, 5);
         label(graphics, "Điểm tuần: " + Utlis.numberFormat(points) + "   Lượt còn: " + available,
                 left, height - 55, 0, -1);
         String prize = reward > 0 ? "+" + Utlis.numberFormat(reward) + " vàng khóa"
@@ -130,9 +135,39 @@ final class RankWheelPanel {
         return Binary.createImage(com.badlogic.gdx.Gdx.files.internal("resource/" + name).readBytes());
     }
 
-    private static void drawCentered(Graphics graphics, mImage image, int size, int rotation, int x, int y) {
-        int pixels = size * DataCenter.gI().zoomLevel;
-        graphics.a(image, 0, 0, image.c, image.d, rotation, x, y, pixels, pixels, 3);
+    private int rotationAt(long now) {
+        int rotation = segment < 0 ? 0 : 330 - segment * 60;
+        long elapsed = now - animationAt;
+        if (elapsed < 1200) {
+            double remaining = (1200 - elapsed) / 1200.0;
+            rotation -= 720 * remaining * remaining;
+        }
+        rotation = (rotation % 360 + 360) % 360;
+        return rotation - rotation % 5;
+    }
+
+    private static float buttonOffsetX(double angle) {
+        return (float) (HOLE_X * Math.cos(angle) - HOLE_Y * Math.sin(angle));
+    }
+
+    private static float buttonOffsetY(double angle) {
+        return (float) (HOLE_X * Math.sin(angle) + HOLE_Y * Math.cos(angle));
+    }
+
+    private static void drawCentered(Graphics graphics, mImage image, int width, int height,
+                                     int rotation, int x, int y, float offsetX, float offsetY) {
+        ImageSampling.configure(image.b());
+        int zoom = DataCenter.gI().zoomLevel;
+        float previousX = graphics.motionX;
+        float previousY = graphics.motionY;
+        graphics.motionX += offsetX;
+        graphics.motionY += offsetY;
+        try {
+            graphics.a(image, 0, 0, image.c, image.d, rotation, x, y, width * zoom, height * zoom, 3);
+        } finally {
+            graphics.motionX = previousX;
+            graphics.motionY = previousY;
+        }
     }
     private static void label(Graphics graphics, String value, int x, int y, int anchor, int color) {
         mFont.a(mFont.d, graphics, value, x, y, anchor, color, 0);
