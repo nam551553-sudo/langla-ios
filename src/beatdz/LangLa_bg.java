@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 
 public class LangLa_bg extends LangLa_fn {
 
+    private final RankWheelPanel rankWheel = new RankWheelPanel();
     private LangLa_ij[][] o;
     private LangLa_ii[][][] s;
     public LangLa_dz[][][] a;
@@ -155,6 +156,7 @@ public class LangLa_bg extends LangLa_fn {
                 for (int j = 0; j < len; j++) {
                     PhucLoi phucLoi = new PhucLoi(var1.readUTF(), (LangLa_jv) null);
                     phucLoi.id = var1.readInt();
+                    phucLoi.isVongXoay = phucLoi.id == RankWheelPanel.WELFARE_ID;
                     phucLoi.text1 = phucLoi.textGioiThieuGoi = var1.readUTF();
                     String []strings = phucLoi.text1.split("@");
                     if(strings.length > 1){
@@ -275,11 +277,7 @@ public class LangLa_bg extends LangLa_fn {
                 this.b[var4] = new LangLa_jv[this.t[var4].b.c.length][];
                 for (int i = 0; i < this.b[var4].length; i++) {
                     this.b[var4][i] = new LangLa_jv[dataPhucLoi[var4].listPhucLoi.get(i).listLangLa_jv.size()];
-                    if (dataPhucLoi[var4].listPhucLoi.get(i).isVongXoay) {
-                        LangLa_dz vx = this.a(this.t[var4].width + (this.width - this.t[var4].width) / 2 - 30, this.t[var4].cy + (this.height - this.t[var4].cy) / 2 - 35, "", this, 1205, 709);
-                        this.a(vx, var4);
-                        this.t[var4].a((LangLa_cs) vx, i);
-                    } else {
+                    if (!dataPhucLoi[var4].listPhucLoi.get(i).isVongXoay) {
                         if (dataPhucLoi[var4].listPhucLoi.get(i).isMuaGoi) {
                             dataPhucLoi[var4].listPhucLoi.get(i).btn = this.a(this.width - 74, this.height - 35, Caption.mC, this, 2907, 7);
                             dataPhucLoi[var4].listPhucLoi.get(i).btn.setSize(60, 22);
@@ -409,7 +407,7 @@ public class LangLa_bg extends LangLa_fn {
 
             for (int var3 = 0; var3 < this.b[var2].length; ++var3) {
                 this.t[var2].c[var3] = false;
-                if (dataPhucLoi[var2].listPhucLoi.get(var3).isVongXoay && this.f() > 0) {
+                if (dataPhucLoi[var2].listPhucLoi.get(var3).isVongXoay && rankWheel.remaining() > 0) {
                     this.t[var2].c[var3] = true;
                     this.m[var2] = true;
                     var1 = true;
@@ -458,30 +456,8 @@ public class LangLa_bg extends LangLa_fn {
         PhucLoi data = dataPhucLoi[this.k()].listPhucLoi.get(this.t[this.k()].b.b);
         if (data != null) {
             if (data.isVongXoay) {
-                //text vòng xoay
-//                DataCenter.gI();
-//                boolean var3 = true;
-//                var1.k = var3;
-//                LangLa_fq.a(var1, 710, this.c, this.t[this.k()].width + (this.width - this.t[this.k()].width) / 2, this.t[this.k()].cy + (this.height - this.t[this.k()].cy) / 2 - 5, 3);
-//                var3 = false;
-//                var1.k = var3;
-//                LangLa_fq.a(var1, 708, 0, this.t[this.k()].width + (this.width - this.t[this.k()].width) / 2, this.t[this.k()].cy + (this.height - this.t[this.k()].cy) / 2 - 70, 3);
-//                mFont.a((mFont) mFont.d, (Graphics) var1, Utlis.replaceAll(Caption.oP, Utlis.numberFormat(this.J)), this.t[this.k()].width + 109, 41, 2, -16711681, 0);
-//                mFont.a((mFont) mFont.d, (Graphics) var1, Caption.mK, this.t[this.k()].width + 10, this.height - 54, 0, -7812062, 0);
-//                var1.f(-7812062);
-//                var1.c(this.t[this.k()].width + 10, this.height - 50, mFont.b(mFont.d, Caption.mK), 1);
-//                mFont.a((mFont) mFont.d, (Graphics) var1, Caption.mM + this.f(), this.t[this.k()].width + 10, this.height - 42, 0, -1, 0);
-//                int var2;
-//                if ((var2 = this.T + 1) > 5) {
-//                    var2 = 5;
-//                }
-//
-//                mFont.a((mFont) mFont.d, (Graphics) var1, Caption.mN + this.ar[var2] + Caption.mO, this.t[this.k()].width + 10, this.height - 30, 0, -1, 0);
-//                if (this.ac < Utlis.time()) {
-//                    mFont.a((mFont) mFont.d, (Graphics) var1, Caption.hR + ": " + Utlis.d(this.Z) + " - " + Utlis.d(this.aa), this.t[this.k()].width + 10, this.height - 18, 0, -2560, 0);
-//                } else {
-//                    mFont.a((mFont) mFont.d, (Graphics) var1, Caption.mF, this.t[this.k()].width + 10, this.height - 18, 0, -65536, 0);
-//                }
+                rankWheel.draw(var1, this.t[this.k()].width + 8, this.a_() + 14, this.width, this.height);
+                return;
             } else {
 
                 if (data.isChiTiet) {
@@ -768,6 +744,12 @@ public class LangLa_bg extends LangLa_fn {
 
     public void b() {
         this.t[this.k()].a();
+        if (isRankWheelSelected()) {
+            rankWheel.update();
+            return;
+        } else {
+            rankWheel.leaveTab();
+        }
         this.o[this.k()][this.t[this.k()].b.b].a();
 
         for (int var1 = 0; var1 < this.a[this.k()][this.t[this.k()].b.b].length; ++var1) {
@@ -833,8 +815,22 @@ public class LangLa_bg extends LangLa_fn {
     public void a(int var1, Object var2, LangLa_cy var3) {
     }
 
+    private boolean isRankWheelSelected() {
+        return dataPhucLoi[this.k()].listPhucLoi.get(this.t[this.k()].b.b).isVongXoay;
+    }
+
+    void receiveRankWheel(Message message) throws IOException {
+        rankWheel.receive(message);
+        this.e();
+    }
+
     public Vector c() {
         Vector var1 = super.c();
+        if (isRankWheelSelected()) {
+            var1.addElement(this.t[this.k()].b());
+            rankWheel.addControls(var1, this, this.t[this.k()].width + 8, this.a_() + 14, this.width, this.height);
+            return var1;
+        }
 
         for (int var4 = 0; var4 < this.b[this.k()][this.t[this.k()].b.b].length; ++var4) {
             int var2 = this.o[this.k()][this.t[this.k()].b.b].cx + this.a[this.k()][this.t[this.k()].b.b][var4].cx;
@@ -919,30 +915,13 @@ public class LangLa_bg extends LangLa_fn {
                     this.cL = a(dataPhucLoi[this.k()].listPhucLoi.get(this.t[this.k()].b.b).textChiTiet, this, this.t[this.k()].width + 45, this.height - 124, 200);
                     return;
                 case 1205:
-                    LangLa_bg var11 = this;
-
-                    try {
-//                        var11.T = var11.i;
-//                        if (!var11.v) {
-//                            if (var11.f() > 0) {
-//                                var11.v = true;
-//                                var11.c = 0;
-//                                var11.d = Utlis.nextInt(35, 50);
-//                                var11.g = Utlis.nextInt(5, 50);
-//                                var11.e = -1;
-//                            }
-//                            int idVongXoay = dataPhucLoi[this.k()].listPhucLoi.get(this.t[this.k()].b.b).idVongXoay;
-//                            Message.c((byte) -60).send();
-//                        }
-                        break;
-                    } catch (Exception var4) {
-                        return;
-                    }
+                    rankWheel.spin();
+                    return;
                 case 1206:
                     this.J();
                     return;
                 case 1207:
-                    this.cL = a(dataPhucLoi[this.k()].listPhucLoi.get(this.t[this.k()].b.b).textChiTietVongXoay, this, this.t[this.k()].width + 45, this.height - 160, 220);
+                    this.cL = a(RankWheelPanel.DETAILS, this, this.t[this.k()].width + 8, this.a_() + 5, 205);
                     break;
                 case 2000:
                     LangLa_jv var10 = (LangLa_jv) var1.k;

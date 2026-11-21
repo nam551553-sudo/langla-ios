@@ -5733,6 +5733,15 @@ public class GameSrc extends MainScreen {
                 case 102:
                     Controller.readLatHinh(var1);
                     return;
+                case RankWheelPanel.CHANNEL:
+                    for (int index = this.cD.size() - 1; index >= 0; index--) {
+                        Object panel = this.cD.get(index);
+                        if (panel instanceof LangLa_bg) {
+                            ((LangLa_bg) panel).receiveRankWheel(var1);
+                            break;
+                        }
+                    }
+                    return;
                 case EquipmentQuote.CHANNEL:
                     EquipmentQuote.receive(this, var1);
                     return;
@@ -5774,6 +5783,7 @@ public class GameSrc extends MainScreen {
             if (Boolean.getBoolean("langla.diagnostics")) Utlis.println("OPEN_FUNC=" + var0);
             Message var1;
             (var1 = new Message((byte) 122)).writeByte(var0);
+            if (var0 == 88) var1.writeBoolean(true);
             var1.send();
         } catch (Exception var2) {
         }

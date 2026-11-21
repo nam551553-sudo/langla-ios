@@ -99,7 +99,7 @@ public class LangLa_al extends LangLa_kj {
 
          for(var3 = 0; var3 < this.g[1].i; ++var3) {
             for(int var4 = 0; var4 < this.g[1].r; ++var4) {
-               b(var1, var4 * this.g[1].h, var3 * this.g[1].h, this.b[var3 * this.g[1].r + var4], var2 == this.g[1].k, "");
+               b(var1, var4 * this.g[1].h, var3 * this.g[1].h, this.b[var3 * this.g[1].r + var4], var2 == this.g[1].k, "Phôi");
                ++var2;
             }
          }

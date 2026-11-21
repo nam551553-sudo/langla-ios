@@ -292,7 +292,7 @@ public class LangLa_ar extends LangLa_kj {
 
                 for (int var6 = 0; var6 < this.h[3].i; ++var6) {
                     for (int var3 = 0; var3 < this.h[3].r; ++var3) {
-                        b(var1, var3 * this.h[3].h, var6 * this.h[3].h, this.b[var6 * this.h[3].r + var3], var6 * this.h[3].i + var3 == this.h[3].k, "");
+                        b(var1, var3 * this.h[3].h, var6 * this.h[3].h, this.b[var6 * this.h[3].r + var3], var6 * this.h[3].i + var3 == this.h[3].k, "Đá");
                     }
                 }
 

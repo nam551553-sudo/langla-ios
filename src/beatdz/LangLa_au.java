@@ -178,11 +178,11 @@ public class LangLa_au extends LangLa_ge {
             for(int var2 = 0; var2 < this.e[1].i; ++var2) {
                for(int var3 = 0; var3 < this.e[1].r; ++var3) {
                   if (var3 % 2 == 0) {
-                     b(var1, var3 * this.e[1].h, var2 * this.e[1].h, this.b[var2 * this.e[1].r + var3], var2 * this.e[1].i + var3 == this.e[1].k, "");
+                     b(var1, var3 * this.e[1].h, var2 * this.e[1].h, this.b[var2 * this.e[1].r + var3], var2 * this.e[1].i + var3 == this.e[1].k, "Đá");
                   } else if (var3 % 2 == 1) {
-                     b(var1, var3 * this.e[1].h, var2 * this.e[1].h, this.b[var2 * this.e[1].r + var3], var2 * this.e[1].i + var3 == this.e[1].k, "");
+                     b(var1, var3 * this.e[1].h, var2 * this.e[1].h, this.b[var2 * this.e[1].r + var3], var2 * this.e[1].i + var3 == this.e[1].k, "Đá");
                   } else {
-                     b(var1, var3 * this.e[1].h, var2 * this.e[1].h, this.b[var2 * this.e[1].r + var3], var2 * this.e[1].i + var3 == this.e[1].k);
+                     b(var1, var3 * this.e[1].h, var2 * this.e[1].h, this.b[var2 * this.e[1].r + var3], var2 * this.e[1].i + var3 == this.e[1].k, "Đá");
                   }
                }
             }

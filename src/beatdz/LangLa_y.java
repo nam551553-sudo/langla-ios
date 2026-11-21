@@ -98,10 +98,15 @@ public class LangLa_y extends LangLa_kj {
                }
             }
 
+            if (var2 < 0 && !this.w.isEmpty()) {
+               var2 = ((ItemTemplate) this.w.get(this.f.b.b)).id;
+            }
             this.a[1] = this.a[0].a();
             Vector var7 = new Vector();
             ItemOption var4;
-            if ((var4 = this.a[1].a(var7, var2)) != null) {
+            if (var2 < 0) {
+               var1 = false;
+            } else if ((var4 = this.a[1].a(var7, var2)) != null) {
                if (var4.a(this.a[1])) {
                   var1 = false;
                }
@@ -127,11 +132,7 @@ public class LangLa_y extends LangLa_kj {
                }
             }
 
-            if (this.y > 0) {
-               this.x = this.a[1].a(this.y, var2);
-            } else {
-               this.x = null;
-            }
+            this.x = var2 >= 0 ? this.a[1].a(this.y, var2) : null;
 
             if (!var1 || this.x == null || this.x[1] == this.x[2]) {
                this.a[1] = null;
@@ -168,7 +169,7 @@ public class LangLa_y extends LangLa_kj {
       if (this.k() == 0) {
          mFont.b(mFont.d, var1, Caption.cg, 14, this.a_() + 9, 0, -10831436, -16777216);
          a(var1, this.h[0].cx, this.h[0].cy, this.a[0], this.h[0].k >= 0, Caption.H);
-         a(var1, this.h[1].cx, this.h[2].cy, this.a[1], this.h[1].k >= 0, Caption.I);
+         a(var1, this.h[1].cx, this.h[1].cy, this.a[1], this.h[1].k >= 0, Caption.I);
          LangLa_fq.a(var1, 95, 0, 210 - DataCenter.gI().i / 3 % 3, this.a_() + 25, 20);
          if (this.g > 0) {
             mFont.b(mFont.d, var1, "- " + Utlis.replaceAll(Caption.hc, "" + this.g), 150, this.a_() + 60, 0, -2560, -16777216);
@@ -178,9 +179,7 @@ public class LangLa_y extends LangLa_kj {
             mFont.b(mFont.d, var1, "- " + Utlis.replaceAll(Caption.gZ, "" + (this.a[0].Z() + this.g)), 150, this.a_() + 74, 0, -1, -16777216);
          }
 
-         if (this.a[0] != null) {
-            mFont.b(mFont.d, var1, "Bạc cần: 0 | Ngọc đã chọn: " + this.y, 150, this.a_() + 158, 0, -1, -16777216);
-         }
+         mFont.b(mFont.d, var1, "Ngọc đã chọn: " + this.y, 150, this.a_() + 158, 0, -1, -16777216);
          int var2;
          if (this.x != null) {
             if (this.d == 0 || this.d % 12 > 2) {
@@ -344,27 +343,15 @@ public class LangLa_y extends LangLa_kj {
                return;
             }
          case 2002:
-            var10 = this;
             this.e();
-            short var12 = ((ItemTemplate)this.w.get(this.f.b.b)).id;
-
-            for(var3 = 0; var3 < Char.gI().arrItemBag.length; ++var3) {
-               if (Char.gI().arrItemBag[var3] != null && Char.gI().arrItemBag[var3].id == var12) {
-                  Item var5 = Char.gI().arrItemBag[var3];
-                  LangLa_y var4 = var10;
-
-                  try {
-                     for(int var6 = 0; var6 < var4.b.length; ++var6) {
-                        if (var4.b[var6] == null) {
-                           var4.b[var6] = var5;
-                           break;
-                        }
-                     }
-
-                     Char.gI().arrItemBag[var5.index] = null;
-                  } catch (Exception var8) {
-                     Utlis.println(var8);
-                  }
+            if (this.w.isEmpty()) return;
+            short gemId = ((ItemTemplate) this.w.get(this.f.b.b)).id;
+            Item[] bag = Char.gI().arrItemBag;
+            int materialSlot = 0;
+            for (int index = 0; index < bag.length && materialSlot < this.b.length; index++) {
+               if (bag[index] != null && bag[index].id == gemId) {
+                  this.b[materialSlot++] = bag[index];
+                  bag[index] = null;
                }
             }
          }

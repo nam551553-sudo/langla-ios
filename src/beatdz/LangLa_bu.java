@@ -156,7 +156,7 @@ public class LangLa_bu extends LangLa_kj {
 
          for(int var2 = 0; var2 < this.g[2].i; ++var2) {
             for(int var3 = 0; var3 < this.g[2].r; ++var3) {
-               b(var1, var3 * this.g[2].h, var2 * this.g[2].h, this.b[var2 * this.g[2].r + var3], var2 * this.g[2].i + var3 == this.g[2].k, "");
+               b(var1, var3 * this.g[2].h, var2 * this.g[2].h, this.b[var2 * this.g[2].r + var3], var2 * this.g[2].i + var3 == this.g[2].k, "Ngọc");
             }
          }
 
