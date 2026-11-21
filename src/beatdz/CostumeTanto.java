@@ -103,6 +103,11 @@ final class CostumeTanto {
 
     static boolean draw(Graphics graphics, LangLa_jr costume, int bodyPose,
                         LangLa_jr weapon, LangLa_ju tanto, int x, int y, boolean flip) {
+        return draw(graphics, costume, bodyPose, weapon, bodyPose, tanto, x, y, flip);
+    }
+
+    static boolean draw(Graphics graphics, LangLa_jr costume, int bodyPose,
+                        LangLa_jr weapon, int weaponPose, LangLa_ju tanto, int x, int y, boolean flip) {
         if (costume == null || bodyPose < 0 || bodyPose >= HAND.length
                 || bodyPose >= costume.d.length || tanto.a == 0) return false;
         boolean cuuVi = tanto.a >= FIRST_TANTO_TEXTURE && tanto.a <= LAST_TANTO_TEXTURE;
@@ -153,11 +158,18 @@ final class CostumeTanto {
 
         if (!cuuVi) {
             // Preserve the weapon frame's native grip, rotation and layering.
-            LangLa_ju reference = data.F[961].d[bodyPose];
+            // Skill animations can advance the weapon independently of the body cel.
+            int referencePose = recent ? weaponPose : bodyPose;
+            if (referencePose < 0 || referencePose >= HAND.length) return false;
+            LangLa_ju reference = data.F[961].d[referencePose];
+            if (reference.a == 0 && recent) {
+                referencePose = bodyPose;
+                reference = data.F[961].d[referencePose];
+            }
             LangLa_et referenceSize = CostumeCape.spriteSize(data, reference.a);
             if (referenceSize == null) return false;
-            int dx = handX - reference.d - Math.round(referenceSize.e * HAND[bodyPose][0] / 100f);
-            int dy = handY - reference.e - Math.round(referenceSize.e * HAND[bodyPose][1] / 100f);
+            int dx = handX - reference.d - Math.round(referenceSize.e * HAND[referencePose][0] / 100f);
+            int dy = handY - reference.e - Math.round(referenceSize.e * HAND[referencePose][1] / 100f);
             // On rear-facing Kawaki frames, the exposed fist sits nearer the
             // body than the stock weapon pivot for the same pose.
             if (kawaki && (bodyPose == 18 || bodyPose == 19 || bodyPose == 21

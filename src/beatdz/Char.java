@@ -1360,7 +1360,7 @@ public class Char extends Entity {
             int layerY = var3 + frame.e;
             if (idleDip != 0 && var8 == customCostume) {
                 LangLa_fq.drawStandingCostume(var1, frame.a, transform, layerX, layerY, idleDip);
-            } else if (!CostumeTanto.draw(var1, customCostume, var5, var8, frame, var2, var3 + idleDip, var7)) {
+            } else if (!CostumeTanto.draw(var1, customCostume, var5, var8, var15, frame, var2, var3 + idleDip, var7)) {
                 int attachmentDip = var8.heldWeapon || var8.equippedCape ? idleDip : 0;
                 LangLa_fq.b(var1, frame.a, transform, layerX, layerY + attachmentDip, 33);
             }
