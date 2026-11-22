@@ -1,9 +1,6 @@
 name: Build iOS IPA
 
 on:
-  push:
-    branches: [main]
-    paths: ['ios-menu-update/**', '.github/workflows/ios.yml']
   workflow_dispatch:
     inputs:
       signing:
@@ -13,8 +10,8 @@ on:
         default: unsigned
       build_number:
         description: Numeric build number
-        default: '215345351'
-        required: true
+        default: ''
+        required: false
       native_test_only:
         description: Only run the native startup test (no new IPA)
         type: boolean
@@ -22,19 +19,38 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   hd-assets:
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    outputs:
+      build_number: ${{ steps.metadata.outputs.build_number }}
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - run: python3 tools/ci/prepare-ios-hd.py
+      - name: Read release build number
+        id: metadata
+        env:
+          REQUESTED_BUILD: ${{ inputs.build_number }}
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, re
+          number = os.environ.get('REQUESTED_BUILD', '').strip()
+          if not number:
+              number = next(line.split('=', 1)[1].strip() for line in pathlib.Path('version.properties').read_text().splitlines() if line.startswith('build='))
+          if not re.fullmatch(r'[0-9]+', number):
+              raise SystemExit('Build number must be numeric')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('build_number=' + number + '\n')
+          PY
+      - name: Verify current startup artwork against pinned VPS hashes
+        run: python3 tools/ci/prepare-ios-startup.py
       - uses: actions/upload-artifact@v4
         with:
-          name: ios-hd-assets
+          name: ios-startup-icons
           path: ios/bootstrap/data/ios-hd/
           compression-level: 0
           if-no-files-found: error
@@ -45,40 +61,15 @@ jobs:
     timeout-minutes: 45
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
-      BUILD_NUMBER: ${{ inputs.build_number || '215345351' }}
+      BUILD_NUMBER: ${{ needs.hd-assets.outputs.build_number }}
       SIGNING_MODE: unsigned
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Apply verified client 215345339 source update
-        run: |
-          echo "5026957ec0ef2f1bac2d58ccbecfdaf24bd57b96fb2d3e2db048bf6ec34ff9d7  ios-source-update-215345339.zip" | shasum -a 256 -c -
-          unzip -oq ios-source-update-215345339.zip -d .
-          git restore --source=HEAD --worktree -- src/beatdz/Char.java src/beatdz/Graphics.java src/beatdz/LangLa_fq.java src/beatdz/LangLa_jr.java src/beatdz/CostumeCape.java src/beatdz/CostumeTanto.java
-          cp ios-menu-update/LangLa_x.java ios-menu-update/ReleaseNotesDialog.java ios-menu-update/LangLa_mq.java ios-menu-update/LangLa_ij.java ios-menu-update/LangLa_ge.java src/beatdz/
-          python3 -c 'from pathlib import Path; p = Path("src/beatdz/GameSrc.java"); p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8")'
-          python3 -c 'from pathlib import Path; paths = map(Path, ("src/beatdz/Char.java", "src/beatdz/LangLa_kl.java", "src/com/tgame/model/Caption.java")); [(p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8")) for p in paths]'
-          python3 -c 'from pathlib import Path; paths = map(Path, ("src/beatdz/Canvas.java", "src/beatdz/SettingsTab.java", "src/beatdz/mConfig.java", "ios/src/main/java/com/beatdz/langlalau/IOSLauncher.java", "ios/Info.plist.xml")); [p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8") for p in paths]'
-          git apply ios-menu-update/fps.patch ios-menu-update/hide-tanto.patch
-          cp ios-menu-update/FrameRate.java src/beatdz/
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('src/beatdz/FrameRate.java')
-          s = p.read_text(encoding='utf-8')
-          assert 'import java.util.function.IntConsumer;' in s
-          s = s.replace('import java.util.function.IntConsumer;\n\n', '')
-          s = s.replace('public final class FrameRate {', 'public final class FrameRate {\n    @FunctionalInterface\n    public interface Listener {\n        void apply(int fps);\n    }\n')
-          p.write_text(s.replace('IntConsumer', 'Listener').replace('platform.accept(fps)', 'platform.apply(fps)'), encoding='utf-8')
-          PY
-          python3 -c 'from pathlib import Path; p = Path("src/beatdz/Canvas.java"); s = p.read_text(); old = "this.logicAccumulator += Math.min(var1, 0.1F);"; assert s.count(old) == 1; p.write_text(s.replace(old, "this.logicAccumulator += Math.min(var1, 0.1F) * (FrameRate.target() / 60f);").replace("float logicInterval = 1.0F / 30.0F;", "float logicInterval = RenderMotion.STEP;").replace("// Gameplay stays at 30 Hz regardless of the selected presentation rate.", "// Scale client simulation by the selected mode, independently of dropped frames."))'
-          cp ios-menu-update/AssetArchives.java ios-menu-update/LangLa_do.java src/beatdz/
-          git apply ios-menu-update/bulk350-ios.patch
-          cp ios-menu-update/LangLa_av.java ios-menu-update/BulkItemUse.java src/beatdz/
-          cp ios-menu-update/IOSStartupSmoke.java ios/src/smoke/java/com/beatdz/langlalau/
       - uses: actions/download-artifact@v4
         with:
-          name: ios-hd-assets
+          name: ios-startup-icons
           path: ios/bootstrap/data/ios-hd/
       - uses: actions/setup-java@v4
         with:
@@ -86,6 +77,7 @@ jobs:
           java-version: '21'
       - name: Prepare simulator build
         run: |
+          command -v ffmpeg || brew install ffmpeg
           chmod +x gradlew
           python3 tools/ci/prepare-ios.py
       - name: Native iOS cold-start to login
@@ -96,50 +88,30 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: iOS-native-startup-log-${{ inputs.build_number || '215345351' }}
-          path: ios-native-smoke.log
+          name: iOS-native-startup-log-${{ needs.hd-assets.outputs.build_number }}
+          path: |
+            ios-native-smoke.log
+            ios-native-result.txt
+            ios-native-diagnostics/
           if-no-files-found: warn
   ipa:
-    needs: hd-assets
+    # Compile independently. Delivery still requires success of this whole workflow,
+    # including native-smoke, so an unverified candidate is never selected for release.
+    needs: [hd-assets]
     if: ${{ !inputs.native_test_only && !contains(github.event.head_commit.message, '[smoke-only]') }}
     runs-on: macos-15
     timeout-minutes: 90
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
-      BUILD_NUMBER: ${{ inputs.build_number || '215345351' }}
+      BUILD_NUMBER: ${{ needs.hd-assets.outputs.build_number }}
       SIGNING_MODE: ${{ inputs.signing || 'unsigned' }}
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Apply verified client 215345339 source update
-        run: |
-          echo "5026957ec0ef2f1bac2d58ccbecfdaf24bd57b96fb2d3e2db048bf6ec34ff9d7  ios-source-update-215345339.zip" | shasum -a 256 -c -
-          unzip -oq ios-source-update-215345339.zip -d .
-          git restore --source=HEAD --worktree -- src/beatdz/Char.java src/beatdz/Graphics.java src/beatdz/LangLa_fq.java src/beatdz/LangLa_jr.java src/beatdz/CostumeCape.java src/beatdz/CostumeTanto.java
-          cp ios-menu-update/LangLa_x.java ios-menu-update/ReleaseNotesDialog.java ios-menu-update/LangLa_mq.java ios-menu-update/LangLa_ij.java ios-menu-update/LangLa_ge.java src/beatdz/
-          python3 -c 'from pathlib import Path; p = Path("src/beatdz/GameSrc.java"); p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8")'
-          python3 -c 'from pathlib import Path; paths = map(Path, ("src/beatdz/Char.java", "src/beatdz/LangLa_kl.java", "src/com/tgame/model/Caption.java")); [(p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8")) for p in paths]'
-          python3 -c 'from pathlib import Path; paths = map(Path, ("src/beatdz/Canvas.java", "src/beatdz/SettingsTab.java", "src/beatdz/mConfig.java", "ios/src/main/java/com/beatdz/langlalau/IOSLauncher.java", "ios/Info.plist.xml")); [p.write_text(p.read_text(encoding="utf-8"), encoding="utf-8") for p in paths]'
-          git apply ios-menu-update/fps.patch ios-menu-update/hide-tanto.patch
-          cp ios-menu-update/FrameRate.java src/beatdz/
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('src/beatdz/FrameRate.java')
-          s = p.read_text(encoding='utf-8')
-          assert 'import java.util.function.IntConsumer;' in s
-          s = s.replace('import java.util.function.IntConsumer;\n\n', '')
-          s = s.replace('public final class FrameRate {', 'public final class FrameRate {\n    @FunctionalInterface\n    public interface Listener {\n        void apply(int fps);\n    }\n')
-          p.write_text(s.replace('IntConsumer', 'Listener').replace('platform.accept(fps)', 'platform.apply(fps)'), encoding='utf-8')
-          PY
-          python3 -c 'from pathlib import Path; p = Path("src/beatdz/Canvas.java"); s = p.read_text(); old = "this.logicAccumulator += Math.min(var1, 0.1F);"; assert s.count(old) == 1; p.write_text(s.replace(old, "this.logicAccumulator += Math.min(var1, 0.1F) * (FrameRate.target() / 60f);").replace("float logicInterval = 1.0F / 30.0F;", "float logicInterval = RenderMotion.STEP;").replace("// Gameplay stays at 30 Hz regardless of the selected presentation rate.", "// Scale client simulation by the selected mode, independently of dropped frames."))'
-          cp ios-menu-update/AssetArchives.java ios-menu-update/LangLa_do.java src/beatdz/
-          git apply ios-menu-update/bulk350-ios.patch
-          cp ios-menu-update/LangLa_av.java ios-menu-update/BulkItemUse.java src/beatdz/
-          cp ios-menu-update/IOSStartupSmoke.java ios/src/smoke/java/com/beatdz/langlalau/
       - uses: actions/download-artifact@v4
         with:
-          name: ios-hd-assets
+          name: ios-startup-icons
           path: ios/bootstrap/data/ios-hd/
       - uses: actions/setup-java@v4
         with:
@@ -147,6 +119,7 @@ jobs:
           java-version: '21'
       - name: Prepare build
         run: |
+          command -v ffmpeg || brew install ffmpeg
           test -d "$DEVELOPER_DIR"
           xcodebuild -version
           chmod +x gradlew
@@ -169,10 +142,15 @@ jobs:
             args+=(-Probovm.iosSkipSigning=true)
           fi
           ./gradlew "${args[@]}" '-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8' :ios:createIPA --max-workers=2 --no-daemon --stacktrace
+          while IFS= read -r -d '' ipa; do
+            if zipinfo -1 "$ipa" | awk '/^Symbols\// {found=1} END {exit !found}'; then
+              zip -dq "$ipa" 'Symbols/*'
+            fi
+          done < <(find ios/build/robovm -type f -name '*.ipa' -print0)
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: LangLa-iOS-${{ inputs.build_number || '215345351' }}-${{ inputs.signing || 'unsigned' }}
+          name: LangLa-iOS-${{ needs.hd-assets.outputs.build_number }}-${{ inputs.signing || 'unsigned' }}
           path: ios/build/robovm/**/*.ipa
           if-no-files-found: error
           retention-days: 7
