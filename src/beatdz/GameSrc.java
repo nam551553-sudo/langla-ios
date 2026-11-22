@@ -3376,8 +3376,21 @@ public class GameSrc extends MainScreen {
                 }
 
                 float cameraY = smooth ? data.k - var1.motionY : data.k;
-                boolean newKonohaScenery = KonohaSchoolScenery.paint(var1, this.mapID, this.maxX, this.maxY,
+                boolean newKonohaScenery = !useLegacyKonohaForVisit && KonohaSchoolScenery.paint(var1, this.mapID, this.maxX, this.maxY,
                         cameraX, cameraY, data.widthScreen, data.heightScreen);
+                if (!newKonohaScenery && !useLegacyKonohaForVisit
+                        && KonohaSchoolScenery.appliesTo(this.mapID, this.maxX, this.maxY)) {
+                    if (System.nanoTime() < konohaWaitUntil) {
+                        var1.motionX = var1.motionY = 0f;
+                        this.a(var1, 0, 0);
+                        var1.f(0xFF132836);
+                        var1.c(0, 0, data.widthScreen, data.heightScreen);
+                        mFont.a(mFont.d, var1, "Đang tải cảnh Trường Konoha…",
+                                data.widthScreen / 2, data.heightScreen / 2, 2, -1, 0);
+                        return;
+                    }
+                    useLegacyKonohaForVisit = true;
+                }
                 for (var14 = 0; var14 < this.K.size(); ++var14) {
                     Entity var20;
                     var20 = (Entity)this.K.elementAt(var14);
@@ -4767,11 +4780,17 @@ public class GameSrc extends MainScreen {
         this.vItemMap.addAll(var2);
     }
 
+    private long konohaWaitUntil;
+    private boolean useLegacyKonohaForVisit;
+
     public void f(Message msg) throws java.io.IOException {
         Char.gI().cleanMove();
         Char.gI().idCharPk = -1;
         this.zoneID = msg.reader.dis.readShort();
         this.mapID = msg.reader.dis.readShort();
+        this.konohaWaitUntil = System.nanoTime() + 3_000_000_000L;
+        this.useLegacyKonohaForVisit = false;
+        KonohaSchoolScenery.preload(this.mapID);
         MapAssetPrefetch.schedule(this.mapID);
         Char.gI().cx = beatdz.SessionMove.$state_SessionMove().x = msg.reader.dis.readShort();
         Char.gI().cy = beatdz.SessionMove.$state_SessionMove().y = msg.reader.dis.readShort();

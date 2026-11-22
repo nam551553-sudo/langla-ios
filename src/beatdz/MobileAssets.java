@@ -9,6 +9,10 @@ final class MobileAssets {
     static int quality(int screenDensity) { return screenDensity <= 2 ? 1 : 2; }
 
     static String cacheName(String name) {
+        if (Gdx.app != null && name.startsWith("tree_") && !name.contains("size")) {
+            int density = DataCenter.a("iconTree/0.png") + 1;
+            return "map-art2/z" + density + "/" + name;
+        }
         boolean imageArchive = name.startsWith("arr_check_") && !name.equals("arr_check_0");
         if (Gdx.app == null || !Canvas.isMobile() || (!isTexture(name) && !imageArchive)) return name;
         // Do not reuse the old zoom-1 images or invalidate accounts, settings and map packets.

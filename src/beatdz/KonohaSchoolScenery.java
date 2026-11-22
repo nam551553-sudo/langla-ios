@@ -47,10 +47,18 @@ final class KonohaSchoolScenery {
 
     private KonohaSchoolScenery() {}
 
+    static boolean appliesTo(int map, int width, int height) {
+        return map == MAP_ID && width == WIDTH && height == HEIGHT && mConfig.gI().readByte(18) <= 1;
+    }
+
+    static void preload(int map) {
+        if (map == MAP_ID && scenery == null && pendingImages == null
+                && mConfig.gI().readByte(18) <= 1) startFetch();
+    }
+
     static boolean paint(Graphics graphics, int map, int width, int height,
                          float cameraX, float cameraY, int viewportWidth, int viewportHeight) {
-        if (map != MAP_ID || width != WIDTH || height != HEIGHT
-                || mConfig.gI().readByte(18) > 1 || !load()) return false;
+        if (!appliesTo(map, width, height) || !load()) return false;
 
         float right = cameraX + viewportWidth;
         float bottom = cameraY + viewportHeight;
@@ -103,7 +111,8 @@ final class KonohaSchoolScenery {
         }
     }
 
-    private static void startFetch() {
+    private static synchronized void startFetch() {
+        if (fetching || pendingImages != null || System.currentTimeMillis() < retryAfter) return;
         fetching = true;
         Thread worker = new Thread(MultiSession.bind(() -> {
             try {
