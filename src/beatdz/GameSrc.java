@@ -3378,13 +3378,11 @@ public class GameSrc extends MainScreen {
                 float cameraY = smooth ? data.k - var1.motionY : data.k;
                 boolean newKonohaScenery = KonohaSchoolScenery.paint(var1, this.mapID, this.maxX, this.maxY,
                         cameraX, cameraY, data.widthScreen, data.heightScreen);
-                boolean newBackdrop = !newKonohaScenery && this.mapID != 86
-                        && var1.mapBackdrop.paint(var1, this.mapID, this.maxX, cameraX,
-                        data.widthScreen, data.heightScreen);
                 for (var14 = 0; var14 < this.K.size(); ++var14) {
                     Entity var20;
                     var20 = (Entity)this.K.elementAt(var14);
-                    if (newKonohaScenery && var20 instanceof LangLa_lo || newBackdrop && MapBackdrop.replaces(var20)) continue;
+                    if (newKonohaScenery && (var20 instanceof LangLa_lo
+                            || var20 instanceof LangLa_em && ((LangLa_em) var20).j.j == 242)) continue;
                     int savedX = var1.a, savedY = var1.b;
                     float savedMotionX = var1.motionX, savedMotionY = var1.motionY;
                     if (smooth) applyRenderMotion(var1, var20, alpha, cameraX);

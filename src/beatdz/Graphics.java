@@ -32,7 +32,6 @@ public class Graphics {
     private float motionY() { return motionY * DataCenter.gI().zoomLevel; }
     public Rectangle c = new Rectangle();
     Rectangle d;
-    final MapBackdrop mapBackdrop = new MapBackdrop();
     public SpriteBatch spriteBatch;
     private ShaderProgram artworkShader;
     public ShapeRenderer shapeRenderer;
@@ -1280,7 +1279,6 @@ public class Graphics {
     }
 
     public void dispose() {
-        mapBackdrop.dispose();
         try {
             if (this.spriteBatch != null) {
                 this.spriteBatch.dispose();
