@@ -10,8 +10,7 @@ final class MobileAssets {
 
     static String cacheName(String name) {
         if (Gdx.app != null && name.startsWith("tree_") && !name.contains("size")) {
-            int density = DataCenter.a("iconTree/0.png") + 1;
-            return "map-art2/z" + density + "/" + name;
+            return "map-original/z" + (DataCenter.a("iconTree/0.png") + 1) + "/" + name;
         }
         boolean imageArchive = name.startsWith("arr_check_") && !name.equals("arr_check_0");
         if (Gdx.app == null || !Canvas.isMobile() || (!isTexture(name) && !imageArchive)) return name;

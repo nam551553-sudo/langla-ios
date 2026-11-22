@@ -3375,27 +3375,9 @@ public class GameSrc extends MainScreen {
                     var1.motionY = data.k - renderMotion.drawnCameraY(data.k, alpha);
                 }
 
-                float cameraY = smooth ? data.k - var1.motionY : data.k;
-                boolean newKonohaScenery = !useLegacyKonohaForVisit && KonohaSchoolScenery.paint(var1, this.mapID, this.maxX, this.maxY,
-                        cameraX, cameraY, data.widthScreen, data.heightScreen);
-                if (!newKonohaScenery && !useLegacyKonohaForVisit
-                        && KonohaSchoolScenery.appliesTo(this.mapID, this.maxX, this.maxY)) {
-                    if (System.nanoTime() < konohaWaitUntil) {
-                        var1.motionX = var1.motionY = 0f;
-                        this.a(var1, 0, 0);
-                        var1.f(0xFF132836);
-                        var1.c(0, 0, data.widthScreen, data.heightScreen);
-                        mFont.a(mFont.d, var1, "Đang tải cảnh Trường Konoha…",
-                                data.widthScreen / 2, data.heightScreen / 2, 2, -1, 0);
-                        return;
-                    }
-                    useLegacyKonohaForVisit = true;
-                }
                 for (var14 = 0; var14 < this.K.size(); ++var14) {
                     Entity var20;
                     var20 = (Entity)this.K.elementAt(var14);
-                    if (newKonohaScenery && (var20 instanceof LangLa_lo
-                            || var20 instanceof LangLa_em && ((LangLa_em) var20).j.j == 242)) continue;
                     int savedX = var1.a, savedY = var1.b;
                     float savedMotionX = var1.motionX, savedMotionY = var1.motionY;
                     if (smooth) applyRenderMotion(var1, var20, alpha, cameraX);
@@ -3414,7 +3396,6 @@ public class GameSrc extends MainScreen {
                 }
                 for (var14 = 0; var14 < this.K.size(); ++var14) {
                     Entity entity = ((Entity) this.K.elementAt(var14));
-                    if (newKonohaScenery && entity instanceof LangLa_lo) continue;
                     int savedX = var1.a, savedY = var1.b;
                     float savedMotionX = var1.motionX, savedMotionY = var1.motionY;
                     if (smooth) applyRenderMotion(var1, entity, alpha, cameraX);
@@ -4780,17 +4761,11 @@ public class GameSrc extends MainScreen {
         this.vItemMap.addAll(var2);
     }
 
-    private long konohaWaitUntil;
-    private boolean useLegacyKonohaForVisit;
-
     public void f(Message msg) throws java.io.IOException {
         Char.gI().cleanMove();
         Char.gI().idCharPk = -1;
         this.zoneID = msg.reader.dis.readShort();
         this.mapID = msg.reader.dis.readShort();
-        this.konohaWaitUntil = System.nanoTime() + 3_000_000_000L;
-        this.useLegacyKonohaForVisit = false;
-        KonohaSchoolScenery.preload(this.mapID);
         MapAssetPrefetch.schedule(this.mapID);
         Char.gI().cx = beatdz.SessionMove.$state_SessionMove().x = msg.reader.dis.readShort();
         Char.gI().cy = beatdz.SessionMove.$state_SessionMove().y = msg.reader.dis.readShort();
