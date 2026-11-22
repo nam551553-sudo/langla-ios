@@ -1317,7 +1317,8 @@ public class Char extends Entity {
 
         for (int var11 = 0; var11 < var4.size(); ++var11) {
             LangLa_jr var8 = (LangLa_jr) var4.elementAt(var11);
-            if (CostumeCape.isNewBody(var8)) customCostume = var8;
+            if (CostumeCape.isNewBody(var8) || var8.a == ObitoWhiteCostume.BODY
+                    || var8.a == CostumeTanto.ITACHI_CROW_BODY) customCostume = var8;
             hasCape |= var8.equippedCape;
             if (var8.b()) {
                 if (this.idClass == 3 && this.gioiTinh == 1) {
@@ -1377,7 +1378,8 @@ public class Char extends Entity {
                 var1.d((float) var8.c);
             }
 
-            LangLa_ju frame = var8.d[var15];
+            LangLa_ju frame = var8.a == FirePhoenixMount.BODY
+                    ? FirePhoenixMount.frame(var8) : var8.d[var15];
             int transform = var7 ? Utlis.b(frame.b) : Utlis.a(frame.b);
             int layerX = var2 + (var7 ? -frame.d : frame.d);
             int layerY = var3 + frame.e;
@@ -2944,6 +2946,10 @@ public class Char extends Entity {
             }
 
             if (this.bv.id == 100) {
+                if (FirePhoenixMount.matches(this.arrItemBody[16])) {
+                    this.a(this.aE, FirePhoenixMount.CHARACTER, 0);
+                    return;
+                }
                 if (this.bv.e == 1056) {
                     this.a(this.aE, 132, 0);
                     return;

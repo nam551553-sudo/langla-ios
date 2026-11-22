@@ -62,6 +62,10 @@ public class Effect extends XYEntity {
       if (var1 instanceof Char) {
          var2 = (Char)var1;
          if (this.getEffectTemplate().type == 91 && var2.arrItemBody[16] != null) {
+            if (FirePhoenixMount.matches(var2.arrItemBody[16])) {
+               this.e = 30796;
+               return;
+            }
             if (var2.arrItemBody[16].id != 812 && !var2.arrItemBody[16].strOptions.startsWith("340,812")) {
                if (var2.arrItemBody[16].id != 789 && !var2.arrItemBody[16].strOptions.startsWith("340,789")) {
                   if (var2.arrItemBody[16].id != 855 && !var2.arrItemBody[16].strOptions.startsWith("340,855")) {

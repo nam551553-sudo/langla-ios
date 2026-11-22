@@ -741,6 +741,7 @@ public class DataCenter {
                     }
                 }
             }
+            ObitoWhiteCostume.apply(f);
             this.F = f;
             LangLa_jt[] g = new LangLa_jt[reader2.dis.readShort()];
             for (int n15 = 0; n15 < g.length; ++n15) {

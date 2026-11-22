@@ -5,17 +5,27 @@ final class CostumeTanto {
     static final int BORUTO_BODY = 974;
     static final int KAWAKI_BODY = 975;
     static final int MADARA_BODY = 976;
+    static final int ITACHI_CROW_BODY = 1087;
+    private static final int ITACHI_CROW_FIRST_TEXTURE = 30760;
+    private static final int[][] ITACHI_CROW_HAND = {
+        {-3, -7}, {-3, -8}, {-10, -12}, {-10, -12}, {-10, -12}, {-10, -12},
+        {-10, -12}, {-10, -12}, {-12, -16}, {-10, -13}, {4, -19}, {-11, -13},
+        {-12, -14}, {-12, -19}, {-2, -18}, {2, -14}, {16, -11}, {-11, -19},
+        {-6, -20}, {-12, -22}, {-12, -24}, {1, -21}, {-1, -19}, {-10, -22},
+        {-8, -21}, {0, -19}, {-10, -10}
+    };
     static final int RED_MOON_BODY = 1084;
     static final int OBITO_BODY = 1085;
     static final int MOMOSOKI_BODY = 1086;
     private static final int MADARA_FIRST_TEXTURE = 30500;
     // Palm centers measured from each cel's bottom center, in logical game pixels.
     private static final int[][] MADARA_HAND = {
-        {-3,-10}, {-3,-10}, {-10,-17}, {-10,-17}, {-10,-16}, {-10,-17},
-        {-10,-16}, {-11,-18}, {8,-17}, {6,-14}, {9,-12}, {8,-17},
-        {5,-14}, {4,-15}, {-13,-17}, {-12,-14}, {-12,-17}, {7,-16},
-        {9,-16}, {13,-22}, {12,-20}, {11,-19}, {-11,-16}, {-12,-18},
-        {-11,-17}, {-6,-23}, {-11,-18}, {-10,-18}, {0,-16}, {-10,-22}, {0,-11}
+        {-4,-7}, {-5,-8}, {-9,-11}, {-9,-11}, {-10,-11}, {-10,-12},
+        {-10,-12}, {-10,-12}, {-7,-7}, {-7,-10}, {-8,-9}, {-2,-2},
+        {-8,-9}, {-12,-11}, {-8,-9}, {-4,-4}, {-5,-9}, {-6,-11},
+        {1,-14}, {2,-11}, {-8,-11}, {-11,-12}, {-4,-14}, {-5,-15},
+        {-12,-13}, {-11,-16}, {-1,-14}, {-12,-13}, {-10,-15}, {-1,-14},
+        {-6,-6}
     };
     private static final int[][] RED_MOON_HAND = {
         {-6,-11}, {-6,-11}, {-10,-14}, {-10,-14}, {-10,-14}, {-10,-14},
@@ -114,8 +124,10 @@ final class CostumeTanto {
         boolean boruto = costume.a == BORUTO_BODY;
         boolean kawaki = costume.a == KAWAKI_BODY;
         boolean madara = costume.a == MADARA_BODY;
+        boolean itachiCrow = costume.a == ITACHI_CROW_BODY;
+        boolean whiteMask = costume.a == ObitoWhiteCostume.BODY;
         boolean recent = isRecentFullBody(costume.a);
-        if (!cuuVi && !((boruto || kawaki || madara || recent) && weapon.heldWeapon)) return false;
+        if (!cuuVi && !((boruto || kawaki || madara || whiteMask || itachiCrow || recent) && weapon.heldWeapon)) return false;
 
         DataCenter data = DataCenter.gI();
         LangLa_ju body = costume.d[bodyPose];
@@ -138,6 +150,16 @@ final class CostumeTanto {
         }
         if (recent) {
             int[] palm = recentPalm(costume.a, body.a);
+            if (palm == null) return false;
+            handX = body.d + palm[0];
+            handY = body.e + palm[1];
+        } else if (itachiCrow) {
+            int cel = body.a - ITACHI_CROW_FIRST_TEXTURE;
+            if (cel < 0 || cel >= ITACHI_CROW_HAND.length) return false;
+            handX = body.d + ITACHI_CROW_HAND[cel][0];
+            handY = body.e + ITACHI_CROW_HAND[cel][1];
+        } else if (whiteMask) {
+            int[] palm = ObitoWhiteCostume.palm(body.a);
             if (palm == null) return false;
             handX = body.d + palm[0];
             handY = body.e + palm[1];

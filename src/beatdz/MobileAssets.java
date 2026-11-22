@@ -12,6 +12,13 @@ final class MobileAssets {
         if (Gdx.app != null && name.startsWith("tree_") && !name.contains("size")) {
             return "map-original/z" + (DataCenter.a("iconTree/0.png") + 1) + "/" + name;
         }
+        if (Gdx.app != null && (name.matches("char_icon_305(?:[012][0-9]|30)")
+                || name.equals("client_icon_30531"))) {
+            return "madara-poses/z" + (DataCenter.a(name) + 1) + "/" + name;
+        }
+        if (Gdx.app != null && name.matches("char_icon_(?:293(?:8[7-9]|9[0-9])|294(?:0[0-9]|1[0-3]))")) {
+            return "obito-white/z" + (DataCenter.a(name) + 1) + "/" + name;
+        }
         boolean imageArchive = name.startsWith("arr_check_") && !name.equals("arr_check_0");
         if (Gdx.app == null || !Canvas.isMobile() || (!isTexture(name) && !imageArchive)) return name;
         // Do not reuse the old zoom-1 images or invalidate accounts, settings and map packets.

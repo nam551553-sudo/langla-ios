@@ -55,7 +55,7 @@ public class LangLa_mk extends LangLa_fm {
                LangLa_kl var14;
                if ((var14 = (LangLa_kl)var4).m() == 0 && var14.y.isMe()) {
                   if (var14.n() != 0 || var5.id != 788 && (var5.strOptions == null || !var5.strOptions.contains(";333,0"))) {
-                     if (var14.n() == 0 && (var5.id == 789 || var5.id == 812 || var5.id == 855 || var5.id == 880 || var5.strOptions != null && var5.strOptions.startsWith("340,789") || var5.strOptions != null && var5.strOptions.startsWith("340,812") || var5.strOptions != null && var5.strOptions.startsWith("340,855") || var5.strOptions != null && var5.strOptions.startsWith("340,880"))) {
+                     if (var14.n() == 0 && (FirePhoenixMount.matches(var5) || var5.id == 789 || var5.id == 812 || var5.id == 855 || var5.id == 880 || var5.strOptions != null && var5.strOptions.startsWith("340,789") || var5.strOptions != null && var5.strOptions.startsWith("340,812") || var5.strOptions != null && var5.strOptions.startsWith("340,855") || var5.strOptions != null && var5.strOptions.startsWith("340,880"))) {
                         var9.add(new LangLa_dz(this.width - 51, this.height - 26, 100, 0, Caption.qB, var4, 170, 15));
                      }
                   } else {
