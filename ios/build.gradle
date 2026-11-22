@@ -13,33 +13,6 @@ dependencies {
     implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-ios"
 }
 robovm { archs = 'arm64' }
-def sharedAssets = rootProject.layout.buildDirectory.dir('gameAssets')
-def iosAssets = layout.buildDirectory.dir('gameAssets')
-def ffmpeg = providers.environmentVariable('LANGLA_FFMPEG').orElse('ffmpeg')
-def prepareIosAssets = tasks.register('prepareIosAssets', Sync) {
-    dependsOn rootProject.tasks.named('prepareGameAssets')
-    inputs.property('ffmpeg', ffmpeg)
-    from(sharedAssets) { exclude 'music/*.mp3' }
-    inputs.files(sharedAssets.map { fileTree(it.dir('music')) })
-    into iosAssets
-    doLast {
-        def destination = iosAssets.get().dir('music').asFile
-        destination.mkdirs()
-        fileTree(sharedAssets.get().dir('music')).matching { include '*.mp3' }.each { track ->
-            def output = new File(destination, track.name)
-            exec {
-                commandLine ffmpeg.get(), '-nostdin', '-hide_banner', '-loglevel', 'error', '-y',
-                    '-i', track.absolutePath, '-vn', '-map_metadata', '-1',
-                    '-ac', '1', '-ar', '24000', '-c:a', 'libmp3lame', '-b:a', '40k', output.absolutePath
-            }
-            if (output.length() >= track.length()) {
-                java.nio.file.Files.copy(track.toPath(), output.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
-            }
-        }
-    }
-}
-tasks.named('processResources') { dependsOn prepareIosAssets }
 if (providers.gradleProperty('iosSmoke').isPresent()) {
     sourceSets.main.java.srcDir('src/smoke/java')
-    sourceSets.main.java.srcDir('../test/shared')
 }
