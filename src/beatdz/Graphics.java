@@ -32,6 +32,7 @@ public class Graphics {
     private float motionY() { return motionY * DataCenter.gI().zoomLevel; }
     public Rectangle c = new Rectangle();
     Rectangle d;
+    final MapBackdrop mapBackdrop = new MapBackdrop();
     public SpriteBatch spriteBatch;
     private ShaderProgram artworkShader;
     public ShapeRenderer shapeRenderer;
@@ -857,6 +858,13 @@ public class Graphics {
         drawImage(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, false);
     }
 
+    void drawMapScenery(mImage image, int firstColumn, int firstRow, int columns, int rows,
+                        int x, int y, int width, int height) {
+        int zoom = DataCenter.gI().zoomLevel;
+        drawImage(image, firstColumn, firstRow, columns, rows, 0, x, y,
+                width * zoom, height * zoom, 0, true);
+    }
+
     void drawImagePixelRows(mImage image, int top, int rows, int transform, int x, int bottom, int width, int height) {
         if (this.k && transform < 0) {
             drawRotatedImage(image, 0, top, image.c, rows, transform, x, bottom, width, height, 33, true);
@@ -1272,6 +1280,7 @@ public class Graphics {
     }
 
     public void dispose() {
+        mapBackdrop.dispose();
         try {
             if (this.spriteBatch != null) {
                 this.spriteBatch.dispose();

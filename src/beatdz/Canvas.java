@@ -412,6 +412,7 @@ public abstract class Canvas implements Screen {
     }
 
     public void dispose() {
+        KonohaSchoolScenery.dispose();
         LangLa_dp var1;
         (var1 = LangLa_dp.a()).d();
         var1.e();
