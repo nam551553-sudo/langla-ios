@@ -87,8 +87,6 @@ jobs:
           java-version: '21'
       - name: Prepare simulator build
         run: |
-          command -v ffmpeg || brew install ffmpeg
-          python3 tools/ci/compact-ios-legacy-music.py
           chmod +x gradlew
           python3 tools/ci/prepare-ios.py
       - name: Native iOS cold-start to login
@@ -153,8 +151,6 @@ jobs:
         run: |
           test -d "$DEVELOPER_DIR"
           xcodebuild -version
-          command -v ffmpeg || brew install ffmpeg
-          python3 tools/ci/compact-ios-legacy-music.py
           chmod +x gradlew
           python3 tools/ci/prepare-ios.py
       - name: Import Apple signing files
