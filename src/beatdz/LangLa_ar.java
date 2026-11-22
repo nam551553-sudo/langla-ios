@@ -8,21 +8,27 @@ public class LangLa_ar extends LangLa_kj {
     public Item[] a = new Item[3];
     public Item[] b = new Item[16];
     private LangLa_ij[] h = new LangLa_ij[4];
-    final EquipmentQuote.Query quote = new EquipmentQuote.Query();
-    private final Item[] selection = new Item[18];
-    private EquipmentQuote confirmedQuote;
-    private long submittedAt;
+    private LangLa_dz i;
     public int c;
+    private long v = 0L;
+    private long w = 0L;
+    private long x = 0L;
+    private int y = 0;
+    private boolean z = false;
+    private boolean A;
+    public int d = 0;
+    public int e = 0;
     public LangLa_jw f;
     private Vector B;
 
     public LangLa_ar(MainScreen var1) {
         super(var1, new String[]{Caption.rx[1], Caption.H});
-        this.h[0] = new LangLa_ij((byte) 1, 162, this.a_() + 16, 30, 30, 30, 1, 1);
-        this.h[1] = new LangLa_ij((byte) 1, 242, this.a_() + 16, 30, 30, 30, 1, 1);
-        this.h[2] = new LangLa_ij((byte) 1, 202, this.a_() + 53, 30, 30, 30, 1, 1);
+        this.h[0] = new LangLa_ij((byte) 1, 162, this.a_() + 20, 30, 30, 30, 1, 1);
+        this.h[1] = new LangLa_ij((byte) 1, 242, this.a_() + 20, 30, 30, 30, 1, 1);
+        this.h[2] = new LangLa_ij((byte) 1, 202, this.a_() + 65, 30, 30, 30, 1, 1);
         this.h[3] = new LangLa_ij((byte) 1, 14, this.a_() + 20, 128, 128, 32, 4, 4);
-        this.a(this.a(this.width - 70, this.height - 33, Caption.rx[1], this, 0, -8), 0);
+        this.i = this.a(this.width - 70, this.height - 33, Caption.rx[1], this, 0, -8);
+        this.a(this.i, 0);
     }
 
     public void a() {
@@ -46,7 +52,6 @@ public class LangLa_ar extends LangLa_kj {
 
     public void b() {
         try {
-            refreshQuote();
             if (GameSrc.gI().Task == 9 && GameSrc.gI().idStep == 10) {
                 LangLa_ar var1;
                 int[] var6;
@@ -107,7 +112,7 @@ public class LangLa_ar extends LangLa_kj {
                         var10001 = this.cx + 270;
                         DataCenter.gI().aO.a(var10001, this.cy + 50);
                     }
-                } else if (this.B.size() == 0 || stoneChance() >= 100) {
+                } else if (this.B.size() == 0 || this.x >= 100L) {
                     if (this.k() != 0) {
                         var10001 = this.cx + 85;
                         DataCenter.gI().aO.a(var10001, this.cy + 15);
@@ -139,11 +144,12 @@ public class LangLa_ar extends LangLa_kj {
                     }
 
                     var6 = var10000;
-                    if (var6 == null && stoneChance() < 100) {
+                    this.e();
+                    if (var6 == null && this.x < 100L) {
                         var10001 = this.cx + 85;
                         DataCenter.gI().aO.a(var10001, this.cy + 10);
                         DataCenter.gI().aO.a = true;
-                    } else if (stoneChance() < 100) {
+                    } else if (this.x < 100L) {
                         var10001 = this.cx + var6[0] + 15;
                         DataCenter.gI().aO.a(var10001, this.cy + 25 + var6[1] + 15);
                     } else {
@@ -157,6 +163,7 @@ public class LangLa_ar extends LangLa_kj {
 
             super.b();
             if (this.k() == 0) {
+                this.e();
 
                 for (int var10 = 0; var10 < this.h.length; ++var10) {
                     this.h[var10].a();
@@ -172,87 +179,63 @@ public class LangLa_ar extends LangLa_kj {
                 }
             }
 
+            if (this.d > 0) {
+                --this.d;
+            }
 
         } catch (Exception var5) {
             Utlis.println(var5);
         }
     }
 
-    void refreshQuote() throws java.io.IOException {
-        if (System.currentTimeMillis() - submittedAt < 1500) return;
-        selection[0] = a[0];
-        selection[1] = a[2];
-        System.arraycopy(b, 0, selection, 2, b.length);
-        if (!quote.refresh(selection, a[0] != null, true)) return;
-        a[1] = null;
-        if (a[0] != null) {
-            Message request = EquipmentQuote.request(EquipmentQuote.UPGRADE, quote.requestId);
-            writeSelection(request);
-            request.send();
-        }
-    }
+    private void e() {
+        this.z = true;
+        this.y = 0;
+        this.v = this.w = this.x = 0L;
 
-    void acceptQuote(EquipmentQuote received) {
-        quote.accept(received);
-        if (received.valid && a[0] != null) {
-            a[1] = a[0].a();
-            a[1].isLock = true;
-            a[1].a(received.nextLevel);
-        }
-    }
-
-    private long stoneChance() {
-        return quote.value == null ? 0 : quote.value.stonePercent;
-    }
-
-    private void writeSelection(Message message) throws java.io.IOException {
-        message.writeByte(a[0].TYPE_TEMP);
-        message.writeShort(a[0].index);
-        message.writeShort(a[2] == null ? -1 : a[2].index);
-        int count = 0;
-        for (Item stone : b) if (stone != null) count++;
-        message.writeByte(count);
-        for (Item stone : b) if (stone != null) message.writeShort(stone.index);
-    }
-
-    boolean awaitingResult() {
-        return System.currentTimeMillis() - submittedAt < 1500;
-    }
-
-    void upgradeResult(boolean success) {
-        submittedAt = 0;
-        confirmedQuote = null;
-        quote.clear();
-        if (a[0] != null && !a[0].u()) {
-            Char.gI().h(a[0].TYPE_TEMP)[a[0].index] = a[0];
-            a[0] = null;
-        }
-        p.showMessage(success ? "Cường hóa thành công." : "Cường hóa thất bại.", success ? -1 : -65536);
-    }
-
-    private void drawQuote(Graphics graphics) {
-        if (a[0] == null) return;
-        EquipmentQuote cost = quote.value;
-        if (cost == null || !cost.valid) {
-            if (cost == null) {
-                mFont.b(mFont.d, graphics, quote.status(), 149, a_() + 89, 0, -2560, -16777216);
-            } else {
-                Vector lines = mFont.a(mFont.d, cost.problem, width - 158);
-                for (int i = 0; i < lines.size(); i++) {
-                    mFont.b(mFont.d, graphics, (String) lines.get(i), 149, a_() + 89 + i * 12, 0, -2560, -16777216);
-                }
+        int var1;
+        for (var1 = 0; var1 < this.b.length; ++var1) {
+            if (this.b[var1] != null) {
+                Item var10003 = this.b[var1];
+                this.v += DataCenter.gI().pointGhepDa[var10003.id];
             }
-            return;
         }
-        int red = -65536;
-        int orange = -30976;
-        mFont.b(mFont.d, graphics, "Thành công: " + cost.chance + "%", 149, a_() + 89, 0, orange, -16777216);
-        mFont.b(mFont.d, graphics, "Bạc: " + Utlis.numberFormat(cost.silver), 149, a_() + 100, 0,
-                cost.silver > Char.gI().bac ? red : orange, -16777216);
-        mFont.b(mFont.d, graphics, "Bạc khóa: " + Utlis.numberFormat(cost.lockedSilver), 149, a_() + 111, 0, orange, -16777216);
-        mFont.b(mFont.d, graphics, "Vàng: " + Utlis.numberFormat(cost.gold), 149, a_() + 122, 0, orange, -16777216);
-        mFont.b(mFont.d, graphics, "Điểm đá: " + Utlis.numberFormat(cost.stonePoints), 149, a_() + 133, 0, orange, -16777216);
-        mFont.b(mFont.d, graphics, "Mốc 100%: " + Utlis.numberFormat(cost.requiredPoints), 149, a_() + 144, 0, orange, -16777216);
+
+        if (this.a[0] != null) {
+            this.a[1] = this.a[0].a();
+            this.a[1].isLock = true;
+            if ((var1 = this.a[1].level + 1) > 19) {
+                var1 = 19;
+            }
+
+            this.a[1].a(var1);
+            if (this.a[0].k() && this.a[1].level <= 19) {
+                this.y = DataCenter.gI().bacKhoaUpgradeVuKhi[this.a[1].level];
+                this.w = DataCenter.gI().pointUpgradeVuKhi[this.a[1].level];
+            } else if (this.a[0].l() && this.a[1].level <= 19) {
+                this.y = DataCenter.gI().bacKhoaUpgradeTrangBi[this.a[1].level];
+                this.w = DataCenter.gI().pointUpgradeTrangBi[this.a[1].level];
+            } else if (this.a[0].m() && this.a[1].level <= 19) {
+                this.y = DataCenter.gI().bacKhoaUpgradePhuKien[this.a[1].level];
+                this.w = DataCenter.gI().pointUpgradePhuKien[this.a[1].level];
+            }
+
+            if ((long) Char.gI().bac + (long) Char.gI().bacKhoa < (long) this.y) {
+                this.z = false;
+            }
+
+            if (this.w > 0L) {
+                this.x = this.v * 100L / this.w;
+            }
+
+            if (!this.a[0].u()) {
+                this.a[1] = null;
+                this.z = false;
+            }
+
+        } else {
+            this.a[1] = null;
+        }
     }
 
     public void a(Graphics var1) {
@@ -269,18 +252,68 @@ public class LangLa_ar extends LangLa_kj {
                 a(var1, this.h[1].cx, this.h[1].cy, this.a[1], this.h[1].k >= 0, Caption.I);
                 a(var1, this.h[2].cx, this.h[2].cy, this.a[2], this.h[2].k >= 0, Caption.bn);
                 LangLa_fq.a(var1, 95, 0, 210 - DataCenter.gI().i / 3 % 3, this.a_() + 25, 20);
-                if (a[0] != null) {
-                    mFont.b(mFont.d, var1, "(+" + a[0].level + ")", 169, a_() + 48, 33, -1, -16777216);
-                    if (a[1] != null) {
-                        mFont.b(mFont.d, var1, "(+" + a[1].level + ")", 249, a_() + 48, 33, -1, -16777216);
+                if (this.a[0] != null) {
+                    mFont.b(mFont.d, var1, "(+" + this.a[0].level + ")", 169, this.a_() + 60, 33, -1, -16777216);
+                    if (this.a[1] != null) {
+                        mFont.b(mFont.d, var1, "(+" + this.a[1].level + ")", 249, this.a_() + 60, 33, -1, -16777216);
+                    }
+
+                    if (!this.z) {
+                        if (this.d == 0 || this.d % 10 > 5) {
+                            if (this.a[0].u()) {
+                                mFont.b(mFont.d, var1, Caption.jD + this.y + Caption.jC, 149, this.a_() + 108, 0, -65536, -16777216);
+                            } else {
+                                mFont.c(mFont.d, var1, Caption.jE, 149, this.a_() + 108, 0, -2560, -16777216);
+                            }
+                        }
+                    } else if (this.d > 0) {
+                        if (this.d % 14 > 7) {
+                            if (this.e == 1) {
+                                mFont.c(mFont.d, var1, Caption.jF, 149, this.a_() + 108, 0, -2560, -16777216);
+                                mFont.c(mFont.d, var1, Caption.jG, 149, this.a_() + 124, 0, -2560, -16777216);
+                            } else if (this.e == 2) {
+                                mFont.c(mFont.d, var1, Caption.jH, 149, this.a_() + 108, 0, -1, -16777216);
+                                mFont.c(mFont.d, var1, Caption.jI, 149, this.a_() + 124, 0, -1, -16777216);
+                            } else if (this.e == 3) {
+                                mFont.c(mFont.d, var1, Caption.jH, 149, this.a_() + 108, 0, -1, -16777216);
+                                mFont.c(mFont.d, var1, Caption.jJ, 149, this.a_() + 124, 0, -1, -16777216);
+                            }
+                        }
+                    } else if (!this.a[0].u()) {
+                        mFont.c(mFont.d, var1, Caption.jE, 149, this.a_() + 108, 0, -2560, -16777216);
+                    } else {
+                        long var2 = this.x;
+                        byte var4 = 99;
+                        if (this.a[2] != null) {
+                            var2 += 3L;
+                            var4 = 100;
+                        }
+
+                        if (var2 > 100L) {
+                            var2 = 100L;
+                        }
+
+                        if (this.a[1].level > 10 && var2 >= 100L) {
+                            mFont.b(mFont.d, var1, Caption.aX + " " + var4 + " %", 149, this.a_() + 108, 0, -30976, -16777216);
+                        } else {
+                            mFont.b(mFont.d, var1, Caption.aX + " " + var2 + " %", 149, this.a_() + 108, 0, -30976, -16777216);
+                        }
+
+                        if (this.y <= Char.gI().bacKhoa) {
+                            mFont.b(mFont.d, var1, Caption.aY + " 0", 149, this.a_() + 124, 0, -30976, -16777216);
+                            mFont.b(mFont.d, var1, Caption.aZ + " " + Utlis.numberFormat(this.y), 149, this.a_() + 140, 0, -30976, -16777216);
+                        } else {
+                            mFont.b(mFont.d, var1, Caption.aY + " " + Utlis.numberFormat(this.y - Char.gI().bacKhoa), 149, this.a_() + 124, 0, -30976, -16777216);
+                            mFont.b(mFont.d, var1, Caption.aZ + " " + Utlis.numberFormat(Char.gI().bacKhoa), 149, this.a_() + 140, 0, -30976, -16777216);
+                        }
                     }
                 }
-                drawQuote(var1);
+
                 this.a(var1, this.h[3]);
 
                 for (int var6 = 0; var6 < this.h[3].i; ++var6) {
                     for (int var3 = 0; var3 < this.h[3].r; ++var3) {
-                        b(var1, var3 * this.h[3].h, var6 * this.h[3].h, this.b[var6 * this.h[3].r + var3], var6 * this.h[3].i + var3 == this.h[3].k, "Đá");
+                        b(var1, var3 * this.h[3].h, var6 * this.h[3].h, this.b[var6 * this.h[3].r + var3], var6 * this.h[3].i + var3 == this.h[3].k, "");
                     }
                 }
 
@@ -331,7 +364,7 @@ public class LangLa_ar extends LangLa_kj {
                 case 1002:
                     this.c = 2;
                     this.a(var1.j, var1.j.k);
-                    showUpgradePreview();
+                    this.cL = a(var1, this, this.a[1]);
                     return;
                 case 1003:
                     this.c = 3;
@@ -356,16 +389,6 @@ public class LangLa_ar extends LangLa_kj {
 
     }
 
-    private void showUpgradePreview() {
-        if (a[0] == null) return;
-        EquipmentQuote cost = quote.value;
-        if (cost == null || !cost.valid || a[1] == null) {
-            p.showMessage(quote.status(), -65536);
-            return;
-        }
-        p.a((LangLa_cx) new ReleaseNotesDialog(p, "Xem trước nâng cấp", cost.details(a[1])));
-    }
-
     private void a(LangLa_ii var1, int var2) {
         for (int var3 = 0; var3 < this.h.length; ++var3) {
             this.h[var3].k = -1;
@@ -385,8 +408,7 @@ public class LangLa_ar extends LangLa_kj {
 
     public void d() {
         super.d();
-        quote.clear();
-        confirmedQuote = null;
+        this.A = false;
         if (this.a[0] != null) {
             Char.gI().h(this.a[0].TYPE_TEMP)[this.a[0].index] = this.a[0];
             this.a[0] = null;
@@ -407,38 +429,58 @@ public class LangLa_ar extends LangLa_kj {
 
     }
 
-    private void a(boolean confirm) {
+    private void a(boolean var1) {
         try {
-            if (awaitingResult()) return;
-            if (a[0] == null) {
-                p.showMessage(Caption.jK, -65536);
-                return;
+            if (!this.z) {
+                this.d = 50;
+            } else if (this.a[0] == null) {
+                DataCenter.gI().currentScreen.showMessage(Caption.jK, -65536);
+            } else if (this.x < 10L) {
+                DataCenter.gI().currentScreen.showMessage(Caption.jL, -65536);
+            } else {
+                if (var1) {
+                    if (this.x > 120L) {
+                        DataCenter.gI().currentScreen.a(Caption.jM, 2001, this);
+                        return;
+                    }
+
+                    if (this.y > Char.gI().bacKhoa) {
+                        DataCenter.gI().currentScreen.a(Caption.jN, 2001, this);
+                        return;
+                    }
+                }
+
+                Message var5;
+                (var5 = new Message((byte) 107)).writeByte(this.a[0].TYPE_TEMP);
+                var5.writeShort(this.a[0].index);
+                if (this.a[2] != null) {
+                    var5.writeShort(this.a[2].index);
+                } else {
+                    var5.writeShort(-1);
+                }
+
+                int var2 = 0;
+
+                int var3;
+                for (var3 = 0; var3 < this.b.length; ++var3) {
+                    if (this.b[var3] != null) {
+                        ++var2;
+                    }
+                }
+
+                var5.writeByte(var2);
+
+                for (var3 = 0; var3 < this.b.length; ++var3) {
+                    if (this.b[var3] != null) {
+                        var5.writeShort(this.b[var3].index);
+                    }
+                }
+
+                var5.send();
             }
-            refreshQuote();
-            EquipmentQuote cost = quote.value;
-            if (cost == null || !cost.valid || !cost.problem.isEmpty()) {
-                p.showMessage(quote.status(), -65536);
-                return;
-            }
-            if (confirm) {
-                confirmedQuote = cost;
-                String warning = cost.stonePercent > 120 ? "\n" + Caption.jM : "";
-                p.a(cost.fees() + warning + "\nCường hóa trang bị?", 2001, this);
-                return;
-            }
-            if (confirmedQuote != cost) {
-                p.showMessage("Chi phí đã thay đổi. Hãy chọn Cường hóa lại.", -65536);
-                return;
-            }
-            Message request = new Message((byte) 107);
-            writeSelection(request);
-            request.writeInt(quote.requestId);
-            request.send();
-            confirmedQuote = null;
-            quote.clear();
-            submittedAt = System.currentTimeMillis();
-        } catch (Exception error) {
-            Utlis.println(error);
+        } catch (Exception var4) {
+            Utlis.println(var4);
         }
     }
+
 }
