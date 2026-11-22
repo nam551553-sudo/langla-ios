@@ -1,0 +1,116 @@
+package beatdz;
+
+import com.tgame.model.Caption;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+final class BulkItemUse {
+    private static final int CHUNK_SIZE = 16;
+    private static final int BACKLOG_SLOW = 32;
+    private static final int BACKLOG_PAUSE = 128;
+    private static final int REWARD_DETAIL_LINES = 6;
+    private final Map<String, Long> rewards = new LinkedHashMap<>();
+    private int remaining, requested, completed, itemId, token, inFlight;
+    private int connectionVersion;
+    private int slot;
+    private long received;
+    private long nextAt, deadline;
+    private Session session;
+
+    boolean active() { return remaining > 0; }
+
+    void start(Item item, int amount) {
+        slot = item.index;
+        itemId = item.id;
+        remaining = requested = amount;
+        completed = 0;
+        received = 0;
+        rewards.clear();
+        inFlight = 0;
+        nextAt = 0;
+        session = Session.gI();
+        connectionVersion = session.connectionVersion();
+    }
+
+    void acknowledge(GameSrc game, int request, int used) {
+        if (!active() || inFlight == 0 || request != token) return;
+        int sent = inFlight;
+        inFlight = 0;
+        if (used >= 0 && used <= sent) completed += used;
+        remaining -= sent;
+        if (used != sent || remaining == 0) {
+            finish(game);
+        } else {
+            nextAt = Utlis.time() + 75;
+        }
+    }
+
+    boolean recordReward(String name, int amount) {
+        if (inFlight == 0 || amount <= 0) return false;
+        Long previous = rewards.get(name);
+        rewards.put(name, (previous == null ? 0L : previous) + amount);
+        received += amount;
+        return true;
+    }
+
+    void update(GameSrc game) {
+        if (!active()) return;
+        long now = Utlis.time();
+        if (session != Session.gI() || session.connectionVersion() != connectionVersion
+                || !session.isConnected() || (inFlight != 0 && now >= deadline)) {
+            remaining = 0;
+            inFlight = 0;
+            publishRewards();
+            game.showMessage("Lượt dùng vật phẩm đã dừng. Kiểm tra túi trước khi thử lại.", -65536);
+            return;
+        }
+        if (inFlight != 0 || now < nextAt) return;
+        int pending = session.pendingIncomingPackets();
+        if (pending >= BACKLOG_PAUSE) return;
+        Item[] bag = Char.gI().arrItemBag;
+        Item item = slot >= 0 && slot < bag.length ? bag[slot] : null;
+        if (item == null || item.id != itemId || item.getAmount() <= 0) {
+            finish(game);
+            return;
+        }
+        try {
+            int limit = itemId == 161 || itemId == 277 ? 128
+                    : item.getItemTemplate().type == 100 ? CHUNK_SIZE : 32;
+            if (pending >= BACKLOG_SLOW || !MultiSession.visible()) limit /= 2;
+            inFlight = Math.min(limit, Math.min(remaining, item.getAmount()));
+            deadline = now + 30000;
+            Message message = new Message((byte) 116);
+            message.writeShort(slot);
+            message.writeShort(inFlight);
+            message.writeInt(++token);
+            message.writeShort(itemId);
+            message.send();
+        } catch (Exception error) {
+            remaining = 0;
+            inFlight = 0;
+            publishRewards();
+            Utlis.println(error);
+        }
+    }
+
+    private void finish(GameSrc game) {
+        remaining = 0;
+        publishRewards();
+        String summary = "Đã dùng " + Utlis.numberFormat(completed) + "/" + Utlis.numberFormat(requested) + " vật phẩm.";
+        if (received > 0) summary += " Nhận " + Utlis.numberFormat(received) + " vật phẩm.";
+        game.showMessage(summary, -1);
+    }
+
+    private void publishRewards() {
+        int lines = 0;
+        for (Map.Entry<String, Long> entry : rewards.entrySet()) {
+            if (lines == REWARD_DETAIL_LINES) break;
+            LangLa_kw.a(7, Caption.bz, Caption.k + " " + Utlis.numberFormat(entry.getValue()) + " " + entry.getKey());
+            lines++;
+        }
+        if (rewards.size() > lines) {
+            LangLa_kw.a(7, Caption.bz, "Và " + (rewards.size() - lines) + " loại vật phẩm khác trong túi.");
+        }
+        rewards.clear();
+    }
+}

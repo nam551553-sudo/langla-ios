@@ -1,0 +1,50 @@
+plugins { id 'java' }
+
+configurations { preverifier }
+dependencies {
+    compileOnly 'org.microemu:midpapi20:2.0.4'
+    preverifier 'com.guardsquare:proguard-base:7.6.1'
+}
+
+tasks.named('compileJava') {
+    options.release = 8
+    options.encoding = 'UTF-8'
+}
+
+def applicationName = 'Lang La Blue J2ME'
+def entryPoint = 'com.langla.j2me.ConnectionMidlet'
+def metadata = [
+    'MIDlet-Name': applicationName,
+    'MIDlet-Version': '0.7.0',
+    'MIDlet-Vendor': 'Lang La Blue',
+    'MIDlet-1': "${applicationName},,${entryPoint}",
+    'MicroEdition-Configuration': 'CLDC-1.1',
+    'MicroEdition-Profile': 'MIDP-2.0'
+]
+tasks.named('jar') { manifest.attributes(metadata) }
+
+def output = layout.buildDirectory.dir('dist')
+tasks.register('packageMidlet', JavaExec) {
+    dependsOn tasks.named('jar')
+    classpath = configurations.preverifier
+    mainClass = 'proguard.ProGuard'
+    inputs.files(tasks.named('jar').flatMap { it.archiveFile }, configurations.compileClasspath)
+    outputs.dir(output)
+    doFirst {
+        def directory = output.get().asFile
+        directory.mkdirs()
+        def arguments = ['-injars', tasks.jar.archiveFile.get().asFile.absolutePath,
+                         '-outjars', new File(directory, 'LangLaBlue-J2ME.jar').absolutePath,
+                         '-dontshrink', '-dontoptimize', '-dontobfuscate', '-microedition',
+                         '-target', '1.2', '-keep', "public class ${entryPoint} { public <init>(); }"]
+        configurations.compileClasspath.each { arguments.addAll(['-libraryjars', it.absolutePath]) }
+        args = arguments
+    }
+    doLast {
+        def directory = output.get().asFile
+        def midlet = new File(directory, 'LangLaBlue-J2ME.jar')
+        def descriptor = metadata.collect { key, value -> "${key}: ${value}" }
+        descriptor.addAll(["MIDlet-Jar-URL: ${midlet.name}", "MIDlet-Jar-Size: ${midlet.length()}"])
+        new File(directory, 'LangLaBlue-J2ME.jad').setText(descriptor.join('\r\n') + '\r\n', 'US-ASCII')
+    }
+}

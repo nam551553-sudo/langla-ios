@@ -1,0 +1,12 @@
+plugins { id 'java-library' }
+sourceSets.main {
+    java {
+        srcDirs = ['../src']
+        exclude 'com/beatdz/langlalau/**', 'beatdz/LangLa_de.java', 'beatdz/LangLa_df.java', 'beatdz/LangLa_dg.java', 'beatdz/LangLa_dh.java'
+        exclude 'beatdz/LangLa_dv.java'
+    }
+}
+dependencies {
+    api "com.badlogicgames.gdx:gdx:$gdxVersion"
+    api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
+}
