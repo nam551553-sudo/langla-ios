@@ -4761,6 +4761,7 @@ public class GameSrc extends MainScreen {
         this.vItemMap.addAll(var2);
     }
 
+
     public void f(Message msg) throws java.io.IOException {
         Char.gI().cleanMove();
         Char.gI().idCharPk = -1;
