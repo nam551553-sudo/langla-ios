@@ -1,0 +1,172 @@
+name: Build iOS cave and refinement release
+
+on:
+  push:
+    branches: [main]
+    paths: ['ios-cave-update.zip', '.github/workflows/ios-caves.yml']
+  workflow_dispatch:
+    inputs:
+      signing:
+        description: Signing mode (signed requires Apple certificate and profile secrets)
+        type: choice
+        options: [unsigned, signed]
+        default: unsigned
+      build_number:
+        description: Numeric build number
+        default: ''
+        required: false
+      native_test_only:
+        description: Only run the native startup test (no new IPA)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  hd-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    outputs:
+      build_number: ${{ steps.metadata.outputs.build_number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Apply verified cave and refinement client 215345438
+        run: |
+          echo "4ea59b1bfd1c1135c284f9f946456f68d19e0ebfe481e93e2855503decf14b93  ios-cave-update.zip" | shasum -a 256 -c -
+          unzip -oq ios-cave-update.zip -d .
+      - name: Read release build number
+        id: metadata
+        env:
+          REQUESTED_BUILD: ${{ inputs.build_number }}
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, re
+          number = os.environ.get('REQUESTED_BUILD', '').strip()
+          if not number:
+              number = next(line.split('=', 1)[1].strip() for line in pathlib.Path('version.properties').read_text().splitlines() if line.startswith('build='))
+          if not re.fullmatch(r'[0-9]+', number):
+              raise SystemExit('Build number must be numeric')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('build_number=' + number + '\n')
+          PY
+      - name: Verify current startup artwork against pinned VPS hashes
+        run: python3 tools/ci/prepare-ios-startup.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-startup-icons
+          path: ios/bootstrap/data/ios-hd/
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 1
+  native-smoke:
+    needs: hd-assets
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+      BUILD_NUMBER: ${{ needs.hd-assets.outputs.build_number }}
+      SIGNING_MODE: unsigned
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Apply verified cave and refinement client 215345438
+        run: |
+          echo "4ea59b1bfd1c1135c284f9f946456f68d19e0ebfe481e93e2855503decf14b93  ios-cave-update.zip" | shasum -a 256 -c -
+          unzip -oq ios-cave-update.zip -d .
+      - uses: actions/download-artifact@v4
+        with:
+          name: ios-startup-icons
+          path: ios/bootstrap/data/ios-hd/
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Prepare simulator build
+        run: |
+          chmod +x gradlew
+          python3 tools/ci/prepare-ios.py
+      - name: Native iOS cold-start to login
+        run: |
+          python3 -c 'from pathlib import Path; p = Path("tools/ci/ios-simulator-smoke.py"); s = p.read_text(); old = "deadline = time.monotonic() + 360"; assert s.count(old) == 1; p.write_text(s.replace(old, "deadline = time.monotonic() + 1800"))'
+          python3 -c 'from pathlib import Path; p = Path("ios/src/smoke/java/com/beatdz/langlalau/IOSStartupSmoke.java"); s = p.read_text(); assert s.count("300000000000L") == 1; p.write_text(s.replace("300000000000L", "1680000000000L"))'
+          python3 tools/ci/ios-simulator-smoke.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iOS-native-startup-log-${{ needs.hd-assets.outputs.build_number }}
+          path: |
+            ios-native-smoke.log
+            ios-native-result.txt
+            ios-native-diagnostics/
+          if-no-files-found: warn
+  ipa:
+    # Compile independently. Delivery still requires success of this whole workflow,
+    # including native-smoke, so an unverified candidate is never selected for release.
+    needs: [hd-assets]
+    if: ${{ !inputs.native_test_only && !contains(github.event.head_commit.message, '[smoke-only]') }}
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+      BUILD_NUMBER: ${{ needs.hd-assets.outputs.build_number }}
+      SIGNING_MODE: ${{ inputs.signing || 'unsigned' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Apply verified cave and refinement client 215345438
+        run: |
+          echo "4ea59b1bfd1c1135c284f9f946456f68d19e0ebfe481e93e2855503decf14b93  ios-cave-update.zip" | shasum -a 256 -c -
+          unzip -oq ios-cave-update.zip -d .
+      - uses: actions/download-artifact@v4
+        with:
+          name: ios-startup-icons
+          path: ios/bootstrap/data/ios-hd/
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Prepare build
+        run: |
+          test -d "$DEVELOPER_DIR"
+          xcodebuild -version
+          chmod +x gradlew
+          python3 tools/ci/prepare-ios.py
+      - name: Import Apple signing files
+        if: inputs.signing == 'signed'
+        env:
+          IOS_CERTIFICATE_P12_BASE64: ${{ secrets.IOS_CERTIFICATE_P12_BASE64 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          IOS_PROVISION_PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
+        run: python3 tools/ci/import-signing.py
+      - name: Build IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(-Pios "-PreleaseBuild=$BUILD_NUMBER")
+          if [[ "$SIGNING_MODE" == signed ]]; then
+            args+=(-Probovm.iosSkipSigning=false "-Probovm.iosSignIdentity=$IOS_SIGN_IDENTITY" "-Probovm.iosProvisioningProfile=$IOS_PROFILE_UUID")
+          else
+            args+=(-Probovm.iosSkipSigning=true)
+          fi
+          ./gradlew "${args[@]}" '-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8' :ios:createIPA --max-workers=2 --no-daemon --stacktrace
+          while IFS= read -r -d '' ipa; do
+            if zipinfo -1 "$ipa" | awk '/^Symbols\// {found=1} END {exit !found}'; then
+              zip -dq "$ipa" 'Symbols/*'
+            fi
+          done < <(find ios/build/robovm -type f -name '*.ipa' -print0)
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: LangLa-iOS-${{ needs.hd-assets.outputs.build_number }}-${{ inputs.signing || 'unsigned' }}
+          path: ios/build/robovm/**/*.ipa
+          if-no-files-found: error
+          retention-days: 7
+      - name: Remove temporary signing files
+        if: always() && inputs.signing == 'signed'
+        run: python3 tools/ci/import-signing.py --cleanup
