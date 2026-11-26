@@ -34,9 +34,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Apply verified cave and refinement client 215345441
+      - name: Apply verified cave and refinement client 215345443
         run: |
-          echo "602ccc90e0b5918a7fb7a82da4562bd153d023b30f4e9c28cdd8ac0037d8f69f  ios-cave-update.zip" | shasum -a 256 -c -
+          echo "2485b53eeb3396d167b70ae15c3cd55a3b14ff9dc7e8ae0a65e1065548d6a5c7  ios-cave-update.zip" | shasum -a 256 -c -
           unzip -oq ios-cave-update.zip -d .
       - name: Read release build number
         id: metadata
@@ -74,9 +74,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Apply verified cave and refinement client 215345441
+      - name: Apply verified cave and refinement client 215345443
         run: |
-          echo "602ccc90e0b5918a7fb7a82da4562bd153d023b30f4e9c28cdd8ac0037d8f69f  ios-cave-update.zip" | shasum -a 256 -c -
+          echo "2485b53eeb3396d167b70ae15c3cd55a3b14ff9dc7e8ae0a65e1065548d6a5c7  ios-cave-update.zip" | shasum -a 256 -c -
           unzip -oq ios-cave-update.zip -d .
       - uses: actions/download-artifact@v4
         with:
@@ -119,9 +119,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Apply verified cave and refinement client 215345441
+      - name: Apply verified cave and refinement client 215345443
         run: |
-          echo "602ccc90e0b5918a7fb7a82da4562bd153d023b30f4e9c28cdd8ac0037d8f69f  ios-cave-update.zip" | shasum -a 256 -c -
+          echo "2485b53eeb3396d167b70ae15c3cd55a3b14ff9dc7e8ae0a65e1065548d6a5c7  ios-cave-update.zip" | shasum -a 256 -c -
           unzip -oq ios-cave-update.zip -d .
       - uses: actions/download-artifact@v4
         with:
